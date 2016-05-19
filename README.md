@@ -1,2 +1,7 @@
-# PLDU
-Per-core based Lightweight Deferred Update for Many-Core Linux Kernel
+# Paper : 
+
+PLDU :  
+
+# How to run the software
+
+
