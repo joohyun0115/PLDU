@@ -1,0 +1,57 @@
+
+
+\RecustomVerbatimEnvironment{Verbatim}{Verbatim}{formatcom=\footnotesize}
+\renewcommand{\ttdefault}{pxtt}
+\newcommand{\analyzer}{{\scshape Analyzer}\xspace}
+\newcommand{\testgen}{{\scshape Testgen}\xspace}
+\newcommand{\SIM}{SIM\xspace}
+\newcommand{\inputcode}[1]{%
+  {\small\hrule\vspace{0.5em}\input{#1}\hrule\vspace{0.5em}}}
+\newcommand{\inputnodraft}[1]{%
+  \ifdraft{#1 omitted in draft mode}{\input{#1}}}
+\newcommand{\tikzshowbbox}{
+  \path[draw=black] (current bounding box.north west)
+    rectangle (current bounding box.south east);
+  \fill[overlay,black] (0,0) circle (.5mm);
+  \draw[overlay,black] (0,2mm) -- +(0,5mm) (0,-2mm) -- +(0,-5mm)
+                       (2mm,0) -- +(5mm,0) (-2mm,0) -- +(-5mm,0);}
+\def\OP#1{\code{#1}}
+\def\INV#1#2#3{\text{\OP{#1}}\ifx?#2?\else(#2)\fi_{#3}}
+\def\RES#1#2#3{{#2}_{#3}}
+\def\HRESTRICT#1#2{#1|#2}
+\def\HIST#1{#1}
+\def\SPEC{\mathscr{S}}
+\def\STEP{\rightarrow}
+\def\TRUE{\textsc{true}}
+\def\FALSE{\textsc{false}}
+\def\HEAD{\textup{head}}
+\def\TAIL{\textup{tail}}
+\def\END{\textsc{end}}
+\def\EMULATE{\textsc{emulate}}
+\def\CONS#1#2{#1\mathbin:#2}
+\def\COMMUTE{\textsc{commute}}
+\def\THREAD{\textrm{thread}}
+\def\OK{\textsc{ok}}
+\def\FAIL{\textsc{fail}}
+\def\CONTINUE{\textsc{continue}}
+\def\YIELD{\textsc{yield}}
+\def\ATTH#1#2{#1_{#2}}
+\let\ATT\ATTH
+\def\REFIMP{\textit{M}}
+\def\HCONCAT{\mathbin{||}}
+\def\qed{$\square$}
+
+\newcommand\scpline[1]{\text{\begin{scriptsize}#1\end{scriptsize}}}
+\newcommand\tupleadj[3]{#1_{#2\gets#3}}
+\newcommand\V[1]{\textit{#1}}
+\newcommand\COMMENT[1]{\hfill{\small{//~\textit{#1}}}}
+\newcommand\NSIMP{m_{\text{ns}}}
+\newcommand\MRC{m_{\text{rc}}}
+\newcommand\SPECRC{\SPEC_{\text{rc}}}
+\newcommand{\SI}{SI\xspace}
+\newcommand{\HX}{\ensuremath{X}}
+\newcommand{\HY}{\ensuremath{Y}}
+\newcommand{\HSUFF}{\ensuremath{Z}}
+
+%Add by Joohyun
+\newcommand{\deferu}{LDU\xspace}

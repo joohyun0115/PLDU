@@ -1,13 +1,19 @@
+TARGET = pldu
+
 LATEXSOURCES = \
-	pldu.tex 
+	$(TARGET).tex 
 
 EPSSOURCES = \
 
-all: pldu.pdf
+all: $(TARGET).pdf
 
-pldu.pdf: $(LATEXSOURCES) $(EPSSOURCES) eps2pdf 
-	sh utilities/runlatex.sh pldu bib
+$(TARGET).pdf: $(LATEXSOURCES) $(EPSSOURCES) eps2pdf 
+	sh utilities/runlatex.sh $(TARGET) bib
 
+.PHONY: view
+view: $(TARGET).pdf
+	evince $(TARGET).pdf &
+	
 eps2pdf:
 	sh utilities/eps2pdf.sh
 

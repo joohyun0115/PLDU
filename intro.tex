@@ -1,0 +1,142 @@
+\section{Introduction} \label{sec:introduction}
+
+%Background
+%With the drastic increase of CPU core counts in various high-end
+%server systems, achieving performance scalability of operating systems
+%running on such many-core systems has been an important issue in research
+%communities.
+%Linux has been naturally considered as a major target for the scalability
+%improvement and a number of accomplishments are published.
+%Early results include RCU~\cite{McKenney98} and hazard
+%pointer~\cite{MagedMichael04a} to improve scalability for read-most data 
+%structures in the Linux kernel. %for relatively low CPU core counts.
+%Though the early results show certain level of improvement in scalability,
+%it turned out that more significant portion of scalability limitation of
+%Linux kernel is due to lock contention in update-heavy global data structures 
+%including file reverse mappings and anonymous reverse mappings during
+%spawning child processes~\cite{Andi2011adding}~\cite{Tim2013adding}. 
+%Such update-heavy data structures cause serialization of the update operations
+%leading to severe performance degradation. 
+
+%Scaling operating systems to many-core architectures is one of the most
+%important challenges in computing today. 
+%One of the scalable operations system is Linux because the Linux kernel
+%community has made it scalable.
+%For example, read-mostly data structures in the Linux have been achieved
+%considerable multi-core scaling by using RCU~\cite{McKenney98} and hazard
+%pointer~\cite{MagedMichael04a}.
+%However, the Linux kernel suffers from such scalability bottlenecks at high
+%core counts.
+%The Linux kernel on many-core processors can be
+%bottlenecked by contended updates locks where processes share a global data
+%structure.
+%When a process spawns child process, reverse mapping using shared global
+%data structure suffers from updates lock contention.
+%Recent research shows how to run a fork in parallel with creating new reverse
+%mapping data structure~\cite{SilasBoydWickizerPth}.
+%More specifically, in order to perfect scalability of the fork, both the
+%file reverse mapping and the anonymous reverse mapping can execute
+%update concurrently without lock
+%contention~\cite{Andi2011adding}~\cite{Tim2013adding}.
+
+%The fundamental scalability problem of reverse mapping is their serialized
+%update because operating systems are serialized at the update operation.
+
+%To solve this problem, an existing approach is to make the update-heavy data
+%structures as non-blocking~\cite{Harris2001Lockfree} based on
+% \emph{compare-and-swap}(CAS).
+%Introducing non-blocking data structures eliminates the update serialization
+% problem during process spawning, but incurs additional issues due to
+% inter-core communication
+%bottlenecks and cache coherence system's write
+% serialization~\cite{SilasBoydWickizerPth}.
+%To overcome the issues caused by cache coherence system, S. Boyd-Wickizer et
+% al. proposed Oplog~\cite{SilasBoydWickizerPth} where logs update operations with time stamps and 
+%actual updates are performed later when the updated data need to be read.
+%While Oplog nicely solves the update serialization problem without any cache
+% coherence-related overheads, the merging of the update logs recorded in multiple per-core data structures
+%considering time stamps further causes performance overheads resulting in
+% limited scalability improvement~\cite{McKenney2008ParallelProgramming}. 
+
+%Therefore, many researches have proposed non-blocking
+%algorithms~\cite{Harris2001Lockfree} for concurrent data structure based on
+%\emph{compare-and-swap}(CAS);nonetheless, this method may suffer from inter-core
+%communication bottleneck, the cache coherence system serializes the writes~\cite{SilasBoydWickizerPth}.
+
+%Another a existing solution is using the per-core processing like
+%Oplog~\cite{SilasBoydWickizerPth}, which achieves scalability by logging in
+%per-core memory.
+%In fact, per-core approach may have best performance for the update-heavy data
+%structure because of their partitioned data structures, whose updates can
+%operate locally.
+%The more-expensive reads, however, must merge across the entire per-core
+%data;read operations are expensive~\cite{McKenney2008ParallelProgramming}.
+%Therefore, their approach may be complex with regard to the read operation.
+%This paper attacks this complexity as a result of the per-core processing.
+%Even though they have generalized a per-core processing to the Oplog's library, 
+%they use intricate optimizations, so their optimizations may be expensive with
+%regard to the read operation.
+%For example, they use the absorbing updates that removes the cancelable
+%operation before the read.
+%This operation may need to iterate previous operation log due to searching the
+%cancelable operation log.
+%Furthermore, reducing the memory use, they maintain per-core memory space.
+
+%Method
+%This paper proposes a novel concurrent update method, \deferu, applicable to
+% Linux reverse mapping solving the problems 
+%mentioned above: the overheads caused by inter-core communication bottlenecks
+% and per-core log management with time stamps. 
+%Our goal is to make the Linux fork scale to large numbers of cores using
+%lightweight deferred processing algorithm.
+%The fork scalability requires two challenges in designing a reverse mapping.
+%First, this lightweight method should permit the concurrent updates not only to
+%reduce the inter-core communication bottleneck but also to eliminate their 
+%complexity.
+%Second, this lightweight method should apply to Linux reverse mapping, and
+%improve the Linux fork scalability.
+
+%The \deferu is similar to Oplog in that it defers the actual update operations
+% as late as possible to reduce serialization problems, but it uses a light weight global queue with
+%non-blocking synchronization for update logs and eliminates time stamps
+% required for per-core log management. 
+%In addition, to optimize the log management and minimize the traversal
+% overheads during reading, \deferu applies update-side absorbing algorithm based on atomic
+%marking and thus efficiently find the operations to be canceled. 
+%The evaluation of the proposed \deferu on Linux kernel 3.19.rc4 running on a
+% 120 core system reveals that 
+%the execution times could be improved by 1.7x, 1.6x, and 2.2x for 
+%a fork-intensive workload-
+%AIM7~\cite{AIM7Benchmark}, Exim from
+%MOSBENCH~\cite{SilasBoydWickizer2010LinuxScales48}, and 
+%lmbench~\cite{mcvoy1996lmbench}, respectively.
+
+%Second, it uses a novel update-side absorbing that uses the atomic marking
+%method, which allows \deferu to eliminate read-side traversal for finding the
+%cancelable operation log;readers can improve performance.
+
+%The proposed approach has the following advantages. 
+%First, it can permits the reverse mapping to remove lock contention, so Linux's
+%fork scalability has been improved.
+%Second, using the lightweight update-side absorbing, \deferu can reduce
+%complexity and improve readers performance.
+%Finally, while per-core processing uses the time-stamp counter(e.g., RDTSCP,
+%RDTSC) that depend on hardware, our method may not depend on hardware.
+
+%We implemented the \deferu in a Linux 3.19.rc4 with modification of lock. 
+%We evaluated the performance and scalability using a fork-intensive workload-
+%AIM7~\cite{AIM7Benchmark}, Exim from
+%MOSBENCH~\cite{SilasBoydWickizer2010LinuxScales48},
+%lmbench~\cite{mcvoy1996lmbench}-our design improves throughput and execution
+%time on 120 core by 1.7x, 1.6x, 2.2x respectively, relative to stock Linux.
+
+%Mapping
+%Paragraph 
+%This paper is organized as follows. 
+%Section 2 summarizes related works and compare our contributions to previous
+%works. 
+%Section 3 describes the design of the \deferu algorithm and 
+%Section 4 explains how to apply to Linux kernel.
+%section 5 explains our implementations in Linux and
+%Section 6 shows the results of the experimental evaluation. 
+%Finally, section 7 concludes the paper.
