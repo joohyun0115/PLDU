@@ -1,6 +1,9 @@
 \section{\pldu design}
 
 
+
+
+
 %This section describes the \deferu algorithm, a lightweight concurrent
 %update for update-heavy data structures based on deferred updates.
 %Challenges to designing a deferred update mechanism includes 
@@ -17,6 +20,8 @@
 %update side absorbing; on the other hand, the \emph{physical update} executes
 %these operations that are minimized by the update side absorbing.
 
+
+
 %\begin{figure}[tb]
 %  \begin{center}
     %
@@ -27,6 +32,8 @@
 %  data structure and logging queue at T1, T2 and T3, respectively.}
 %  \label{fig:basic}
 %\end{figure}
+
+
 
 %\subsection{Approach}
 
@@ -53,6 +60,8 @@
 %\deferu scheme inspires by this operation sequence, and inherits ideas
 %from Oplog's deferred processing and Harris's marking scheme.
 
+
+
 %\deferu's scheme for concurrent update inspires by Linux kernel's operation
 %sequence.
 %For example, consider a linked list in Linux kernel, if a operation is an insert
@@ -72,6 +81,9 @@
 %the same object, but reads can occur concurrently.
 %\deferu scheme inspires by this operation sequence, and inherits ideas
 %from Oplog's deferred processing and Harris's marking scheme.
+
+
+
 
 %One important algorithm in our proposed novel concurrent update scheme is
 %update-side absorbing operation that cancels duplicated operations for

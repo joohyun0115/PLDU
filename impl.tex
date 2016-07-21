@@ -1,4 +1,13 @@
 \section{Implementation}\label{sec:implementation}
+
+% Dynamic nonblocking and lock-less data strucures(structures that access
+% dynamically allocated memory that may also be freed at runtime) must typically
+% rely on alternative safe memory recalamation mechanisms[COMMUNICATION of the
+% ACM 2013] .
+
+
+%   
+
 %We implemented the new deferred update algorithm in Linux 3.19.rc4 kernel, and
 %our modified Linux is available as open source.
 %\deferu's scheme is based on deferred processing, so it needs a garbage

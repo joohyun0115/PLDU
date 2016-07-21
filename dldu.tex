@@ -19,8 +19,6 @@ head or tail of the queue in order to complete their operation[FC].
 
 \subsection{Lightweight Concurrent updates}
 
-
-
 %This section describes the \deferu algorithm, a lightweight concurrent
 %update for update-heavy data structures based on deferred updates.
 %Challenges to designing a deferred update mechanism includes 
@@ -111,8 +109,9 @@ head or tail of the queue in order to complete their operation[FC].
 %This mark is checked later when reading operation occurs and the operation log 
 %maintained in the lock-less list is applied to original data structure
 % atomically.
-%This action may give effective update;however, the inserted operation log has remained in the lock-less list, so \deferu's reader checks the mark field 
-%when they convert operation log to original data structure atomically.
+%This action may give effective update;however, the inserted operation log has
+% remained in the lock-less list, so \deferu's reader checks the mark field
+% when they convert operation log to original data structure atomically.
 
 %figure : basic principle 
 %Figure \ref{fig:basic} gives an example of deferred update with six update
