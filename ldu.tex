@@ -1,22 +1,130 @@
-\section{\ldu Design}
+\section{LDU Design}
 
 \subsection{Log-based Concurrent updates}
-To keep the log from growing without end, we can at any point apply in-order a
-subsequence of the operations at the head of the log to the state to derive a
-new state, and remove these operation from the log[EuroSys 2006 PLS].
 
-High level operations performed on shared data structures can be divided into
-three groups: read-only, write-only, and read-modify-write[PLS].
-Read-only operations do not mutate the data, write-only operations modify the
-data but do not return a result, and read-modify-write operations change shared
-data and return a result that is dependent on the data read[PLS].
+%Paragraph 1: Log 기반 Concurrent updates에 대한 설명
+% Flat combining
 
-Both suffer from a complete loss of scalability beyond a rather low concurrency
-level, because all threads must succesfully apply a CAS operation to the shared
-head or tail of the queue in order to complete their operation[FC].
+% Oplog
+
+\subsection{Approach}
+
+%Paragraph 1: Log 기반으로 LDU에서 사용하는 방법 요약
 
 
-\subsection{Lightweight Concurrent updates}
+
+%Paragraph 2: timestamp를 사용하지 않아도 되는 이유 설명
+
+
+
+%Paragraph 3: CoW 기법 : read before physical update 
+
+
+
+%Paragraph 4: 그림 설명 
+
+
+
+\subsection{The LDU Algorithm}
+
+%Paragraph 1:LDU 소스 코드 설명 
+
+
+\subsection{logical update}
+\begin{figure}[tb]
+\begin{obeylines}
+\begin{obeyspaces}
+function \(logical\_insert(obj, root) \):
+~~~If CAS(obj.del\_node.mark, 1, 0) $\ne$ 1:  
+~~~    obj.add\_node.mark $\gets$ 1
+~~~    If test\_and\_set\_bit(OP\_INSERT, obj.exist) $\ne$ true:
+~~~        set\_bit(OP\_INSERT, obj.used):
+~~~        obj.add\_node.op $\gets$ OP\_INSERT
+~~~        obj.add\_node.key $\gets$ obj
+~~~        obj.add\_node.root $\gets$ root
+~~~        add\_lock\_less\_list(obj.add\_node)
+~~~
+~~~
+function \(logical\_remove(obj, root) \):
+~~~If CAS(obj.add\_node.mark, 1, 0) $\ne$ 1:  
+~~~    obj.del\_node.mark $\gets$ 1 
+~~~    If test\_and\_set\_bit(OP\_REMOVE, obj.exist) $\ne$ true:
+~~~        set\_bit(OP\_REMOVE, obj.used):
+~~~        obj.del\_node.op $\gets$ OP\_REMOVE
+~~~        obj.del\_node.key $\gets$ obj
+~~~        obj.del\_node.root $\gets$ root
+~~~        add\_lock\_less\_list(obj.del\_node)
+
+\end{obeyspaces}
+\end{obeylines}
+\rule{\columnwidth}{0.5pt}
+\vspace{-\baselineskip}
+\caption{\deferu logical update algorithm. \code{logical\_insert} represents
+ non-blocking insert function.
+It may be called by original insert position without locks. The fastpath is
+ that when their object was removed by \code{logical\_remove},
+ \code{logical\_insert} just changes node's marking field.}
+\label{fig:logicalupdate}
+\end{figure}
+
+
+\subsection{Physical update}
+\begin{figure}[tb]
+\begin{obeylines}
+\begin{obeyspaces}
+function \(synchronize\_ldu(obj, head) \):
+~~~If (head.first = NULL): 
+~~~    return; 
+~~~entry $\gets$ xchg(head.first, NULL);
+~~~for each list node:
+~~~    obj $\gets$ node.key
+~~~    clear\_bit(node.op, obj.exist)
+~~~    If !xchg(node.mark, 0):
+~~~         physical\_update(node.op, obj, node.root)
+~~~    clear\_bit(node.op, obj.used)
+~~~
+function \(physical\_update(op, obj, root) \):
+~~~If op = OP\_INSERT :  
+~~~    call real insert function(obj, root) 
+~~~Else If op = OP\_REMOVE :  
+~~~    call real remove function(obj, root) 
+
+\end{obeyspaces}
+\end{obeylines}
+\rule{\columnwidth}{0.5pt}
+\vspace{-\baselineskip}
+\caption{\deferu physical update algorithm. \code{synchronize\_ldu} may be
+ called by reader and converts update log to original data structure
+ traversing the lock-less list.}
+\label{fig:physicalupdate}
+\end{figure}
+
+
+
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Reference Sentence 1
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+%To keep the log from growing without end, we can at any point apply in-order a
+%subsequence of the operations at the head of the log to the state to derive a
+%new state, and remove these operation from the log[EuroSys 2006 PLS].
+
+%High level operations performed on shared data structures can be divided into
+%three groups: read-only, write-only, and read-modify-write[PLS].
+
+%Read-only operations do not mutate the data, write-only operations modify the
+%data but do not return a result, and read-modify-write operations change shared
+%data and return a result that is dependent on the data read[PLS].
+
+%Both suffer from a complete loss of scalability beyond a rather low concurrency
+%level, because all threads must succesfully apply a CAS operation to the shared
+%head or tail of the queue in order to complete their operation[FC].
+
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Reference Sentence 2
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 %This section describes the \deferu algorithm, a lightweight concurrent
 %update for update-heavy data structures based on deferred updates.
@@ -53,8 +161,9 @@ head or tail of the queue in order to complete their operation[FC].
 % object, but reads can be concurrently invoked with update.
 %\deferu borrows ideas from Oplog's deferred processing and Harris' marking
 % scheme.
-%The reason is that Linux kernel's object management scheme differs from research-oriented data structure such as the lock-free and wait-free data
-%structures~\cite{Harris2001Lockfree}~\cite{Fomitchev2004Lockfree}~\cite{Timnat2012}.
+%The reason is that Linux kernel's object management scheme differs from
+% research-oriented data structure such as the lock-free and wait-free data
+% structures~\cite{Harris2001Lockfree}~\cite{Fomitchev2004Lockfree}~\cite{Timnat2012}.
 %For example, consider the Harris linked list, an insert operation inserts an 
 %integer key into the data structure, but Linux kernel inserts their object link.
 %The Linux kernel's list operations do not depend on key value.
@@ -142,7 +251,8 @@ head or tail of the queue in order to complete their operation[FC].
 %Finally, the tree contains nodes \code{D} and \code{B}, so the reader can read
 % eventually consistent data.
 
-%First, removing the cancelable operation at update point, \deferu uses the update side absorbing instead of read before absorbing.
+%First, removing the cancelable operation at update point, \deferu uses the
+% update side absorbing instead of read before absorbing.
 %Therefore, read before operations in \deferu are fast because read-side
 %absorbing operation is eliminated. 
 %One notable difference between Oplog and \deferu is that 
@@ -155,7 +265,8 @@ head or tail of the queue in order to complete their operation[FC].
 %efficient update-side absorbing that eliminates traversal finding the
 %cancelable operation.
 %Furthermore, to optimize the log management and minimize the traversal
-% overheads during reading, \deferu applies efficient update-side absorbing algorithm instead of read-side absorbing algorithm. 
+% overheads during reading, \deferu applies efficient update-side absorbing
+% algorithm instead of read-side absorbing algorithm.
 
 %\subsection{logical update}
 %\begin{figure}[tb]
@@ -189,7 +300,8 @@ head or tail of the queue in order to complete their operation[FC].
 %\caption{\deferu logical update algorithm. \code{logical\_insert} represents
 % non-blocking insert function.
 %It may be called by original insert position without locks. The fastpath is
-% that when their object was removed by \code{logical\_remove}, \code{logical\_insert} just changes node's marking field.}
+% that when their object was removed by \code{logical\_remove},
+% \code{logical\_insert} just changes node's marking field.}
 %\label{fig:logicalupdate}
 %\end{figure}
 

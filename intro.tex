@@ -1,5 +1,24 @@
 \section{Introduction} \label{sec:introduction}
 
+%Background
+
+%Method
+
+%Mapping
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+% Reference Sentence 1
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+
+
+
+
+
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Reference Sentence 2:LDU paper
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 % Ondemand로 로그를 지워 준다.
 %Background
 %With the drastic increase of CPU core counts in various high-end
@@ -52,17 +71,20 @@
 %bottlenecks and cache coherence system's write
 % serialization~\cite{SilasBoydWickizerPth}.
 %To overcome the issues caused by cache coherence system, S. Boyd-Wickizer et
-% al. proposed Oplog~\cite{SilasBoydWickizerPth} where logs update operations with time stamps and 
-%actual updates are performed later when the updated data need to be read.
+% al. proposed Oplog~\cite{SilasBoydWickizerPth} where logs update operations
+% with time stamps and actual updates are performed later when the updated data
+% need to be read.
 %While Oplog nicely solves the update serialization problem without any cache
-% coherence-related overheads, the merging of the update logs recorded in multiple per-core data structures
-%considering time stamps further causes performance overheads resulting in
-% limited scalability improvement~\cite{McKenney2008ParallelProgramming}. 
+% coherence-related overheads, the merging of the update logs recorded in
+% multiple per-core data structures considering time stamps further causes
+% performance overheads resulting in limited scalability
+% improvement~\cite{McKenney2008ParallelProgramming}.
 
 %Therefore, many researches have proposed non-blocking
 %algorithms~\cite{Harris2001Lockfree} for concurrent data structure based on
 %\emph{compare-and-swap}(CAS);nonetheless, this method may suffer from inter-core
-%communication bottleneck, the cache coherence system serializes the writes~\cite{SilasBoydWickizerPth}.
+%communication bottleneck, the cache coherence system serializes the
+% writes~\cite{SilasBoydWickizerPth}.
 
 %Another a existing solution is using the per-core processing like
 %Oplog~\cite{SilasBoydWickizerPth}, which achieves scalability by logging in
@@ -98,9 +120,9 @@
 %improve the Linux fork scalability.
 
 %The \deferu is similar to Oplog in that it defers the actual update operations
-% as late as possible to reduce serialization problems, but it uses a light weight global queue with
-%non-blocking synchronization for update logs and eliminates time stamps
-% required for per-core log management. 
+% as late as possible to reduce serialization problems, but it uses a light
+% weight global queue with non-blocking synchronization for update logs and
+% eliminates time stamps required for per-core log management. 
 %In addition, to optimize the log management and minimize the traversal
 % overheads during reading, \deferu applies update-side absorbing algorithm based on atomic
 %marking and thus efficiently find the operations to be canceled. 

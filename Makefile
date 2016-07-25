@@ -1,4 +1,4 @@
-TARGET = pldu
+TARGET = scalability
 
 LATEXSOURCES = \
 	$(TARGET).tex 
