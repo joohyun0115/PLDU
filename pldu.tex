@@ -1,19 +1,20 @@
 \section{PLDU design}
 
-%Paragraph 1:ldu의 확장 개념 설명
+%Paragraph 1:oplog와 ldu의 문제점 설명 
+
 
 
 \subsection{Approach}
-%Paragraph 1: Insert-Remove Operation에 대한 처리 설명
+
+%Paragraph 1: LDU의 head pointer를 per-core 기반으로 수정한 버전 
 
 
 
-%Paragraph 2:per-core 
+%Paragraph 2: Insert-Remove Operation에 대한 처리 설명
 
 
 
-%Paragraph 3:per-cor
-
+%Paragraph 3: object 기반 Hash table 관리 설명
 
 
 
@@ -21,7 +22,11 @@
 
 \subsection{The PLDU Algorithm}
 
-\subsection{logical update}
+
+\subsection{PLDU logical update}
+
+%Paragraph 1:LDU Concurrent Updates 소스 코드 설명 
+
 \begin{figure}[tb]
 \begin{obeylines}
 \begin{obeyspaces}
@@ -55,7 +60,9 @@ It may be called by original insert position without locks. The fastpath is
 \end{figure}
 
 
-\subsection{Physical update}
+\subsection{PLDU Physical update}
+
+%Paragraph 2:LDU Deferred Updates 코드 설명 
 
 \begin{figure}[tb]
 \begin{obeylines}

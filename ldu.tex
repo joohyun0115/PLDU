@@ -2,40 +2,47 @@
 
 \subsection{Log-based Concurrent updates}
 
-%Paragraph 1: Log 기반 Concurrent updates에 대한 설명
-% Flat combining
+%Paragraph 1: Log 기반의 데이터 구조 설명 
 
-% Oplog
+
 
 \subsection{Approach}
 
-%Paragraph 1: Log 기반으로 LDU에서 사용하는 방법 요약
+
+%Paragraph 1: CoW 기법 : read before physical update 
 
 
 
-%Paragraph 2: timestamp를 사용하지 않아도 되는 이유 설명
+
+%Paragraph 2: MPSC lock-less list를 활용하는 Log 기반 방법
 
 
 
-%Paragraph 3: CoW 기법 : read before physical update 
+
+%Paragraph 3: Abosrbing - 로그를 집어 넣을 때 지우는 방법
 
 
 
-%Paragraph 4: 그림 설명 
+%Paragraph 4: timestamp를 사용하지 않아도 되는 이유 설명
+
+
+
+
+%Paragraph 5: 그림 설명 
 
 
 
 \subsection{The LDU Algorithm}
 
-%Paragraph 1:LDU 소스 코드 설명 
 
-
-\subsection{logical update}
+\subsection{LDU logical update}
+%Paragraph 1:LDU Concurrent Updates 소스 코드 설명 
 \begin{figure}[tb]
 \begin{obeylines}
 \begin{obeyspaces}
 function \(logical\_insert(obj, root) \):
-~~~If CAS(obj.del\_node.mark, 1, 0) $\ne$ 1:  
+~~~If xchg(obj.del\_node.mark, 0) $\ne$ 1:  
+~~~    BUG(obj.add\_node.mark)
 ~~~    obj.add\_node.mark $\gets$ 1
 ~~~    If test\_and\_set\_bit(OP\_INSERT, obj.exist) $\ne$ true:
 ~~~        set\_bit(OP\_INSERT, obj.used):
@@ -46,7 +53,8 @@ function \(logical\_insert(obj, root) \):
 ~~~
 ~~~
 function \(logical\_remove(obj, root) \):
-~~~If CAS(obj.add\_node.mark, 1, 0) $\ne$ 1:  
+~~~If xchg(obj.add\_node.mark, 0) $\ne$ 1:  
+~~~    BUG(obj.del\_node.mark)
 ~~~    obj.del\_node.mark $\gets$ 1 
 ~~~    If test\_and\_set\_bit(OP\_REMOVE, obj.exist) $\ne$ true:
 ~~~        set\_bit(OP\_REMOVE, obj.used):
@@ -68,7 +76,9 @@ It may be called by original insert position without locks. The fastpath is
 \end{figure}
 
 
-\subsection{Physical update}
+\subsection{LDU Physical update}
+%Paragraph 2:LDU Deferred Updates 코드 설명 
+
 \begin{figure}[tb]
 \begin{obeylines}
 \begin{obeyspaces}
