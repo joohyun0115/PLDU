@@ -1,42 +1,72 @@
 \section{LDU Design}
 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 1: 이번 장에 대한 설명 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+
 \subsection{Log-based Concurrent updates}
 
-%Paragraph 1: Log 기반의 데이터 구조 설명 
-
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 1: Log 기반의 알고리즘 설명 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+% Linux kernel의 scalalbility를 위한 Concurrent updates 기술에 대한 연구는 필요하다. 
 
 
 \subsection{Approach}
 
-
-%Paragraph 1: CoW 기법 : read before physical update 
-
-
-
-
-%Paragraph 2: MPSC lock-less list를 활용하는 Log 기반 방법
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 1: LDU는 CoW 기법 : read before physical update 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 
 
 
-%Paragraph 3: Abosrbing - 로그를 집어 넣을 때 지우는 방법
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 2: Muti Producer Single Consumer, lock-less list를 활용하는 Log 기반 방법
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+% time-stamp 기반의 per-core 기반의 문제점은 operating log를 저장하는 공간이 per-core 공간이기 때문에
+% 관리에 대한 문제점이 존재한다.
 
 
 
-%Paragraph 4: timestamp를 사용하지 않아도 되는 이유 설명
+
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 3: optimization point one : Update-side Abosrbing - 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+% 로그를 집어 넣을 때 체크를 하여 xchg atomic 연산을 활용하여 operation을 지우는 방법
 
 
 
 
-%Paragraph 5: 그림 설명 
 
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 4: optimization point two : reusing garbage object 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+% global operation list에 들어가 있지만 삭제가 발생하여 mark filed가 zero인 경우(garbage object)
+% 비싼 연산인 list에 똑같은 연산을 넣지 않고, 해당 object를 재활용한다. 
+
+
+
+
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 5: Flowchart 그림 설명 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%
 
 
 \subsection{The LDU Algorithm}
 
 
+
+
 \subsection{LDU logical update}
-%Paragraph 1:LDU Concurrent Updates 소스 코드 설명 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 1:LDU Concurrent Updates 알고리즘 코드 및 설명 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 \begin{figure}[tb]
 \begin{obeylines}
 \begin{obeyspaces}
@@ -77,7 +107,9 @@ It may be called by original insert position without locks. The fastpath is
 
 
 \subsection{LDU Physical update}
-%Paragraph 2:LDU Deferred Updates 코드 설명 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 2:LDU Deferred Updates 알고리즘 코드 및 설명 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 \begin{figure}[tb]
 \begin{obeylines}
@@ -111,6 +143,24 @@ function \(physical\_update(op, obj, root) \):
 
 
 
+\subsection{LDU Correctness}
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 1: LDU Correctness 증명
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+
+
+
+
+
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Reference Sentence 1
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+
+
+
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Reference Sentence 1
@@ -133,7 +183,7 @@ function \(physical\_update(op, obj, root) \):
 
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Reference Sentence 2
+%Reference Sentence 2:LDU paper
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 %This section describes the \deferu algorithm, a lightweight concurrent

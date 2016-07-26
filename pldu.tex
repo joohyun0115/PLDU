@@ -1,31 +1,62 @@
 \section{PLDU design}
 
-%Paragraph 1:oplog와 ldu의 문제점 설명 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 1: ldu의 문제점 설명 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+% * LDU는 기본적으로 operation을 global head pointer에 저장하는 문제가 있다. 이 때문에 
+% 발생하는 cache overhead는 존재한다.  
 
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 2: oplog의 문제점 설명 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+% * PLDU는 per-core에 로그를 저장하는 방식을 사용함에 따라, oplog가 수행한 방식과 비슷하다. 
+% 하지만, timestamp를 사용하지 않고 per-core log 기법을 구현함에 따라, time stamp를 
+% management하는 오버헤드가 없다.
 
 
 \subsection{Approach}
 
-%Paragraph 1: LDU의 head pointer를 per-core 기반으로 수정한 버전 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 1: LDU의 head pointer를 per-core 기반으로 수정한 버전 설명
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+% * 기본적으로 PLDU는 LDU의 global 변수인 head 포인터에 log를 저장함에 따라 발생하는 
+% cache invalidate에 대한 overhead를 줄이고, timestamp를 사용하지 않는 것이 목적이다.
+%
 
 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 2: PLDU의 Insert-Remove Operation에 대한 처리 설명
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-%Paragraph 2: Insert-Remove Operation에 대한 처리 설명
-
-
-
-%Paragraph 3: object 기반 Hash table 관리 설명
-
+% * object에 대한 순서가 만약 Insert와 remove가 변경된다면, 문제가 발생한다. 
 
 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 3: Global Lock을 사용한 방법과, object 기반 Hash table 관리 설명
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+% * 만약 LDU의 log를 저장하는 global object를 대상으로 per-core hash table로 object를 관리
+%를 하면 장점이 있다.
+
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 4:그림 설명 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+% * 
+
+
 
 \subsection{The PLDU Algorithm}
 
 
 \subsection{PLDU logical update}
 
-%Paragraph 1:LDU Concurrent Updates 소스 코드 설명 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 1: PLDU Concurrent Updates 소스 코드 설명 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 \begin{figure}[tb]
 \begin{obeylines}
@@ -62,7 +93,9 @@ It may be called by original insert position without locks. The fastpath is
 
 \subsection{PLDU Physical update}
 
-%Paragraph 2:LDU Deferred Updates 코드 설명 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 2: PLDU Deferred Updates 코드 설명 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 \begin{figure}[tb]
 \begin{obeylines}
@@ -95,7 +128,18 @@ function \(physical\_update(op, obj, root) \):
 \label{fig:pphysicalupdate}
 \end{figure}
 
+\subsection{PLDU Correctness}
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 1: PLDU Correctness 설명 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
+
+
+
+
+
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Reference Sentence 1
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -105,7 +149,7 @@ function \(physical\_update(op, obj, root) \):
 
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Reference Sentence 2
+%Reference Sentence 2:LDU paper
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 %This section describes the \deferu algorithm, a lightweight concurrent
