@@ -11,7 +11,8 @@
 %Paragraph 1: Log 기반의 알고리즘 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 % Linux kernel의 scalalbility를 위한 Concurrent updates 기술에 대한 연구는 필요하다. 
-
+% void 함수일 경우 사용, 분산 시스템에 사용하는 개념을 활용.
+% PLS 논문 참고하여 작성
 
 \subsection{Approach}
 
@@ -120,10 +121,11 @@ function \(synchronize\_ldu(obj, head) \):
 ~~~entry $\gets$ xchg(head.first, NULL);
 ~~~for each list node:
 ~~~    obj $\gets$ node.key
-~~~    clear\_bit(node.op, obj.exist)
 ~~~    If !xchg(node.mark, 0):
 ~~~         physical\_update(node.op, obj, node.root)
 ~~~    clear\_bit(node.op, obj.used)
+~~~    If !xchg(node.mark, 0):
+~~~         physical\_update(node.op, obj, node.root)
 ~~~
 function \(physical\_update(op, obj, root) \):
 ~~~If op = OP\_INSERT :  
@@ -145,7 +147,7 @@ function \(physical\_update(op, obj, root) \):
 
 \subsection{LDU Correctness}
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 1: LDU Correctness 증명
+%Paragraph 1: LDU Correctness 설명
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 
