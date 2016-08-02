@@ -1,24 +1,30 @@
 \section{PLDU design}
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 1: ldu의 문제점 설명 
+%Paragraph 1: 이번 장에 대한 설명 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 2: ldu와 oplog의 문제점 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 % * LDU는 기본적으로 operation을 global head pointer에 저장하는 문제가 있다. 이 때문에 
 % 발생하는 cache overhead는 존재한다.  
-
-
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 2: oplog의 문제점 설명 
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 % * PLDU는 per-core에 로그를 저장하는 방식을 사용함에 따라, oplog가 수행한 방식과 비슷하다. 
 % 하지만, timestamp를 사용하지 않고 per-core log 기법을 구현함에 따라, time stamp를 
 % management하는 오버헤드가 없다.
+% OpLog는 로그 수행을 아래와 같이 한다. 
+%If a process logs an insert operation on one core,
+%migrates to another core, and logs a remove operation, the remove should
+%eventually execute after the insert[OpLog].
+
 
 
 \subsection{Approach}
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 1: LDU의 head pointer를 per-core 기반으로 수정한 버전 설명
+%Paragraph 1: PLDU의 목적 - LDU의 head pointer를 per-core 기반으로 수정한 버전 설명
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 % * 기본적으로 PLDU는 LDU의 global 변수인 head 포인터에 log를 저장함에 따라 발생하는 
@@ -26,23 +32,45 @@
 %
 
 
+
+
+
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 2: PLDU의 Insert-Remove Operation에 대한 처리 설명
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 % * object에 대한 순서가 만약 Insert와 remove가 변경된다면, 문제가 발생한다. 
+%If a process logs an insert operation on one core,
+%migrates to another core, and logs a remove operation, the remove should
+%eventually execute after the insert[OpLog].
+
+
+
 
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 3: object 기반 Hash table 관리 설명
+%Paragraph 3: LDU와 다른 부분 : log를 저장하는 위치에 대한 설명, per-core log
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+
+
+
+
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 4: object 기반 Hash table 관리 설명
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 % * 만약 LDU의 log를 저장하는 global object를 대상으로 per-core hash table로 object를 관리
 %를 하면 장점이 있다.
 
 
+
+
+
+
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 4:그림 설명 
+%Paragraph 5:그림 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 % * 
@@ -67,6 +95,7 @@ function \(logical\_insert(obj, root) \):
 ~~~    If test\_and\_set\_bit(OP\_INSERT, obj.used) $\ne$ true:
 ~~~        obj.add\_node.op $\gets$ OP\_INSERT
 ~~~        obj.add\_node.key $\gets$ obj
+~~~        obj.add\_node.root $\gets$ root
 ~~~        obj.add\_node.root $\gets$ root
 ~~~
 ~~~
@@ -144,6 +173,14 @@ function \(physical\_update(op, obj, root) \):
 %Reference Sentence 1
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
+* By default OpLog executes logged updates in temporal order. For example,
+consider a linked list. If a process logs an insert operation on one core,
+migrates to another core, and logs a remove operation, the remove should
+eventually execute after the insert.
+* OpLog relies on timestamps from a system-wide synchronized clock to tell it
+how to order entries in different cores' log.
+*This ordering ensures linearizaility, making OpLog compatible with existing
+data structure semantics.
 
 
 

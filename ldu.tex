@@ -1,18 +1,37 @@
 \section{LDU Design}
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 1: 이번 장에 대한 설명 
+%Paragraph 1: LDU의 특징을 간단한 설명과 이번장에 대한 설명
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
+%LDU의 특징을 요약하여 설명
+%LDU는 리눅스 커널의 Scalability 위한 timestamp를 이용하지 않는 새로운 로그 기반의
+%hight update rates를 위한 Concurrent Updates 방법이다. LDU의 기본적인 철학은
+%distributed system의 log기반 방식의 concurrent updates 방법을
+%shared memory system의 장점을 최대한 활용하여 구현한 방법이다.
+%이러한 LDU는 Concurrent Updates를 위해 수행 시점에서는 Atomic하게 Operation Log를 Global queue에
+% 저장하여, Lock이 필요 없어 scalability가 향상되고 Lock 자체의 오버헤를 줄일 수 있다. 
+%LDU는 global queue의 cache invalidate 줄이기 위해 2가지 optimization을 수행한다.
+%마지막으로 Log를 저장하는 저장된 Log는 주기적으로 또는 read 전에 호출되게 되는데, 
+%FC와 같이 operation Log를 corse rain lock과 함께 single core에서 수행하므로 
+%cache의 miss를 줄여 성능을 향시킨다.
+
+LDU 
+This section explains these algorithmic design aspects of LDU.
 
 \subsection{Log-based Concurrent updates}
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 1: Log 기반의 알고리즘 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-% Linux kernel의 scalalbility를 위한 Concurrent updates 기술에 대한 연구는 필요하다. 
 % void 함수일 경우 사용, 분산 시스템에 사용하는 개념을 활용.
 % PLS 논문 참고하여 작성
+
+Log-based approaches can help to support high update rates because
+
+
+
+
 
 \subsection{Approach}
 
@@ -20,6 +39,18 @@
 %Paragraph 1: LDU는 CoW 기법 : read before physical update 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 % LWN 참조
+% LDU의 철학 : CoW와 비슷한 방법으로 수행하되, distributed system과 같이 
+% concurrent update를 위해 timestamp를 사용하지 않고 최소한의 shared 
+%memory를 이용한 방법이다.
+% lock에 의한 오버헤드를 줄임, 2가지 optimization 기법을 통해 비싼 연산을 줄임
+% cache miss가 줄어 듦, 마지막으로 상대적으로 CAS연산을 줄인 리눅스의 lock-less
+%list에 operation을 저장하므로, cache invalidate 문제를 상대적으로 줄임.
+
+%LDU도 log-based approach를 가진다. 따라서 log-based 방법의 장점을 가지면서, 
+%update 순간 lock이 필요없고
+For update-heavy data structure LDU update before read operation;for example, it
+similar to CoW(Copy On Write) method because acture update as long as possible
+late.
 
 
 
@@ -27,9 +58,9 @@
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 2: Muti Producer Single Consumer, lock-less list를 활용하는 Log 기반 방법
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-% time-stamp 기반의 per-core 기반의 문제점은 operating log를 저장하는 공간이 per-core 공간이기 때문에
-% 관리에 대한 문제점이 존재한다.
-
+% time-stamp 기반의 per-core 기반의 문제점은 operating log를 저장하는 공간이 
+%per-core 공간이기 때문에 관리에 대한 문제점이 존재한다.
+%
 
 
 
@@ -38,6 +69,7 @@
 %Paragraph 3: optimization point one : Update-side Abosrbing - 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 % 로그를 집어 넣을 때 체크를 하여 xchg atomic 연산을 활용하여 operation을 지우는 방법
+
 
 
 
@@ -55,9 +87,25 @@
 
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 5: Flowchart 그림 설명 
+%Paragraph 5: 중간에 한번씩 log를 flush
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+% global operation list에 들어가 있지만 삭제가 발생하여 mark filed가 zero인 경우(garbage object)
+% 비싼 연산인 list에 똑같은 연산을 넣지 않고, 해당 object를 재활용한다. 
+
+
+
+
+
+
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 6: Flowchart 그림 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %
+
+
+
+
 
 
 \subsection{The LDU Algorithm}

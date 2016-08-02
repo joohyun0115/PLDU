@@ -33,7 +33,6 @@
 \usepackage{xspace}
 \usepackage{xcolor}
 \usepackage{url}
-\usepackage{listings}
 \usepackage{balance}
 \usepackage{subfig}
 \usepackage{booktabs}
@@ -43,10 +42,9 @@
 \usepackage{lastpage}
 \usepackage{alltt}
 \usepackage{etoolbox}
-\usepackage{ifdraft}
-\usepackage{titlesec}
 \usepackage{cleveref} % After hyperref, listings
 \usepackage{fancyhdr}
+
 \usepackage{macro}
 \newenvironment{CompactItemize}{\begin{itemize}}{\end{itemize}}
 \def\code#1{{\texttt{#1}}}
@@ -58,20 +56,19 @@
 \date{}
 
 %make title bold and 14 pt font (Latex default is non-bold, 16 pt)
-\title{\Large \bf Lightweight Deferred Updates for Linux Kenrel Scalability}
+\title{\Large \bf A Lightweight Deferred Concurrent Updates for Linux Kenrel
+Scalability}
 
 %for single author (just remove % characters)
-%\author{
-%{\rm Your N.\ Here}\\
-%Your Institution
-%\and
-%{\rm Second Name}\\
-%Second Institution
-% copy the following lines to add more authors
-% \and
-% {\rm Name}\\
-%Name Institution
-%} % end author
+\author{
+{\rm Your N.\ Here}\\
+Your Institution
+\and
+{\rm Second Name}\\
+ \and
+ {\rm Name}\\
+Name Institution
+} % end author
 
 \maketitle
 
