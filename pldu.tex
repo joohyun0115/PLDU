@@ -86,32 +86,16 @@
 %Paragraph 1: PLDU Concurrent Updates 소스 코드 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-\begin{figure}[tb]
+\begin{figure}[tb!]
 \begin{obeylines}
 \begin{obeyspaces}
-function \(logical\_insert(obj, root) \):
-~~~If xchg(obj.del\_node.mark, 0) $\ne$ 0:  
-~~~    obj.add\_node.mark $\gets$ 1
-~~~    If test\_and\_set\_bit(OP\_INSERT, obj.used) $\ne$ true:
-~~~        obj.add\_node.op $\gets$ OP\_INSERT
-~~~        obj.add\_node.key $\gets$ obj
-~~~        obj.add\_node.root $\gets$ root
-~~~        obj.add\_node.root $\gets$ root
-~~~
-~~~
-function \(logical\_remove(obj, root) \):
-~~~If xchg(obj.add\_node.mark, 0) $\ne$ 0:  
-~~~    obj.del\_node.mark $\gets$ 1 
-~~~    If test\_and\_set\_bit(OP\_REMOVE, obj.used) $\ne$ true:
-~~~        obj.del\_node.op $\gets$ OP\_REMOVE
-~~~        obj.del\_node.key $\gets$ obj
-~~~        obj.del\_node.root $\gets$ root
 
+\lstinputlisting{src/ldu_logical.c}
 \end{obeyspaces}
 \end{obeylines}
 \rule{\columnwidth}{0.5pt}
 \vspace{-\baselineskip}
-\caption{\deferu logical update algorithm. \code{logical\_insert} represents
+\caption{PLDU logical update algorithm. \code{logical\_insert} represents
  non-blocking insert function.
 It may be called by original insert position without locks. The fastpath is
  that when their object was removed by \code{logical\_remove},
@@ -126,42 +110,21 @@ It may be called by original insert position without locks. The fastpath is
 %Paragraph 2: PLDU Deferred Updates 코드 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-\begin{figure}[tb]
+\begin{figure}[tb!]
 \begin{obeylines}
 \begin{obeyspaces}
-function \(synchronize\_ldu(obj, head) \):
-~~~If (head.first = NULL): 
-~~~    return; 
-~~~entry $\gets$ xchg(head.first, NULL);
-~~~for each list node:
-~~~    obj $\gets$ node.key
-~~~    If !xchg(node.mark, 0):
-~~~         physical\_update(node.op, obj, node.root)
-~~~    clear\_bit(node.op, obj.used)
-~~~    If !xchg(node.mark, 0):
-~~~         physical\_update(node.op, obj, node.root)
-~~~
-function \(physical\_update(op, obj, root) \):
-~~~If op = OP\_INSERT :  
-~~~    call real insert function(obj, root) 
-~~~Else If op = OP\_REMOVE :  
-~~~    call real remove function(obj, root) 
+
+\lstinputlisting{src/ldu_physical.c}
 
 \end{obeyspaces}
 \end{obeylines}
 \rule{\columnwidth}{0.5pt}
 \vspace{-\baselineskip}
-\caption{\deferu physical update algorithm. \code{synchronize\_ldu} may be
+\caption{PLDU physical update algorithm. \code{synchronize\_ldu} may be
  called by reader and converts update log to original data structure
  traversing the lock-less list.}
 \label{fig:pphysicalupdate}
 \end{figure}
-
-\subsection{PLDU Correctness}
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 1: PLDU Correctness 설명 
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
 
 
 
