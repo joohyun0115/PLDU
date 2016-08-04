@@ -60,14 +60,15 @@
 %* 본 논문은 high update rate를 가진 data structure를 위한 새로운 방법(LDU)을 제안하였다.
 %* LDU는 timestamp를 이용함에 따라 생기는 복잡성을 해결하기 위해, 조금 더 simple하고 lightweight한 방법으로
 % 접근하여 update-heavy한 data structure를 위한 concurrent updates 방법을 제안하였다. 
-%* LDU는 OpLog와 같이 분산 시스템에서 사용하는 log기반의 concurrent update 방식과 최소한의
-% shared memory system의 atomic 연산을 이용하여 이 문제를 해결 하였다.
-%* LDU도 역시 앞에서 언급한 log-based 알고리즘의 모든 장점을 가지도록 만들었다. 
+%* LDU는 OpLog와 같이 분산 시스템에서 사용하는 log기반의 concurrent updates 방식과 최소한의
+% shared-memory system의 atomic 연산을 이용하여 이 문제를 해결 하였다.
+%* LDU도 역시 log-based 알고리즘이 가지고 있는 4가지 장점을 가진다. 
 %* lock-less concurrent update: lock 필요없으므로, lock에 대한 오버헤드가 없다.
 %* cache : corse graind lock(FC), single core에서 log의 operation을 수행하므로 캐시 히트율이
 % 높다. 
 %* Simpler and easier: 다른 알고리즘(트리, 리스트, 스택, 큐)에 쉽게 적용이 가능.
 %* optimization : update-side absorbing, reuse garbage object 
+%* practical system인 intel xeon 120코어를 대상으로 리눅스 커널 fork scalability 개선
 
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -100,8 +101,6 @@
 %*
 %* practical system인 intel xeon 120코어를 대상으로 리눅스 커널 fork scalability 개선 :
 %*
-%* 2개의 LDU 버전을 제안 : 로그 저장을 위해 global queue에 저장하여 보다 심플하고 lightweight한
-% G-LDU와 프로그래머의 노력이 조금 더 필요한 per-core 기반으로 관리하는 P-LDU를 제안하였다.  
 %*
 
 
