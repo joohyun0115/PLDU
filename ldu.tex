@@ -100,6 +100,7 @@ late.
 %Paragraph 3: PLDU: Per-core lock-less list를 활용하는 Log 기반 방법
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
+%
 
 
 
@@ -121,18 +122,12 @@ late.
 
 
 
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 5: object 기반 Hash table 관리 설명
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-% * 만약 LDU의 log를 저장하는 global object를 대상으로 per-core hash table로 object를 관리
-%를 하면 장점이 있다.
 
 
 
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 6: optimization point one : Update-side Abosrbing 
+%Paragraph 5: optimization point one : Update-side Abosrbing 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 % 로그를 집어 넣을 때 체크를 하여 xchg atomic 연산을 활용하여 operation을 지우는 방법
 
@@ -157,8 +152,11 @@ late.
 % log를 지워주는 효과를 가져주므로 성능 향상을 준다.
 
 
+
+
+
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 7: optimization point two : reusing garbage object 
+%Paragraph 6: optimization point two : reusing garbage object 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 % LDU의 또 다른 최적화 기법은 update-side absorbing 때문에 취소된 
@@ -174,7 +172,7 @@ late.
 
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 8: 중간에 한번씩 log를 flush
+%Paragraph 7: 중간에 한번씩 log를 flush
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 %To keep the log from growing without end, log-based method periodically 
@@ -188,7 +186,7 @@ late.
 
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 9: LDU limitation 설명
+%Paragraph 8: LDU limitation 설명
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 % LDU는 2가지 limitation을 가지고 있다. 
@@ -418,6 +416,18 @@ It may be called by original insert position without locks. The fastpath is
 
 \subsubsection{PLDU logical update}
 
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 1: object 기반 Hash table 관리 설명
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+% * 만약 LDU의 log를 저장하는 global object를 대상으로 per-core hash table로 object를 관리
+%를 하면 장점이 있다.
+
+
+
+
+
 \begin{figure}[tb!]
 \begin{obeylines}
 \begin{obeyspaces}
@@ -433,6 +443,8 @@ It may be called by original insert position without locks. The fastpath is
  traversing the lock-less list.}
 \label{fig:physicalupdate}
 \end{figure}
+
+
 
 
 
