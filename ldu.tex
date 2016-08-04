@@ -4,17 +4,19 @@
 %Paragraph 1: LDU의 특징을 간단한 설명과 이번장에 대한 설명(LDU의 특징을 요약하여 설명)
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-%LDU는 리눅스 커널의 hight update rates를 가진 data strcuture의 Scalability 위한 
+%LDU는 리눅스 커널의 high update rates를 가진 data strcuture의 Scalability 위한 
 %새로운 로그 기반의  위한 Concurrent Updates 방법이다. LDU는 timestamp를
 % 이용하여 발생하는 log를 관리에 대한 어려움을 해결하였다. 
-%time-stamp를 사용하지 않기 위해 LDU는 global queue를 이용하는데 이 때 발생하는
-%head pointer에 대한 cache invalidate 줄이기(mitigating) 위해 
-%3가지 방법(light weight queue,  Update-side Abosrbing, reusing garbage object)을 
-%병행 하였다.
+%
+%time-stamp를 사용하지 않기 위해 LDU는 최소한의 shared memory system 
+%atomic 연산을 사용하도록 하여 설계하였다. 
 %이러한 LDU의 기본적인 철학은 distributed system에서 주로 사용하는 time-stamp log기반 
 %방식의 concurrent updates 방법과 shared memory system에서만 사용할 수 있는 CAS와 같은
-%atomic operation을 절묘하게 결합하여 설계하였다. 즉 저장된 log를 순서대로 수행 하기
-% 위해 최소한의 atomic operation을 사용하도록 설계하였다. 
+%atomic operation을 절묘하게 결합하여 설계하였다. 
+% 즉 저장된 log를 consistency를 유지하기 위해 최소한의 atomic operation을 사용하도록 설계하였다. 
+%LDU는 cache invalidate 줄이기(mitigating)을 최소화 하기 위해 
+%3가지 방법(light weight queue,  Update-side Abosrbing, reusing garbage object)을 
+%병행 하였다.
 
 LDU 
 This section explains these algorithmic design aspects of LDU.
@@ -24,8 +26,6 @@ This section explains these algorithmic design aspects of LDU.
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 1: Log 기반의 알고리즘 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-% void 함수일 경우 사용, 분산 시스템에 사용하는 개념을 활용.
-% PLS 논문 참고하여 작성
 
 %Update heavy한 구조 때문에 발생하는 scalability 문제에 대한 해결 책 중 하나는
 %Log기반의 알고리즘을 사용하는 것이다. Log-based 알고리즘은 lock을 피하기 위해
@@ -80,7 +80,7 @@ late.
 
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 2: Muti Producer Single Consumer, lock-less list를 활용하는 Log 기반 방법
+%Paragraph 2: GLDU: Global queue 를 활용하는 Log 기반 방법 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 % LDU는 global queue의 head 포인터에 대한 CAS 연산을 최대한 줄이기 위해 
@@ -95,8 +95,44 @@ late.
 
 
 
+
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 3: optimization point one : Update-side Abosrbing 
+%Paragraph 3: PLDU: Per-core lock-less list를 활용하는 Log 기반 방법
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+
+
+
+
+
+
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 4: PLDU의 Insert-Remove Operation에 대한 처리 설명 - time ordering
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+% * object에 대한 순서가 만약 Insert와 remove가 변경된다면, 문제가 발생한다. 
+%If a process logs an insert operation on one core,
+%migrates to another core, and logs a remove operation, the remove should
+%eventually execute after the insert[OpLog].
+
+
+
+
+
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 5: object 기반 Hash table 관리 설명
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+% * 만약 LDU의 log를 저장하는 global object를 대상으로 per-core hash table로 object를 관리
+%를 하면 장점이 있다.
+
+
+
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 6: optimization point one : Update-side Abosrbing 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 % 로그를 집어 넣을 때 체크를 하여 xchg atomic 연산을 활용하여 operation을 지우는 방법
 
@@ -122,7 +158,7 @@ late.
 
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 4: optimization point two : reusing garbage object 
+%Paragraph 7: optimization point two : reusing garbage object 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 % LDU의 또 다른 최적화 기법은 update-side absorbing 때문에 취소된 
@@ -138,7 +174,7 @@ late.
 
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 5: 중간에 한번씩 log를 flush
+%Paragraph 8: 중간에 한번씩 log를 flush
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 %To keep the log from growing without end, log-based method periodically 
@@ -147,8 +183,12 @@ late.
 % 발생하는 메모리 낭비를 줄인다.
 
 
+
+
+
+
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 6: LDU limitation 설명
+%Paragraph 9: LDU limitation 설명
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 % LDU는 2가지 limitation을 가지고 있다. 
@@ -167,13 +207,14 @@ late.
 % 같은 노드에 대해서 insert-insert 또는 remove-remove 순서로 동작할 수 있다.
 % 이러한 경우에는 LDU를 적용하지 못한다.
 
-% 두번째 limitation은 3가지의 optimation 방법을 수행한다고 해도, 결국 global 
-% queue를 수행함에 따라 head 포인터에 따른 cache 문제가 있다. 이 문제는 다음장
-% PLDU에서 다시 자세히 다루도록 한다.
+% 하지만 CSDS 구조가 아닌 data structure를 사용하여 
 
 
+\subsection{LDU example}
+
+\subsubsection{GLDU example}
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 7: Flowchart 그림 설명 
+%Paragraph 1: GLDU Flowchart 그림 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %
 
@@ -218,11 +259,68 @@ Finally, the tree contains nodes \code{D} and \code{B}, so the reader can read
  eventually consistent data.
 
 
+
+\subsubsection{PLDU example}
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 2: PLDU Flowchart 그림 설명 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%
+
+\begin{figure}[tb]
+  \begin{center}
+     \includegraphics[width=0.5\textwidth,height=0.5\textheight,keepaspectratio]{fig/basic}
+  \end{center}
+  \caption{\deferu example showing six update operations and one read
+  operation. The execution flows from top to bottom. Memory represents original
+  data structure and logging queue at T1, T2 and T3, respectively.}
+  \label{fig:basic}
+\end{figure}
+
+
+Figure \ref{fig:basic} gives an example of deferred update with six update
+operations and one read operation.
+In this figure, execution flows from top to bottom.
+The data structure for \emph{physical update} is a tree, and initial values in
+the tree are node \code{A} and \code{B}.
+In contrast, the data structure for \emph{logical update} is lock-less list.
+In the top figure, \code{Core0}, \code{Core1} and \code{Core2} perform the
+logical insert operation to nodes \code{C}, \code{D} and \code{E},
+ respectively.
+The logical inserts set the insert mark, and they then insert their
+nodes into lock-less list.
+In this case, none of the lock is needed because \deferu uses the lock-less
+list;all threads can execute the update concurrently.
+At \code{T1}, the tree contains node \code{A}
+and \code{B} and 
+the lock-less list contains node \code{E}, \code{D} and \code{C}.
+When removing the node \code{C}, the node \code{C}, whose mark field was marked
+by insert, atomically cleans up the insert marked field.
+At \code{T2}, the lock-less list contains nodes
+\code{A}, \code{E}, \code{D}, and \code{C}, and the marking field is zero for 
+nodes \code{E} and \code{C}.
+Before running the \code{synchronize} function, they need to lock the original
+ tree's lock using the exclusive lock in order to protect the tree's
+ operation.
+The \code{synchronize} migrates from lock-less list node to tree node, each of 
+which is the marked node, so nodes \code{A} and \code{D} are migrated.
+Finally, the tree contains nodes \code{D} and \code{B}, so the reader can read
+ eventually consistent data.
+
+
+
+\subsection{GLDU vs. PLDU}
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 1: 둘간의 장단점 설명
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+
+
+
 \subsection{The LDU Algorithm}
 
 
-
-\subsection{LDU logical update}
+\subsubsection{GLDU logical update}
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 1:LDU Concurrent Updates 알고리즘 코드 및 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -242,8 +340,6 @@ marking field, then they check whether or not this node already has been
 If the node does not exist in lock-less list, then they insert the node into
 lock-less list.
 
-
-
 \begin{figure}[tb!]
 \begin{obeylines}
 \begin{obeyspaces}
@@ -262,7 +358,7 @@ It may be called by original insert position without locks. The fastpath is
 \end{figure}
 
 
-\subsection{LDU Physical update}
+\subsubsection{GLDU Physical update}
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 2:LDU Deferred Updates 알고리즘 코드 및 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -300,11 +396,58 @@ operation log.
 
 
 
+\subsubsection{The PLDU Algorithm}
+
+\begin{figure}[tb!]
+\begin{obeylines}
+\begin{obeyspaces}
+
+\lstinputlisting{src/pldu_logical.c}
+\end{obeyspaces}
+\end{obeylines}
+\rule{\columnwidth}{0.5pt}
+\vspace{-\baselineskip}
+\caption{\deferu logical update algorithm. \code{logical\_insert} represents
+ non-blocking insert function.
+It may be called by original insert position without locks. The fastpath is
+ that when their object was removed by \code{logical\_remove},
+ \code{logical\_insert} just changes node's marking field.}
+\label{fig:logicalupdate}
+\end{figure}
+
+
+\subsubsection{PLDU logical update}
+
+\begin{figure}[tb!]
+\begin{obeylines}
+\begin{obeyspaces}
+
+\lstinputlisting{src/pldu_physical.c}
+
+\end{obeyspaces}
+\end{obeylines}
+\rule{\columnwidth}{0.5pt}
+\vspace{-\baselineskip}
+\caption{\deferu physical update algorithm. \code{synchronize\_ldu} may be
+ called by reader and converts update log to original data structure
+ traversing the lock-less list.}
+\label{fig:physicalupdate}
+\end{figure}
+
+
+
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Reference Sentence 1
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-
+* By default OpLog executes logged updates in temporal order. For example,
+consider a linked list. If a process logs an insert operation on one core,
+migrates to another core, and logs a remove operation, the remove should
+eventually execute after the insert.
+* OpLog relies on timestamps from a system-wide synchronized clock to tell it
+how to order entries in different cores' log.
+*This ordering ensures linearizaility, making OpLog compatible with existing
+data structure semantics.
 
 
 
