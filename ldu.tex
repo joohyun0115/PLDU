@@ -5,17 +5,19 @@
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 \ifkor
-LDU는 리눅스 커널의 high update rates를 가진 data strcuture의 scalability 위한 새로운 로그 기반의  위한
-Concurrent Updates 방법이다.
-LDU는 timestamp를 이용하여 발생하는 log를 관리에 대한 어려움을 해결하였다.
-time-stamp를 사용하지 않기 위해 LDU는 최소한의 shared memory system atomic 연산을 사용하도록 하여 설계하였다.
-이러한 LDU의 기본적인 철학은 distributed system에서 주로 사용하는 time-stamp log기반  방식의 concurrent
-updates 방법과 shared memory system에서만 사용할 수 있는 CAS와 같은 atomic operation을 절묘하게
-결합하여 설계하였다.
-즉 저장된 log를 consistency를 유지하기 위해 최소한의 atomic operation을 사용하도록 설계하였다. 
-LDU는 cache invalidate 줄이기(mitigating)을 최소화 하기 위해 3가지 방법(light weight queue, 
-Update-side Abosrbing, reusing garbage object)을 병행 하였다.
-This section explains these algorithmic design aspects of LDU.
+LDU는 리눅스 커널의 high update rates를 가진 data strcuture의 scalability를 해결하기 위한 구조를
+가진다.
+이러한 LDU의 기본적인 철학은 distributed system에서 사용하는 log기반 방식의 concurrent updates 방법과
+shared-memory system에서만 사용할 수 있는 hardware-based synchronization 기능(i.e.,
+compare-and-swap, test-and-set, etc)을 최소한으로 이용하도록 설계하였다.
+이를 통해 concurrent updates가 가능하게 하였으며, 동시에 cache communication overhead를 최소화 하였다. 
+예를 들어, high update rates data structure의 scalability 문제를 해결하기 위해, LDU는 update
+operation 순간에는 operation 로그를 atomic하게 저장하여 concurrent updates를 가능하게 한다. 
+또한,  LDU는 global atomic 연산에 따른 cache communication overhead를 줄이기(mitigating)
+위해 2가지 최적화 방법(update-side abosrbing, reusing garbage)을 사용하였으며,
+log를 저장하는 위치에 따라 global queue를 이용한 type(GLDU)과 per-core queue를 이용한 type(PLDU)
+을 설계하였다. 
+본 장에서는 이러한 LDU의 최적화 방법과 log 위치에 따른 LDU 알고리즘의 디자인 측면에 대해서 설명한다. 
 \else
 This section explains these algorithmic design aspects of LDU.
 \fi
@@ -29,12 +31,12 @@ This section explains these algorithmic design aspects of LDU.
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 \ifkor
-Update heavy한 구조 때문에 발생하는 scalability 문제에 대한 해결 책 중 하나는 Log기반의 알고리즘을 사용하는 것이다.
+Update heavy한 구조 때문에 발생하는 scalability 문제에 대한 해결책 중 하나는 Log-based 알고리즘을 사용하는 것이다.
 Log-based 알고리즘은 lock을 피하기 위해 update가 발생하면, data structure의 update
-operation(insert or remove)을 argument와 함께 저장하고, 주기적 또는 before a read operation에
+operation(insert or remove)을 argument와 함께 저장하고, 주기적 또는 read operation을 수행하기 전에
 applies the updates in all the logs to the data structure, so reader can read up to date data structure.
-Log-based 방법은 마치 CoW(Copy on Write)와 같이, read 전에 저장된 log가 수행됨으로 read가 간혈적으로
-수행되는 data structure에 적합한 방법이다.
+이러한 Log-based 방법은 마치 CoW(Copy on Write)와 유사하다.
+즉, read 전에 저장된 log가 수행됨으로 read가 간혈적으로 수행되는 data structure에 적합한 방법이다.
 \else
 
 \fi
@@ -45,12 +47,15 @@ Log-based 방법은 마치 CoW(Copy on Write)와 같이, read 전에 저장된 l
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %
 \ifkor
-Log-based 방법은 총 4가지의 장점을 가진다. 첫째로, Update가 수행하는 시점 로그를 저장하는 순간에는 Lock이 필요가 없다. 
-둘째로, 저장된 Log를 corse-grain Lock과 함께 하나의 코어에서 수행하므로 cache에 효율성이 높아진다. 
-또한 OpLog와 같이 log를 per-core로 저장하면, cache invalidate에 대한 오버헤드를 최소화 할 수 있다. 
-셋째로, 기존 여러 데이터 structure에 쉽게 적용할 수 있는 장점이 있다.
-마지막으로 저장된 Log를 실제 수행하지 않고, 여러가지 optimization 방법을 사용하여 적은 operation으로 Log를 줄일 수
-있다.
+Update heavy한 구조를 위해, Log-based 방법은 총 4가지의 장점을 가진다. 
+첫째로, update가 수행하는 시점 즉 로그를 저장하는 순간에는 lock이 필요가 없다. 
+따라서 update를 concurrent하게 수행할 수 있을 뿐아니라, lock 자체가 가지고 있는 overall
+coherence traffic is significantly reduced[FC].
+둘째로, 저장된 update operation log를 corse-grain lock과 함께 하나의 코어에서 수행하기 때문에, cache
+효율성이 높아진다.
+셋째로, 기존 여러 데이터(tree, queue) structure에 쉽게 적용할 수 있는 장점이 있다.
+마지막으로 저장된 log를 실제 수행하지 않고, 여러가지 optimization 방법을 사용하여 적은 operation으로 Log를 줄일 수
+있다. 
 \else
 Log-based approaches can help to support high update rates because
 \fi
@@ -60,23 +65,19 @@ Log-based approaches can help to support high update rates because
 \subsection{Approach}
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 1: LDU는 another CoW 기법 : read before physical update 
+%Paragraph 1: LDU는 another log-based 기법 : read before physical update 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 \ifkor
-LDU도 log-based approach를 가진다 그러므로 log-based 방법의 장점을 모두 가진다.
-LDU는 먼저 lock 없이 Concurrent Updates를 위해 수행 시점에서는 Atomic하게 Operation  Log를 Global
-queue에 저장 한다. Lock이 필요 없어 scalability가 뿐만 아니라  Lock 자체의 오버헤를 줄일 수 있다. 
-Log를 저장하는 저장된 Log는 주기적으로 또는 read 전에 호출되게 되는데, LDU는 FC와 같이 operation Log를 corse
-grain lock과 함께 single core에서 수행하므로 cache의 miss를 줄여 성능을 향상시킨다.
-또한 LDU는 Log-based 방법과 같이 기존 data structure를 많이 수정하지 않아 다른 data structure에 쉽게 적용할
-수 있다.
-LDU가 global queue를 사용함에 따라, CAS operations on the head of the queue limit
-scalability(the bottleneck on the log is similar to that the Michael and Scott
-queue) 
-이처럼 LDU는 global queue의 사용에 대한 cache invalidate 줄이고, 불필요한 연산을 줄이기 위해, CAS를 최소화한
-queue를 사용, update-side absorbing, reusing garbage object 등과 같이 3가지 optimization을
-수행하였다.
+LDU도 log-based approach를 따른다. 그러므로 앞에서 설명한 log-based 방법의 장점을 모두 가진다.
+LDU는 먼저 lock 없이 concurrent Updates를 위해, update를 수행하는 시점에서 atomic하게 operation
+log를 global queue(GLDU) 또는 per-core queue(PLDU)저장 한다. 
+따라서 lock이 필요 없어 scalability가 뿐만 아니라  lock 자체의 오버헤를 줄일 수 있다.
+저장된 Log는 불필요한 메모리 낭비를 줄이기 위해 주기적으로 flush하거나 또는 read 전에 호출되게 되는데, 이 때 LDU는 FC와 같이
+operation Log를 corse grain lock과 함께 single core에서 수행한다. 
+따라서 cache의 miss를 줄여 성능을 향상시킨다.
+다음으로 LDU는 Log-based 방법과 같이 기존 data structure를 많이 수정하지 않고도 다른 data structure에 쉽게
+적용할 수 있다.
 \else
 For update-heavy data structure LDU update before read operation;for example, it
 similar to CoW(Copy On Write) method because acture update as long as possible
@@ -85,44 +86,90 @@ late.
 
 
 
-
-
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 2: GLDU: Global queue 를 활용하는 Log 기반 방법 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 \ifkor
-LDU는 global queue의 head 포인터에 대한 CAS 연산을 최대한 줄이기 위해  log를 저장하고자 하는 큐를 multiple
-producers and single consumer에 기반하는 non-blocking queue를 이용하였다. 
-이 큐는 다른 non-blocking list와 다르게 insert operation을 head의 first 노드에 삽입함에 따라, CAS가
-발생되는 횟수가 상대적으로 적다. 
-게다가 remove를 위한 복잡한 알고리즘이 필요없다.
-그 이유는 저장된 log를 수행하는 single consumer는 head  pointer를 NULL로 xchg 명령을 사용하여
+LDU의 하나의 타입 중 하나인 GLDU(Global queue version of LDU)는 log를 global queue에 저장하는
+방법이다.
+Global queue를 사용함에 따라, GLDU는 CAS operations on the head of the
+queue limit scalability(the bottleneck on the log is similar to that the Michael and Scott
+queue)[].
+GLDU는 global queue의 사용에 대한 cache invalidate 줄이고, 불필요한 연산을 줄이기 위해, CAS를 최소화한
+queue를 사용 하였고, update-side absorbing, reusing garbage object 과 같은  3가지
+optimization을 사용하였다.
+먼저 GLDU는 global queue의 head 포인터에 대한 CAS 연산을 최대한 줄이기 위해 log를 저장하고자 하는 큐를
+multiple producers and single consumer에 기반하는 non-blocking queue를 이용하였다. 
+이 큐는 다른 non-blocking list[][][]와 다르게, insert operation을 항상 처음 노드에 삽입함에
+따라, CAS가 발생되는 횟수를 상대적으로 줄인다. 
+게다가 single consumer를 고려 했기 때문에, remove를 위한 복잡한 알고리즘이 필요없다.
+Single consumer는 operation log 전체를 얻기 위해, xchg 명령을 사용하여 head  pointer를 NULL로
 atomic하게 제거한다.
 따라서 remove를 위한 복잡한 알고리즘이 필요없다.
 이러한 큐는 이미 Linux 커널에 Lock-less list라는 이름으로 구현되어 있으며, 이미 커널에 많은 부분에 사용되고 있다.
-LDU도 Linux 커널에 있는 Lock-less list를 활용 하였다.
+요약하자면, GLDU는 head pointer의 CAS fail 때문에 발생하는 multiple CAS를 최소화 하기 위해, Linux
+커널에 있는 Lock-less list를 활용 하였다.
 \else
 \fi
 
 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 3: optimization point one : Update-side Abosrbing 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+% 로그를 집어 넣을 때 체크를 하여 xchg atomic 연산을 활용하여 operation을 지우는 방법
+
+\ifkor
+LDU는 저장된 update log에 대해서 최적화를 수행하기 위해 update-side absorbing이라는 방법을 사용한다. 
+이 방법은 만약 같은 object에 대해서 insert와 remove가 발생하였으면, 같은 object에
+대해서, insert oepration과 remove operation에 대한 log를 update시점에 바로 바로 삭제하는 방법이다. 
+이처럼 log가 삭제될 수 있는 근본적인 이유는 operation log가 deferred로 수행하기 떄문에 가능하다. 
+Timestamp기반의 OpLog도 이러한 log 삭제 방법 수행하여 최적화를 하였으나, operation log가 서로 다른 코어에 존재하는
+log 같은 경우 시간 순서되로 log를 merge한 후 삭제를 위해 검색을 해야하는 추가적인 작업을 수행해야 한다.
+하지만 LDU는 이순간 shared-memory 시스템의 상대적으로 가벼운 swap operation을 사용했으므로 이러한 오버헤드를 줄일 수
+있다. 
+
+LDU의 update-side absorbing은 shared memory system의 swap operation을 사용한다.
+이를 위해, LDU는 모든 object에 insert와 remove의 mark 필드를 추가해서 update-side
+absorbing을 수행 하였다.
+예를 들어 만약A라는 object를 대상으로 insert-remove operation이 수행될 경우 처음 insert operation은
+insert mark 필드에 표시하고 queue에 저장한다.
+다음 remove operation 부터는 log를 queue에 저장하지 않고 insert에 표시한 mark 필드에 표시한 값만
+atomic하게 지워주는 방식으로 진행된다.
+이것은 swap이라는 상대적으로 가벼운 연산과 상대적으로 덜 share 하는 global object의 mark filed를 사용해서 log를
+지워주는 효과를 가져주므로, cache communication overhead를 많이 발생시키는 global head 포인터에 CAS연산을 사용을 줄여
+준다. 
+또한 앞으로 설명할 per-core기반의 concurrent updates를 가능하게 한다.
+
+\else
+\fi
+
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 3: PLDU: Per-core lock-less list를 활용하는 Log 기반 방법
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-
-
-
-
-
-
-
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 4: PLDU의 Insert-Remove Operation에 대한 처리 설명 - time ordering
+%Paragraph 4: optimization point two : reusing garbage object 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 \ifkor
+LDU의 또 다른 최적화 기법은 update-side absorbing 때문에 취소된 queue에 저장된 garbage object를 재활용하는
+것이다.
+이것은 queue에는 존재하지만 update-side aborsrbing 때문에 취소 되어 garbage가 되어 queue에 보관되어 있는
+log일 경우, 다음 update operation에 대해서는 해당 로그를 새로 많들어 넣지 않고 기존 로그를 재활용하는 방법이다. 
+예를 들어 A라는 오브젝트에 대해서 insert-remove-insert 순서로 update가 수행될 경우, 세번째 insert 명령어는
+global operation list에 들어가 있지만 update-side absorbing 때문에 최소되어  insert mark
+filed가 zero인 경우(garbage object)이다. 
+이러한 경우, 다음 insert operation에 대해서는 list에 연산을 다시 넣지 않고, 해당 object의 mark 필드만 변경하여
+log를 재활용하는 방법을 사용한다. 따라서 LDU는 두가지 최적화 기법을 사용하여 cache communication overhead를
+줄였다.
+\else
+\fi
+
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 6: PLDU 설명 : Insert-Remove Operation에 대한 처리 설명 - time ordering
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+\ifkor
+LDU의 두번 째 타입은 Per-core에 log를 저장하는 PLDU이다.  
 object에 대한 순서가 만약 Insert와 remove가 변경된다면, 문제가 발생한다. 
 If a process logs an insert operation on one core,
 migrates to another core, and logs a remove operation, the remove should
@@ -138,70 +185,17 @@ eventually execute after the insert[OpLog].
 
 
 
-
-
-
-
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 5: optimization point one : Update-side Abosrbing 
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-% 로그를 집어 넣을 때 체크를 하여 xchg atomic 연산을 활용하여 operation을 지우는 방법
-
-\ifkor
-LDU는 최적화를 위해 update-side absorbing이라는 방법을 사용한다. Update operation는 
-만약 같은 object에 대해서 insert와 remove가 발생하였으면, 같은 object에 대해서는
-insert oepration과 remove operation은 수행을 안해도 되는 operation이다. 
-이러한 방법은 log 기반으로 deferred 로 수행하기 떄문에 가능한것인데, log로 저장을 했기 때문에 삭제가 가능한 operation을
-삭제하여 성능을 높이는 방법이다.
-OpLog는 이러한 Log 삭제를 같은 코어서 동작하면 적은 operation으로 바로 바로 삭제를 하나 다른 코어로 이동된 Log 같은 경우
-삭제를 위해 검색을 해야하는 추가적인 작업을 수행하는 문제가 있다.
-LDU는 Log를 줄이는 작업에는 shared memory system의 atomic operation을 사용하였다.
-LDU는 모든 object에 insert와 remove의 mark 필드를 추가해서 global head 포인터에 비싼 CAS연산을 사용을
-줄이는 방법을 사용한다.
-이것은 삭제가능한 operationg일 경우 CAS를 사용하여 로그로 저장하지 않고 update를 수행할 때 SWAP operation을 활용해
-바로 바로 지워주는 알고리즘을 사용하였다.
-예를 들어 만약A라는 object를 대상으로 insert-remove operation이 수행될 경우 처음 insert operation은
-insert mark 필드에 표시하고 queue에 저장한다.
-다음 remove operation 부터는 log를 queue에 저장하지 않고 insert에 표시한 mark 필드에 표시한 값만 지워주는
-방식으로 사용한다.
-이것은 상대적으로 가벼운 연산만 사용해서 log를 지워주는 효과를 가져주므로 성능 향상을 준다.
-\else
-\fi
-
-
-
-
-
-
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 6: optimization point two : reusing garbage object 
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-\ifkor
-LDU의 또 다른 최적화 기법은 update-side absorbing 때문에 취소된 garbage object를 재활용하는 것이다.
-이것은 queue에는 존재하만 update-side aborsrbing 때문에 취소 되어 garbage가 되어 queue에 보관되어 있는
-log일 경우, 다음 update operation에 대해서는 로그를 새로 많들어 넣지 않고 기존 로그를 재활용하는 방법이다. 
-예를 들어  같은 오브젝트에 대해서 insert-remove-insert 순서로 update가 수행될 경우에는 세번째 insert 명령어는
-global operation list에 들어가 있지만 remove가 발생하여 mark filed가 zero인 경우(garbage
-object)이다. 이러한 경우 다음 insert operation에 대해서 비싼 연산인 list에 연산을 다시 넣지 않고, 해당 object의
-mark 필드만 변경하여 log를 재활용하는 방법을 사용하였다. 
-\else
-\fi
-
-
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 7: 중간에 한번씩 log를 flush
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 \ifkor
-To keep the log from growing without end, log-based method periodically  apply
-the time-ordered operations at the head of the log to remove these opearation
-from the log. LDU는 주기적으로 Log를 적용함으로 Log가 쌓여서 발생하는 메모리 낭비를 줄인다.
+LDU는 log 때문에 불필요하게 메모리 낭비를 방지하고, To keep the log from growing without end,
+log-based method periodically apply the time-ordered operations at the head of
+the log to remove these opearation from the log.
+즉 LDU는 주기적으로 Log를 적용함으로 Log가 쌓여서 발생하는 메모리 낭비를 줄인다.
 \else
 \fi
-
-
-
 
 
 
@@ -210,8 +204,8 @@ from the log. LDU는 주기적으로 Log를 적용함으로 Log가 쌓여서 발
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 \ifkor
-LDU는 2가지 limitation을 가지고 있다.  
-첫번째로는 리눅스 커널과 같이 search가 two update operations(one to insert and one to remove
+LDU는 다음의 limitation을 가지고 있다.
+리눅스 커널과 같이 search가 two update operations(one to insert and one to remove
 an element) 함수 외부해서 수행하는 data structure에만 적용이 가능하다.
 즉 다시말하면 리눅스의 data structure의 경우에는 search와 update가 분리되어 있어 같은 update operation이
 연달아 호출되지 않는다.
