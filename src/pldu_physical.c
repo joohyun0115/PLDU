@@ -1,17 +1,4 @@
 
-void ldu_physical_update(int op,
-		struct vm_area_struct *vma,
-		struct rb_root *root)
-{
-	if (!root)
-		return;
-
-	if (op == LDU_OP_ADD)
-		vma_interval_tree_insert(vma, root);
-	else
-		vma_interval_tree_remove(vma, root);
-}
-
 void synchronize_ldu(struct llist_node *entry)
 {
 	struct ldu_node *dnode;

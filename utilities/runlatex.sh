@@ -33,7 +33,7 @@ basename=`echo $1 | sed -e 's/\.tex$//'`
 
 iter=1
 echo "pdflatex $iter"
-pdflatex $basename > /dev/null 2>&1 < /dev/null || :
+pdflatex -shell-escape $basename > /dev/null 2>&1 < /dev/null || :
 if grep -q '! Emergency stop.' $basename.log
 then
 	echo "----- Fatal latex error, see $basename.log for details. -----"
@@ -51,7 +51,7 @@ while grep -q 'LaTeX Warning: Label(s) may have changed. Rerun to get cross-refe
 do
 	iter=`expr $iter + 1`
 	echo "pdflatex $iter"
-	pdflatex $basename > /dev/null 2>&1 < /dev/null || :
+	pdflatex -shell-escape $basename > /dev/null 2>&1 < /dev/null || :
 	if grep -q '! Emergency stop.' $basename.log
 	then
 		echo "----- Fatal latex error, see $basename.log for details. -----"
