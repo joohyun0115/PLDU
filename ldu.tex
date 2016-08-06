@@ -170,7 +170,9 @@ log를 재활용하는 방법을 사용한다. 따라서 LDU는 두가지 최적
 
 \ifkor
 LDU의 두번 째 타입은 Per-core에 log를 저장하는 PLDU이다.  
-object에 대한 순서가 만약 Insert와 remove가 변경된다면, 문제가 발생한다. 
+object에 대한 순서가 만약 Insert와 remove가 변경된다면, 문제가 발생한다.
+\inv{1}{A} \inv{2}{B} \inv{3}{C} \res{1}{A} \res{3}{C}
+ 
 If a process logs an insert operation on one core,
 migrates to another core, and logs a remove operation, the remove should
 eventually execute after the insert[OpLog].

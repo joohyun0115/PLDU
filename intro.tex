@@ -2,20 +2,18 @@
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-% Background
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-% 
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-% Outline
+%Background
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 \ifkor
-최근 코어수가 증가하고 있다.
-이처럼 100개 이상 코어수가 증가한 매니코어 환경에서 리눅스 커널에 대한 확장성 문제가 있다. 
-확장성 문제 중 하나가 락 경합 때문에 발생하는 serialization 문제이다.
-여러 락 serialization 문제 중 하나가 update operation이기 때문에 발생하는 문제가 있다. 그 이유는
-pdate operation 는 동시에 수행되지 못하기 때문이다.
-리눅스 커널의 reverse page mapping이 update rate가 높은 구조로 되어 있다.
-따라서 리눅스 커널의 rmap update lock에 때문에 serialize 되어 scalability 문제가 있다.
+최근 코어수가 증가하고 있다. 따라서 멀티코어에서 매니코어 환경으로 바뀌고 있다. 
+이러한 매니코어 환경에서 리눅스 커널의 확장성에는 문제가 있다[][][]. 
+확장성 문제 중 하나는 락 경합 때문에 발생하는 직렬화 문제이다[][].
+여러 락 때문에 발생하는 직렬화 문제 중 하나가 update operation이기 때문에 문제가 발생한다[][].
+그 이유는 update operation는 여러 thread가 동시에 수행되지 못하기 때문이다.
+예를 들어, 리눅스 커널의 프로세스간 공유하는 자료구조인 reverse page maps은 update rate가 높은 구조로 되어
+있다[][]. 
+따라서 리눅스 커널은 reverse page mapping에 대한 update lock에 때문에 serialize 되어 새로운 프로세스를
+생성 하는 과정에서 scalability 문제가 있다[][].
 \else
 
 \fi
@@ -25,28 +23,31 @@ pdate operation 는 동시에 수행되지 못하기 때문이다.
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Problem
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-% Outline
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 \ifkor
+이처럼 update serialization 문제를 해결하기 위해 여러 concurrent updates 방법[][][][][][] 들이 연구되고 있다. 
+이러한 concurrent updates 방법들은 워크로드 특성인 update ratio에 따라 많은 성능 차이를 보인다[][].
+이 중 리눅스 커널의 reverse page mapping과 같이 high update ratio를 가진 update-heavy한 data
+structure일 경우에는, update lock 경합 때문에 발생하는 scalability 문제를 해결하기 위한 여러 방법이 있다.
+그 중 하나는 cache coherence traffic을 줄인 log-based 알고리즘[][][]을 사용하는 것이다.
+Log-based 알고리즘은 lock을 피하기 위해 update가 발생하면, data structure의 update
+operation(insert or remove)을 argument와 함께 저장하고, 주기적 또는 read operation을 수행하기 전에
+applies the updates in all the logs to the data structure, so reader can read
+up to date data structure. 이것은 마치 CoW(Copy On Write)와 유사한 결과를 얻는다. 
 
-이처럼 update serialization 문제를 해결하기 위해 여러 concurrent updates 방법[][][] 들이 연구되고 있다. 
-이러한 concurrent updates 방법들은 워크로드 특성인 update ratio에 따라 많은 성능 차이를 보인다.
-이 중 high update ratio를 가진 커널의 rmap과 같이 update-heavy한 data structure일 경우, 이를 해결하기
-위한 방법 중 하나는 log-based 알고리즘[][][]을 사용하는 것이다. 
-log-based 알고리즘은 ~~~~ 이며, 마치 CoW와 유사한 방법을 사용한다. 
-Silas Boyd-Wickizer ,. update heavy한 구조를 timestamp 기반의 per-core log를 활용한 방법을
-제안하였다.
-timestamp 기반의 per-core log를 활용한 concurrent updates 방법은 update 부분만 고려했을 때 굉장히 좋은
-scalability를 가지고 있다. 하지만 timestamp 관리 비용에 대한 문제가 있다.
-다시 말하면, core가 늘어 날 수로 timestamp 관리하는 비용기 커진다. 
-예를 들어 코어 수가 1000개로 늘어 날 경우 log를 merge하는 reader가 각 코어에 쌓인 log를 시간 순서로 정렬하고 관리하는
- 비용이 커진다.
-또한 per-core로 log를 저장하는 공간에 대해서도 고려해야한다. OpLog는 per-core hash table로 root 포인터를
-가지고 있는 object의 log를 bucket단위로 저장하는데, 만약 root의 object 많은 경우, 잦은 hash
-충돌로 인한 문제가 발생한다.
-
+S. Boyd-Wickizer et al. 는 synchronized timestamp counters 기반의 per-core log를 활용하여
+update heavy한 자료구조에서의 concurrent updates 문제를 해결하였다.
+Synchronized timestamp counters 기반의 per-core log를 활용한 concurrent updates 방법은
+update 부분만 고려했을 때, conflict free이므로 굉장히 높은 scalability를 가질 수 있다[]. 
+하지만 per-core 기반의 synchronized timestamp counters를 사용한 방법은 결국 timestamp
+ordering and merging 작업을 야기한다. 
+만약 코어 수가 늘어 날 경우, resolving logs(merging or absorbing) may require
+additional sequential processing, which can limit scalalbility and
+performance.
+Furthermore, because limiting the per-core memory size, OpLog does not work
+well for all data structures.
+%(OpLog는 각각의 per-core메모리에 저장된 로그의 오브젝트를 해쉬 테이블을 통해 구별한다.)
+%(OpLog distinguishs each log's object saving the per-core memory through(via)
+% hash table).
 \else
 
 \fi
@@ -58,23 +59,29 @@ scalability를 가지고 있다. 하지만 timestamp 관리 비용에 대한 문
 %Method
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-% Outline
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%
 \ifkor
-본 논문은 high update rate를 가진 data structure를 위한 새로운 방법(LDU)을 제안하였다.
-LDU는 timestamp를 이용함에 따라 생기는 복잡성을 해결하기 위해, 조금 더 simple하고 lightweight한 방법으로 접근하여
-update-heavy한 data structure를 위한 concurrent updates 방법을 제안하였다.
-LDU는 OpLog와 같이 분산 시스템에서 사용하는 log기반의 concurrent updates 방식과 최소한의 shared-memory
-system의 atomic 연산을 이용하여 이 문제를 해결 하였다.
-LDU도 역시 log-based 알고리즘이 가지고 있는 4가지 장점을 가진다.  
-lock-less concurrent update: lock 필요없으므로, lock에 대한 오버헤드가 없다. 
-cache : corse graind lock(FC), single core에서 log의 operation을 수행하므로 캐시 히트율이 높다. 
-Simpler and easier: 다른 알고리즘(트리, 리스트, 스택, 큐)에 쉽게 적용이 가능. 
-optimization : update-side absorbing, reuse garbage object
-practical system인 intel xeon 120코어를 대상으로 리눅스 커널 fork scalability 개선
+본 논문은 high update rate를 가진 data structure를 위한 새로운 방법인 LDU를 제안한다. 
+LDU는 synchronized timestamp counters를 이용함에 따라 생기는 ordering or merging overhead와
+workload에 따른 interfaces dependency가 있는 문제를 줄이기 위해, 조금 더 simple하고
+lightweight한 방법을 사용하였다.
+즉 우리는 update-heavy한 data structure를 위한 새로운 concurrent updates 방법을 제안한다. 
+LDU의 철학은 FC 또는 OpLog와 같이 분산 시스템에서 사용하는 log기반의 concurrent updates 방식과 최소한의
+shared-memory system의 hardware-based synchronization 기법(예를 들어, compare and
+swap, test and set) 이용하여 이 문제를 해결 하였다.
+LDU는 per-core 방식이기 때문에 발생하는 interfaces dependency가 있는 문제를 해결하기 위해, log 저장을
+global queue를 사용하는 방식인 GLDU와 per-core에 log를 저장하여 global header의 cache
+coherece traffic을 줄인 PLDU로 개발하였으며 이것은 서로간 장단점을 가지고 있다.
+또한 update-side absorbing과 reuse garbage등 2가지 optimization 기술을 사용하여 삭제 가능한
+operation log를 지우고 재활용하는 방법으로 성능 최적화를 수행하였다.
 
+이처럼 synchronized timestamp counters를 제거함과 동시에, cache communication bottleneck 줄인
+LDU는 전형적인 log-based 알고리즘의 장점을 모두 가진다.
+첫째로, update가 수행하는 시점 즉 로그를 저장하는 순간에는 lock이 필요가 없다. 
+따라서 lock 없이 update를 concurrent하게 수행할 수 있다
+둘째로, 저장된 update operation log를 corse-grain lock과 함께 하나의 코어에서 수행하기 때문에,
+cache 효율성이 높아진다[FC].
+셋째로, 기존 여러 데이터 structure에 쉽게 적용할 수 있는 장점이 있다.
+마지막으로 저장된 log를 수행하지 전에 optimization 방법을 사용하여 log의 수를 줄 인다.
 \else
 
 \fi
@@ -83,17 +90,15 @@ practical system인 intel xeon 120코어를 대상으로 리눅스 커널 fork s
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Result
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-% Outline
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%
 
 \ifkor
-LDU를 리눅스의 update heavy한 data structure 때문에 fork scalability 문제를 발생시키는 2가지 anon,
-file reverse page mapping에 적용하였다.
-실험 결과 및 발견된 결과 * 120core에서 2x 성능 향상
-
+우리는 위와 같은 장점을 가지는 LDU를 리눅스 커널의 fork scalability 문제를 야기시키는 2가지 reverse page
+mapping(anonymous pape mapping[], file page mapping[])에 적용하였다.
+또한 We implemented the LDU in a Linux 4.5.rc4 with elemination of lock. 
+We evaluated the performance and scalability using a fork-intensive workload-
+AIM7[], Exim from MOSBENCH[], lmbench[]-our design improves throughput and
+execution time on 120 core by 1.7x, 1.6x, 2.2x respectively, relative to stock Linux.
+  
 \else
 
 \fi
@@ -105,15 +110,19 @@ file reverse page mapping에 적용하였다.
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Contribution 정리
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-% Outline
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%
-
 \ifkor
-새로운 simple하고 lightweight한 log-based concurrnet updates 방법 제안:
-practical system인 intel xeon 120코어를 대상으로 리눅스 커널 fork scalability 개선 :
+\noindent
+\textbf{Contributions.} This paper makes the following contributions:
+\begin{itemize}
+\item 우리는 새로운 log-based concurrnet updates 방법인 LDU를 개발하였다. 
+LDU는 synchronized timestamp counters를 이용함에 따라 생기는 ordering or merging overhead와
+workload에 따른 interfaces dependency가 있는 문제를 줄이기 위해, 조금 더 simple하고
+lightweight한 방법과 update-side absorbing과 reuse garbage의 optimization을
+사용하여 log-based concurrent updates를 구현하였다.
+\item 우리는 LDU을 practical한 manycore system인 intel xeon 120코어 위에 동작하는 리눅스 커널에
+적용하여, fork scalability 문제를 해결하였다. 
+Fork 관련 벤치마크 성능은 워크로드 특성에 따라 1.6x부터 2.2x까지 개선되었다.
+\end{itemize}
 \else
 
 \fi
@@ -126,12 +135,7 @@ practical system인 intel xeon 120코어를 대상으로 리눅스 커널 fork s
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Mapping
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-% Outline
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%
-This paper is organized as follows. 
+The rest of this paper is organized as follows.
 Section 2 summarizes related works and compare our contributions to previous
 works. 
 Section 3 describes the design of the LDU algorithm and 
@@ -139,8 +143,6 @@ Section 4 explains how to apply to Linux kernel.
 section 5 explains our implementations in Linux and
 Section 6 shows the results of the experimental evaluation. 
 Finally, section 7 concludes the paper.
-
-
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
