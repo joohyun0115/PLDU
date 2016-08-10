@@ -7,16 +7,15 @@
 \ifkor
 LDU는 리눅스 커널의 high update rates를 가진 data strcuture의 scalability를 해결하기 위한 구조를
 가진다.
-이러한 LDU의 기본적인 철학은 distributed system에서 사용하는 log기반 방식의 concurrent updates 방법과
-shared-memory system에서만 사용할 수 있는 hardware-based synchronization 기능(i.e.,
-compare-and-swap, test-and-set, etc)을 최소한으로 이용하도록 설계하였다.
+이러한 LDU의는 log기반 방식의 concurrent updates 방법과 atomic synchronization 기능(i.e.,
+compare-and-swap, test-and-set, etc)을 최소한으로 사용하도록 설계하였다.
 이를 통해 concurrent updates가 가능하게 하였으며, 동시에 cache communication overhead를 최소화 하였다. 
 예를 들어, high update rates data structure의 scalability 문제를 해결하기 위해, LDU는 update
 operation 순간에는 operation 로그를 atomic하게 저장하여 concurrent updates를 가능하게 한다. 
 또한,  LDU는 global atomic 연산에 따른 cache communication overhead를 줄이기(mitigating)
 위해 2가지 최적화 방법(update-side abosrbing, reusing garbage)을 사용하였으며,
-log를 저장하는 위치에 따라 global queue를 이용한 type(GLDU)과 per-core queue를 이용한 type(PLDU)
-을 설계하였다. 
+log를 저장하는 위치에 따라 global queue를 이용한 방식인 GLDU와 per-core queue를 이용한 방식인 PLD로 
+설계하였다.
 본 장에서는 이러한 LDU의 최적화 방법과 log 위치에 따른 LDU 알고리즘의 디자인 측면에 대해서 설명한다. 
 \else
 This section explains these algorithmic design aspects of LDU.
@@ -27,7 +26,7 @@ This section explains these algorithmic design aspects of LDU.
 \subsection{Log-based Concurrent updates}
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 1: Log 기반의 알고리즘 설명 
+%Paragraph 1: Log 기반의 알고리즘 대략적인 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 \ifkor
@@ -50,10 +49,10 @@ applies the updates in all the logs to the data structure, so reader can read up
 Update heavy한 구조를 위해, Log-based 방법은 총 4가지의 장점을 가진다. 
 첫째로, update가 수행하는 시점 즉 로그를 저장하는 순간에는 lock이 필요가 없다. 
 따라서 update를 concurrent하게 수행할 수 있을 뿐아니라, lock 자체가 가지고 있는 overall
-coherence traffic is significantly reduced[FC].
+coherence traffic is significantly reduced.
 둘째로, 저장된 update operation log를 corse-grain lock과 함께 하나의 코어에서 수행하기 때문에, cache
 효율성이 높아진다.
-셋째로, 기존 여러 데이터(tree, queue) structure에 쉽게 적용할 수 있는 장점이 있다.
+셋째로, 큰 수정 없이 기존 여러 데이터(tree, queue) structure에 쉽게 적용할 수 있는 장점이 있다.
 마지막으로 저장된 log를 실제 수행하지 않고, 여러가지 optimization 방법을 사용하여 적은 operation으로 Log를 줄일 수
 있다. 
 \else
@@ -70,11 +69,11 @@ Log-based approaches can help to support high update rates because
 
 \ifkor
 LDU도 log-based approach를 따른다. 그러므로 앞에서 설명한 log-based 방법의 장점을 모두 가진다.
-LDU는 먼저 lock 없이 concurrent Updates를 위해, update를 수행하는 시점에서 atomic하게 operation
-log를 global queue(GLDU) 또는 per-core queue(PLDU)저장 한다. 
+LDU는 먼저 lock 없이 concurrent Updates를 수행하기 위해, update를 수행하는 시점에서 atomic하게
+operation log를 global queue(GLDU) 또는 per-core queue(PLDU)저장 한다.
 따라서 lock이 필요 없어 scalability가 뿐만 아니라  lock 자체의 오버헤를 줄일 수 있다.
-저장된 Log는 불필요한 메모리 낭비를 줄이기 위해 주기적으로 flush하거나 또는 read 전에 호출되게 되는데, 이 때 LDU는 FC와 같이
-operation Log를 corse grain lock과 함께 single core에서 수행한다. 
+저장된 Log는 불필요한 메모리 낭비를 줄이기 위해 주기적으로 flush하거나 또는 read 전에 호출되게 되는데, 이 때 LDU는 FC와
+같이 operation Log를 corse grain lock과 함께 single core에서 수행한다. 
 따라서 cache의 miss를 줄여 성능을 향상시킨다.
 다음으로 LDU는 Log-based 방법과 같이 기존 data structure를 많이 수정하지 않고도 다른 data structure에 쉽게
 적용할 수 있다.
@@ -93,23 +92,22 @@ late.
 \ifkor
 LDU의 하나의 타입 중 하나인 GLDU(Global queue version of LDU)는 log를 global queue에 저장하는
 방법이다.
-Global queue를 사용함에 따라, GLDU는 CAS operations on the head of the
+global queue를 사용함에 따라, GLDU는 CAS operations on the head of the
 queue limit scalability(the bottleneck on the log is similar to that the Michael and Scott
 queue)[].
 GLDU는 global queue의 사용에 대한 cache invalidate 줄이고, 불필요한 연산을 줄이기 위해, CAS를 최소화한
-queue를 사용 하였고, update-side absorbing, reusing garbage object 과 같은  3가지
-optimization을 사용하였다.
+queue를 사용 하였고, update-side absorbing, reuse garbage log과 같은  3가지
+최소화 기법을 사용하였다.
 먼저 GLDU는 global queue의 head 포인터에 대한 CAS 연산을 최대한 줄이기 위해 log를 저장하고자 하는 큐를
 multiple producers and single consumer에 기반하는 non-blocking queue를 이용하였다. 
 이 큐는 다른 non-blocking list[][][]와 다르게, insert operation을 항상 처음 노드에 삽입함에
-따라, CAS가 발생되는 횟수를 상대적으로 줄인다. 
-게다가 single consumer를 고려 했기 때문에, remove를 위한 복잡한 알고리즘이 필요없다.
-Single consumer는 operation log 전체를 얻기 위해, xchg 명령을 사용하여 head  pointer를 NULL로
-atomic하게 제거한다.
-따라서 remove를 위한 복잡한 알고리즘이 필요없다.
+따라, CAS가 발생되는 횟수를 상대적으로 줄일 수 있다.
+게다가 single consumer를 고려 했기 때문에, remove를 위한 복잡한 알고리즘이 필요없다. 
+예를 들어 single consumer는 operation log 전체를 얻기 위해, xchg 명령을 사용하여 head  pointer를
+NULL로 atomic하게 제거한다. 
 이러한 큐는 이미 Linux 커널에 Lock-less list라는 이름으로 구현되어 있으며, 이미 커널에 많은 부분에 사용되고 있다.
 요약하자면, GLDU는 head pointer의 CAS fail 때문에 발생하는 multiple CAS를 최소화 하기 위해, Linux
-커널에 있는 Lock-less list를 활용 하였다.
+커널에 있는 Lock-less list를 활용 하였다~\cite{HuangLocklessList}.
 \else
 \fi
 
@@ -124,10 +122,11 @@ LDU는 저장된 update log에 대해서 최적화를 수행하기 위해 update
 이 방법은 만약 같은 object에 대해서 insert와 remove가 발생하였으면, 같은 object에
 대해서, insert oepration과 remove operation에 대한 log를 update시점에 바로 바로 삭제하는 방법이다. 
 이처럼 log가 삭제될 수 있는 근본적인 이유는 operation log가 deferred로 수행하기 떄문에 가능하다. 
-Timestamp기반의 OpLog도 이러한 log 삭제 방법 수행하여 최적화를 하였으나, operation log가 서로 다른 코어에 존재하는
-log 같은 경우 시간 순서되로 log를 merge한 후 삭제를 위해 검색을 해야하는 추가적인 작업을 수행해야 한다.
-하지만 LDU는 이순간 shared-memory 시스템의 상대적으로 가벼운 swap operation을 사용했으므로 이러한 오버헤드를 줄일 수
-있다. 
+syncronized timestamp counters 기반의 OpLog도 이러한 log 삭제 방법 수행하여 최적화를 하였으나,
+operation log가 서로 다른 코어에 존재하는 log 같은 경우 시간 순서되로 log를 merge 후 검색한 후 삭제를 위해야한다. 
+이것은 추가적인 오버헤드를 가지고 있다. 
+하지만 LDU는 indivisual object를 대상으로 상대적으로 가벼운 swap operation을 사용하여 shared log 삭제하는
+방법을 사용했다.
 
 LDU의 update-side absorbing은 shared memory system의 swap operation을 사용한다.
 이를 위해, LDU는 모든 object에 insert와 remove의 mark 필드를 추가해서 update-side
@@ -136,9 +135,9 @@ absorbing을 수행 하였다.
 insert mark 필드에 표시하고 queue에 저장한다.
 다음 remove operation 부터는 log를 queue에 저장하지 않고 insert에 표시한 mark 필드에 표시한 값만
 atomic하게 지워주는 방식으로 진행된다.
-이것은 swap이라는 상대적으로 가벼운 연산과 상대적으로 덜 share 하는 global object의 mark filed를 사용해서 log를
-지워주는 효과를 가져주므로, cache communication overhead를 많이 발생시키는 global head 포인터에 CAS연산을 사용을 줄여
-준다. 
+이것은 swap이라는 상대적으로 가벼운 연산과 상대적으로 덜 share 하는 indivisaul global object의 mark filed를
+사용해서 log를 지워주는 효과를 가져주므로, cache communication overhead를 많이 발생시키는 global head
+포인터에 CAS연산을 사용을 줄여 준다. 
 또한 앞으로 설명할 per-core기반의 concurrent updates를 가능하게 한다.
 
 \else
@@ -150,41 +149,45 @@ atomic하게 지워주는 방식으로 진행된다.
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 \ifkor
-LDU의 또 다른 최적화 기법은 update-side absorbing 때문에 취소된 queue에 저장된 garbage object를 재활용하는
+LDU의 또 다른 최적화 기법은 update-side absorbing 때문에 취소된 queue에 저장된 garbage log를 재활용하는
 것이다.
 이것은 queue에는 존재하지만 update-side aborsrbing 때문에 취소 되어 garbage가 되어 queue에 보관되어 있는
 log일 경우, 다음 update operation에 대해서는 해당 로그를 새로 많들어 넣지 않고 기존 로그를 재활용하는 방법이다. 
 예를 들어 A라는 오브젝트에 대해서 insert-remove-insert 순서로 update가 수행될 경우, 세번째 insert 명령어는
 global operation list에 들어가 있지만 update-side absorbing 때문에 최소되어  insert mark
-filed가 zero인 경우(garbage object)이다. 
+filed가 zero인 경우(garbage object)이다.
 이러한 경우, 다음 insert operation에 대해서는 list에 연산을 다시 넣지 않고, 해당 object의 mark 필드만 변경하여
 log를 재활용하는 방법을 사용한다. 따라서 LDU는 두가지 최적화 기법을 사용하여 cache communication overhead를
 줄였다.
 \else
 \fi
 
-
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 6: PLDU 설명 : Insert-Remove Operation에 대한 처리 설명 - time ordering
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 \ifkor
-LDU의 두번 째 타입은 Per-core에 log를 저장하는 PLDU이다.  
-object에 대한 순서가 만약 Insert와 remove가 변경된다면, 문제가 발생한다.
+LDU의 두번 째 타입은 Per-core에 log를 저장하는 PLDU이다. 
+PLDU의 원리는 기본적으로 log를 per-core 메모리에 저장하되 timestamp가 필요한 log만 shared memory
+system의 atomic 연산으로 처리를 하자는 것이다.
+When a process logs an insert operation on one core, migrates to another core,
+and logs a remove operation, the remove should eventually execute after the
+insert, so this condition needs the timestamp[].
+
+즉 timestamp 없이 per-core로 merge된 로그가 아래와 같은 상황이 발생하면 문제가 발생한다. 
+
 \inv{1}{A} \inv{2}{B} \inv{3}{C} \res{1}{A} \res{3}{C}
- 
-If a process logs an insert operation on one core,
-migrates to another core, and logs a remove operation, the remove should
-eventually execute after the insert[OpLog].
+
+여기서 흥미로운 사실은 같은 object에 대해서 insert-remove operation을 update 할 때 수행해
+주면 결국 per-core에 남은 operation은 insert 또는 remove operation만 남게 된다. 
+즉 per-core log는 timestamp가 없어도 되는 operation만 남게 된다.
+PLDU는 로그를 update-side absorbing 기술로 로그를 바로 바로 지워줌으로 timestamp를 없이도 per-core
+log를 사용할 수 있도록 하였다.
 \else
 If a process logs an insert operation on one core,
 migrates to another core, and logs a remove operation, the remove should
 eventually execute after the insert[OpLog].
 \fi
-
-
-
-
 
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -199,27 +202,85 @@ the log to remove these opearation from the log.
 \else
 \fi
 
+\subsection{Limitation}
 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 7: Per-core limitation: per-core 메모리를 사용하는 log-based approach의 문제점
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+\ifkor
+PLDU도 일반적으로 per-core 기반의 log-based 방법의 문제점을 가진다. 
+일반적으로 OpLog를 포함한 Per-core 기반의 log-based 방법의 문제점은 does not work well for a all
+data structure.
+Per-core log-based 시스템의 어려운 점은 log의 저장 위치(header)가 update operation이 사용하는 global
+data structure가 아니라 per-core 메모리 공간과 구별되었기 때문이다. 
+따라서 log 위치가 global data strucutre와 separated 되었기 때문에 추가적인 hash table등을 
+사용하여 object별로 구별하여 관리 하거나, 여러 종류의 log를 하나의 per-core 메모리 공간에 저장 한 후 log를
+사용할 떄마다 구별하여 처리해야 하는 방법이 필요하다.
+만약 hash table 등을 사용하여 구별하여 저장할 경우는 많은 종류의 오브젝트가 생성되어 hash table 충돌이 많이 발생하는
+data structure일 경우 해쉬 충돌로 인해 lock이 필요하므로 오히려 scalability 문제가 생긴다.
+이 경우 per-core hash table의 크기를 늘리면 hash 충돌 발생은 줄게 되지만 per-core memory overhead가 큰
+문제가 있다.
+이와 반대로 일단 하나의 per-core memory에 저장한 후 차후 log를 ojbect별 분리 하는 경우이다. 
+이 경우는  mix되어 있는 로그를 구별하면서 해당 data structure만 보호하는 lock을 사용하기가 어려우므로, global
+lock을 사용해야한다.
+결국 이 방법도 역시 global lock에 의한 scalability 문제가 있다.
+결국 per-core 기반의 log-based 방법은 제한적이다. 
+즉 per-core 기반 log-based 방법은 does not work well for a all data structure.
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 8: PLDU limitation 설명
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+PLDU만의 limitation은 reader가 봤을 때 data structure에는 문제 없이 존재하지만,
+같은 insert operation간의 또는 같은 remove operation간의 순서가 변경되어 들어가 있기 때문에,
+operation의 순서를 중요시하는 stack, queue 같은 data structure는 사용하지 못하는 문제가 있다. 
+이러한 경우는 GLDU나 반드시 timestamp 기반의 방법[][]을 사용해야한다. 
+예를 들어 아래와 같이 ordering이 변경될 수 있다. 
+
+\inv{1}{A} \inv{2}{B} \inv{3}{C} \res{1}{A} \res{3}{C}
+
+따라서 이런 문제가 있는 data structure일 경우 GLDU를 사용해야한다.
+
+\else
+
+\fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 8: LDU limitation 설명
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 \ifkor
-LDU는 다음의 limitation을 가지고 있다.
-리눅스 커널과 같이 search가 two update operations(one to insert and one to remove
-an element) 함수 외부해서 수행하는 data structure에만 적용이 가능하다.
-즉 다시말하면 리눅스의 data structure의 경우에는 search와 update가 분리되어 있어 같은 update operation이
+두 GLDU and PLDU의 공통적인 limitation은 리눅스 커널와 freeBSD 커널과 같이 search가 two update
+operations(one to insert and one to remove an element)이 함수 외부해서 수행하는 구조에서만 적용이 가능하다.
+재미있는 사실은 리눅스의 data structure의 경우에는 search와 update가 분리되어 있어, 같은 update operation이
 연달아 호출되지 않는다.
-즉 이러한 구조는 search가 외부에 있기 때문에 insert operation 다음에는 반드시  remove opration이 발생하고 
-remove operation 다음에는 반드시 insert operation이 발생하는 특징이 있다.
+이러한 구조는 search가 외부에 있기 때문에 insert operation 다음에는 반드시 remove opration이 발생하고 
+remove operation 다음에는 반드시 insert operation이 발생하는 특징이 있다(search에서 이미 필터링이 되기
+때문).
 이와 반대로 research 분야에서 많이 연구되는 CSDS(Concurrent search data structures)[]의 방법들은
 search가 update operation 내부에 존재하는 구조로 되어 있어서 같은 노드에 대해서 insert-insert 또는
 remove-remove 순서로 동작할 수 있다.
-이러한 경우에는 LDU를 적용하지 못한다.
-하지만 CSDS 구조가 아닌 data structure를 사용하여 
+이처럼 CSDS 알고리즘일 경우에는 LDU를 적용하지 못하는 limitation이 있다.
+하지만 본 연구는 리눅스 커널과 같은 practical한 data structure에 초점을 맞추었기 때문에, 
+research 분야에 많이 연구되고 있는 CSDS 알고리즘은 고려하지 않았다.
+아직 연구되어온 CSDS 알고리즘들은 garbage collector[][], iteration[], ordering[]여러
+practical한 이유로 C언어로 구현된 리눅스 커널 등에 적용하기에는 아직 한계가 있다[][][].
 \else
 \fi
+
+
+\subsection{GLDU vs. PLDU}
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 1: 둘간의 장단점 설명
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+GLDU와 PLDU는 서로 상호 보완적인 관계이다. GLUD의 장점은 광장히 simple하여 어떻한 data structure간에 쉽게 적용이
+가능하다. 
+그리고 PLDU와 같은 ordering 이슈도 없다. 
+단점으로는 global queue를 사용함에 따라 global head pointer를 동시에 수정하므로 cache coherence
+traffic issue가 있어서 scalability가 PLDU에 비해 약간 떨어진다.
+반면에 PLDU는 GLDU보다 Scalability 측면으로는 더 좋지만 stack, queue와 같이 순서가 예민한 data
+structure에는 사용 못하는 data structure의 dependency가 있는 문제가 있다.
 
 
 \subsection{LDU example}
@@ -232,7 +293,7 @@ remove-remove 순서로 동작할 수 있다.
 
 \begin{figure}[tb]
   \begin{center}
-     \includegraphics[width=0.5\textwidth,height=0.5\textheight,keepaspectratio]{fig/basic}
+     \includegraphics[width=0.5\textwidth,height=0.5\textheight,keepaspectratio]{fig/basic_gldu}
   \end{center}
   \caption{\deferu example showing six update operations and one read
   operation. The execution flows from top to bottom. Memory represents original
@@ -241,6 +302,7 @@ remove-remove 순서로 동작할 수 있다.
 \end{figure}
 
 
+\ifkor
 Figure \ref{fig:basic} gives an example of deferred update with six update
 operations and one read operation.
 In this figure, execution flows from top to bottom.
@@ -269,7 +331,36 @@ The \code{synchronize} migrates from lock-less list node to tree node, each of
 which is the marked node, so nodes \code{A} and \code{D} are migrated.
 Finally, the tree contains nodes \code{D} and \code{B}, so the reader can read
  eventually consistent data.
-
+\else
+Figure \ref{fig:basic} gives an example of deferred update with six update
+operations and one read operation.
+In this figure, execution flows from top to bottom.
+The data structure for \emph{physical update} is a tree, and initial values in
+the tree are node \code{A} and \code{B}.
+In contrast, the data structure for \emph{logical update} is lock-less list.
+In the top figure, \code{Core0}, \code{Core1} and \code{Core2} perform the
+logical insert operation to nodes \code{C}, \code{D} and \code{E},
+ respectively.
+The logical inserts set the insert mark, and they then insert their
+nodes into lock-less list.
+In this case, none of the lock is needed because \deferu uses the lock-less
+list;all threads can execute the update concurrently.
+At \code{T1}, the tree contains node \code{A}
+and \code{B} and 
+the lock-less list contains node \code{E}, \code{D} and \code{C}.
+When removing the node \code{C}, the node \code{C}, whose mark field was marked
+by insert, atomically cleans up the insert marked field.
+At \code{T2}, the lock-less list contains nodes
+\code{A}, \code{E}, \code{D}, and \code{C}, and the marking field is zero for 
+nodes \code{E} and \code{C}.
+Before running the \code{synchronize} function, they need to lock the original
+ tree's lock using the exclusive lock in order to protect the tree's
+ operation.
+The \code{synchronize} migrates from lock-less list node to tree node, each of 
+which is the marked node, so nodes \code{A} and \code{D} are migrated.
+Finally, the tree contains nodes \code{D} and \code{B}, so the reader can read
+ eventually consistent data.
+\fi
 
 
 \subsubsection{PLDU example}
@@ -280,7 +371,7 @@ Finally, the tree contains nodes \code{D} and \code{B}, so the reader can read
 
 \begin{figure}[tb]
   \begin{center}
-     \includegraphics[width=0.5\textwidth,height=0.5\textheight,keepaspectratio]{fig/basic}
+     \includegraphics[width=0.5\textwidth,height=0.5\textheight,keepaspectratio]{fig/basic_pldu}
   \end{center}
   \caption{\deferu example showing six update operations and one read
   operation. The execution flows from top to bottom. Memory represents original
@@ -288,7 +379,7 @@ Finally, the tree contains nodes \code{D} and \code{B}, so the reader can read
   \label{fig:basic}
 \end{figure}
 
-
+\ifkor
 Figure \ref{fig:basic} gives an example of deferred update with six update
 operations and one read operation.
 In this figure, execution flows from top to bottom.
@@ -318,14 +409,36 @@ which is the marked node, so nodes \code{A} and \code{D} are migrated.
 Finally, the tree contains nodes \code{D} and \code{B}, so the reader can read
  eventually consistent data.
 
-
-
-\subsection{GLDU vs. PLDU}
-
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 1: 둘간의 장단점 설명
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
+\else
+Figure \ref{fig:basic} gives an example of deferred update with six update
+operations and one read operation.
+In this figure, execution flows from top to bottom.
+The data structure for \emph{physical update} is a tree, and initial values in
+the tree are node \code{A} and \code{B}.
+In contrast, the data structure for \emph{logical update} is lock-less list.
+In the top figure, \code{Core0}, \code{Core1} and \code{Core2} perform the
+logical insert operation to nodes \code{C}, \code{D} and \code{E},
+ respectively.
+The logical inserts set the insert mark, and they then insert their
+nodes into lock-less list.
+In this case, none of the lock is needed because \deferu uses the lock-less
+list;all threads can execute the update concurrently.
+At \code{T1}, the tree contains node \code{A}
+and \code{B} and 
+the lock-less list contains node \code{E}, \code{D} and \code{C}.
+When removing the node \code{C}, the node \code{C}, whose mark field was marked
+by insert, atomically cleans up the insert marked field.
+At \code{T2}, the lock-less list contains nodes
+\code{A}, \code{E}, \code{D}, and \code{C}, and the marking field is zero for 
+nodes \code{E} and \code{C}.
+Before running the \code{synchronize} function, they need to lock the original
+ tree's lock using the exclusive lock in order to protect the tree's
+ operation.
+The \code{synchronize} migrates from lock-less list node to tree node, each of 
+which is the marked node, so nodes \code{A} and \code{D} are migrated.
+Finally, the tree contains nodes \code{D} and \code{B}, so the reader can read
+ eventually consistent data.
+\fi
 
 
 
@@ -337,6 +450,7 @@ Finally, the tree contains nodes \code{D} and \code{B}, so the reader can read
 %Paragraph 1:LDU Concurrent Updates 알고리즘 코드 및 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
+\ifkor
 The pseudo code for \deferu's \emph{logical update} is given in
 The \code{logical\_insert}, the concurrent update function, checks whether this
 object already has been removed by \code{logical\_remove}.
@@ -350,6 +464,21 @@ marking field, then they check whether or not this node already has been
  inserted in lock-less list.
 If the node does not exist in lock-less list, then they insert the node into
 lock-less list.
+\else
+The pseudo code for \deferu's \emph{logical update} is given in
+The \code{logical\_insert}, the concurrent update function, checks whether this
+object already has been removed by \code{logical\_remove}.
+If this object has been removed, \code{logical\_insert} initializes the marking
+ field and then they return, which is fastpath.
+The marking field needs synchronization because this field in the
+\emph{logical update} is shared with the \emph{physical update}, so the CAS
+ operation is needed.
+When the marking field has been initialized, they set the
+marking field, then they check whether or not this node already has been
+ inserted in lock-less list.
+If the node does not exist in lock-less list, then they insert the node into
+lock-less list.
+\fi
 
 \begin{figure}[tb!]
  
@@ -369,6 +498,7 @@ It may be called by original insert position without locks. The fastpath is
 %Paragraph 2:LDU Deferred Updates 알고리즘 코드 및 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
+\ifkor
 The pseudo code for \deferu's \emph{physical update} is given in
 Figure~\ref{fig:physicalupdate}.
 First, they check whether lock-less list is an empty list or not, then they
@@ -383,6 +513,22 @@ The programmer must acquire locks on the \code{synchronize\_ldu} function,
 which migrates log to original data structure.
 Finally, the \code{physical\_update} executes original functions by using the
 operation log.
+\else
+The pseudo code for \deferu's \emph{physical update} is given in
+Figure~\ref{fig:physicalupdate}.
+First, they check whether lock-less list is an empty list or not, then they
+iterate the lock-less list.
+If the marking field has been set, they execute migration from
+lock-less to original data structure.
+Because the marking field in \emph{physical update} is shared with
+ \emph{logical update}, the CAS operation is needed.
+They initialize the used field, which needs to protect the object from freed
+ through destructor.
+The programmer must acquire locks on the \code{synchronize\_ldu} function,
+which migrates log to original data structure.
+Finally, the \code{physical\_update} executes original functions by using the
+operation log.
+\fi
 
 \begin{figure}[tb!]
 
@@ -423,11 +569,43 @@ It may be called by original insert position without locks. The fastpath is
 
 % * 만약 LDU의 log를 저장하는 global object를 대상으로 per-core hash table로 object를 관리
 %를 하면 장점이 있다.
+\ifkor
+The pseudo code for \deferu's \emph{physical update} is given in
+Figure~\ref{fig:physicalupdate}.
+First, they check whether lock-less list is an empty list or not, then they
+iterate the lock-less list.
+If the marking field has been set, they execute migration from
+lock-less to original data structure.
+Because the marking field in \emph{physical update} is shared with
+ \emph{logical update}, the CAS operation is needed.
+They initialize the used field, which needs to protect the object from freed
+ through destructor.
+The programmer must acquire locks on the \code{synchronize\_ldu} function,
+which migrates log to original data structure.
+Finally, the \code{physical\_update} executes original functions by using the
+operation log.
+\else
+The pseudo code for \deferu's \emph{physical update} is given in
+Figure~\ref{fig:physicalupdate}.
+First, they check whether lock-less list is an empty list or not, then they
+iterate the lock-less list.
+If the marking field has been set, they execute migration from
+lock-less to original data structure.
+Because the marking field in \emph{physical update} is shared with
+ \emph{logical update}, the CAS operation is needed.
+They initialize the used field, which needs to protect the object from freed
+ through destructor.
+The programmer must acquire locks on the \code{synchronize\_ldu} function,
+which migrates log to original data structure.
+Finally, the \code{physical\_update} executes original functions by using the
+operation log.
+\fi
 
 
 
 
 
+\subsubsection{PLDU Physical update}
 \begin{figure}[tb!]
 
 \inputminted[linenos,fontsize=\footnotesize, tabsize=2]{c}{src/pldu_physical.c}
@@ -441,6 +619,42 @@ It may be called by original insert position without locks. The fastpath is
 \end{figure}
 
 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 4:PLDU Deferred Updates 알고리즘 코드 및 설명 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+\ifkor
+The pseudo code for \deferu's \emph{physical update} is given in
+Figure~\ref{fig:physicalupdate}.
+First, they check whether lock-less list is an empty list or not, then they
+iterate the lock-less list.
+If the marking field has been set, they execute migration from
+lock-less to original data structure.
+Because the marking field in \emph{physical update} is shared with
+ \emph{logical update}, the CAS operation is needed.
+They initialize the used field, which needs to protect the object from freed
+ through destructor.
+The programmer must acquire locks on the \code{synchronize\_ldu} function,
+which migrates log to original data structure.
+Finally, the \code{physical\_update} executes original functions by using the
+operation log.
+\else
+The pseudo code for \deferu's \emph{physical update} is given in
+Figure~\ref{fig:physicalupdate}.
+First, they check whether lock-less list is an empty list or not, then they
+iterate the lock-less list.
+If the marking field has been set, they execute migration from
+lock-less to original data structure.
+Because the marking field in \emph{physical update} is shared with
+ \emph{logical update}, the CAS operation is needed.
+They initialize the used field, which needs to protect the object from freed
+ through destructor.
+The programmer must acquire locks on the \code{synchronize\_ldu} function,
+which migrates log to original data structure.
+Finally, the \code{physical\_update} executes original functions by using the
+operation log.
+\fi
+
 
 
 
@@ -448,6 +662,8 @@ It may be called by original insert position without locks. The fastpath is
 %Reference Sentence 1
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
+\ifkor
+\else
 * By default OpLog executes logged updates in temporal order. For example,
 consider a linked list. If a process logs an insert operation on one core,
 migrates to another core, and logs a remove operation, the remove should
@@ -456,6 +672,7 @@ eventually execute after the insert.
 how to order entries in different cores' log.
 *This ordering ensures linearizaility, making OpLog compatible with existing
 data structure semantics.
+\fi
 
 
 

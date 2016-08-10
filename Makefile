@@ -17,12 +17,6 @@ view: $(TARGET).pdf
 eps2pdf:
 	sh utilities/eps2pdf.sh
 
-src/%.tex: src/%.c
-	pygmentize -f latex $< \
-		| sed -e 's,PY{o+ow},PY{k},g' \
-		> $@
-
-
 clean:
 	find . -name '*.aux' -o -name '*.blg' \
 		-o -name '*.dvi' -o -name '*.log' \

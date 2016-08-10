@@ -1,4 +1,34 @@
 
+
+@article{BuesoScalabilityTechniques,
+ author = {Bueso, Davidlohr},
+ title = {Scalability Techniques for Practical Synchronization Primitives},
+ journal = {Commun. ACM},
+ issue_date = {January 2015},
+ volume = {58},
+ number = {1},
+ month = dec,
+ year = {2014},
+ issn = {0001-0782},
+ pages = {66--74},
+ numpages = {9},
+ url = {http://doi.acm.org/10.1145/2687882},
+ doi = {10.1145/2687882},
+ acmid = {2687882},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+}
+
+@inproceedings{overviewofkernellock,
+  title={ An overview of kernel lock improvements.},
+  author={D. Bueso and S. Norton.},
+  year={2014},
+  organization={LinuxCon North America},
+  note={\url{http://sourceforge.net/projects/aimbench}}
+}
+
+%note={\url{http://events.linuxfoundation.org/sites/events/files/slides/linuxcon-2014-locking-final.pdf}}
+
 @Inproceedings{SilasBoydWickizer2010LinuxScales48
 ,Author="Silas Boyd-Wickizer and Austin T. Clements and Yandong Mao and Aleksey Pesterev and M. Frans Kaashoek and Robert Morris and Nickolai Zeldovich"
 ,Title="An Analysis of {Linux} Scalability to Many Cores"
@@ -69,10 +99,40 @@
 } 
 
 @incollection{petrank2013lock,
-  title={Lock-free data-structure iterators},
-  author={Petrank, Erez and Timnat, Shahar},
-  booktitle={DISC '13 Proceedings of the 27th International Conference on Distributed Computing, Jerusalem, Israel},
-  year={2013},
+ title={Lock-free data-structure iterators},
+ author={Petrank, Erez and Timnat, Shahar},
+ booktitle={DISC '13 Proceedings of the 27th International Conference on Distributed Computing, Jerusalem, Israel},
+ year={2013},
+}
+
+
+@inproceedings{PaulDetailLWN,
+ title={MSome more details on Read-Log-Update},
+ author = {Paul McKenney},
+ note= {https://lwn.net/Articles/667720/},
+ year= {2016},
+}
+
+@inproceedings{CorbetLWNRMAP,
+ title={The object-based reverse-mapping VM},
+ author = {Jonathan Corbet},
+ note= {https://lwn.net/Articles/23732/},
+ year= {2003},
+}
+
+@inproceedings{CorbetLWNANON,
+ title={The case of the overly anonymous anon\_vma},
+ author = {Jonathan Corbet},
+ note= {https://lwn.net/Articles/383162/},
+ year= {2010},
+}
+
+
+@inproceedings{HuangLocklessList,
+ title={Lock-less list},
+ author = {Huang Ying},
+ note= {https://lwn.net/Articles/423366/},
+ year= {2011},
 }
 
 
@@ -93,6 +153,21 @@
 @inproceedings{AIM7Benchmark,
   title={AIM Benchmarks},
   note={\url{http://sourceforge.net/projects/aimbench}}
+}
+
+
+
+@inproceedings{Exim,
+ title={Exim Internet Mailer},
+ note= {http://www.exim.org/},
+ year= {2015},
+}
+
+
+@inproceedings{MOSBENCH,
+ title={Mosbench},
+ note= {https://pdos.csail.mit.edu/mosbench/mosbench.git},
+ year= {2010},
 }
 
 
@@ -279,11 +354,177 @@ Multiprocessors"
 \url{http://kernel.org/pub/linux/kernel/people/paulmck/perfbook/perfbook.html}"
 }
 
-@url{MCSLocksKernel,
-  Author = "J. Corbet.",
+@book{MCSLocksKernel,
+  Author = {J. Corbet.},
   title={MCS locks and qspinlocks},
-  Year = {2014}, 
-  note={\url{https://lwn.net/Articles/590243/}}
+  Year = {2014}
 }
 
 
+@inproceedings{Wang2016BeMyGuest,
+ author = {Wang, Tianzheng and Chabbi, Milind and Kimura, Hideaki},
+ title = {Be My Guest: MCS Lock Now Welcomes Guests},
+ booktitle = {Proceedings of the 21st ACM SIGPLAN Symposium on Principles and Practice of Parallel Programming},
+ series = {PPoPP '16},
+ year = {2016},
+ isbn = {978-1-4503-4092-2},
+ location = {Barcelona, Spain},
+ pages = {21:1--21:12},
+ articleno = {21},
+ numpages = {12},
+ url = {http://doi.acm.org/10.1145/2851141.2851160},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {MCS, fairness, latency, locking API, queued locks, scalability, spin locks, throughput},
+} 
+
+
+@article{Bueso2015STP,
+ author = {Bueso, Davidlohr},
+ title = {Scalability Techniques for Practical Synchronization Primitives},
+ journal = {Commun. ACM},
+ issue_date = {January 2015},
+ volume = {58},
+ number = {1},
+ month = dec,
+ year = {2014},
+ issn = {0001-0782},
+ pages = {66--74},
+ numpages = {9},
+ url = {http://doi.acm.org/10.1145/2687882},
+ doi = {10.1145/2687882},
+ acmid = {2687882},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+} 
+
+
+@inproceedings{Bueso2014MCS,
+  title={An Overview of Kernel Lock Improvements},
+  author={D. Bueso and S. Norto},
+  note={http://events.linuxfoundation.org/sites/events/files/slides/linuxcon-2014-locking-final.pdf},
+  year={2014}
+}
+
+
+@article{Clements15SCR,
+ author = {Clements, Austin T. and Kaashoek, M. Frans and Zeldovich, Nickolai and Morris, Robert T. and Kohler, Eddie},
+ title = {The Scalable Commutativity Rule: Designing Scalable Software for Multicore Processors},
+ journal = {ACM Trans. Comput. Syst.},
+ issue_date = {January 2015},
+ volume = {32},
+ number = {4},
+ month = jan,
+ year = {2015},
+ issn = {0734-2071},
+ pages = {10:1--10:47},
+ articleno = {10},
+ numpages = {47},
+ url = {http://doi.acm.org/10.1145/2699681},
+ doi = {10.1145/2699681},
+ acmid = {2699681},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {Commutativity, conflict freedom, multicore, software interfaces},
+} 
+
+@inproceedings {Changwoo2016UMSF,
+author = {Changwoo Min and Sanidhya Kashyap and Steffen Maass and Taesoo Kim},
+title = {Understanding Manycore Scalability of File Systems},
+booktitle = {2016 USENIX Annual Technical Conference (USENIX ATC 16)},
+year = {2016},
+month = Jun,
+isbn = {978-1-931971-30-0},
+address = {Denver, CO},
+pages = {71--85},
+url = {https://www.usenix.org/conference/atc16/technical-sessions/presentation/min},
+publisher = {USENIX Association},
+}
+
+@inproceedings{Dodds2015SCT,
+ author = {Dodds, Mike and Haas, Andreas and Kirsch, Christoph M.},
+ title = {A Scalable, Correct Time-Stamped Stack},
+ booktitle = {Proceedings of the 42Nd Annual ACM SIGPLAN-SIGACT Symposium on Principles of Programming Languages},
+ series = {POPL '15},
+ year = {2015},
+ isbn = {978-1-4503-3300-9},
+ location = {Mumbai, India},
+ pages = {233--246},
+ numpages = {14},
+ url = {http://doi.acm.org/10.1145/2676726.2676963},
+ doi = {10.1145/2676726.2676963},
+ acmid = {2676963},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {concurrent stack, linearizability, timestamps, verification},
+} 
+
+
+@inproceedings{BoydWickizer2008Corey,
+ author = {Boyd-Wickizer, Silas and Chen, Haibo and Chen, Rong and Mao, Yandong and Kaashoek, Frans and Morris, Robert and Pesterev, Aleksey and Stein, Lex and Wu, Ming and Dai, Yuehua and Zhang, Yang and Zhang, Zheng},
+ title = {Corey: An Operating System for Many Cores},
+ booktitle = {Proceedings of the 8th USENIX Conference on Operating Systems Design and Implementation},
+ series = {OSDI'08},
+ year = {2008},
+ location = {San Diego, California},
+ pages = {43--57},
+ numpages = {15},
+ url = {http://dl.acm.org/citation.cfm?id=1855741.1855745},
+ acmid = {1855745},
+ publisher = {USENIX Association},
+ address = {Berkeley, CA, USA},
+} 
+
+@inproceedings{BoydWickizer2012OLS,
+ author={Silas Boyd-Wickizer and M. Frans Kaashoek and Robert Morris and Nickolai Zeldovich},
+ title = {Non-scalable locks are dangerous.},
+ booktitle = {In Proceedings of the Linux Symposium},
+ year = {2012},
+} 
+
+@article{Shalev2006PLS,
+ author = {Shalev, Ori and Shavit, Nir},
+ title = {Predictive Log-synchronization},
+ journal = {SIGOPS Oper. Syst. Rev.},
+ issue_date = {October 2006},
+ volume = {40},
+ number = {4},
+ month = apr,
+ year = {2006},
+ issn = {0163-5980},
+ pages = {305--315},
+ numpages = {11},
+ url = {http://doi.acm.org/10.1145/1218063.1217965},
+ doi = {10.1145/1218063.1217965},
+ acmid = {1217965},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {concurrent, monitor, prediction, synchronization},
+} 
+
+
+@inproceedings{Hendler2010FC,
+ author = {Hendler, Danny and Incze, Itai and Shavit, Nir and Tzafrir, Moran},
+ title = {Flat Combining and the Synchronization-parallelism Tradeoff},
+ booktitle = {Proceedings of the Twenty-second Annual ACM Symposium on Parallelism in Algorithms and Architectures},
+ series = {SPAA '10},
+ year = {2010},
+ isbn = {978-1-4503-0079-7},
+ location = {Thira, Santorini, Greece},
+ pages = {355--364},
+ numpages = {10},
+ url = {http://doi.acm.org/10.1145/1810479.1810540},
+ doi = {10.1145/1810479.1810540},
+ acmid = {1810540},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {concurrent data-structures, multiprocessors, synchronization},
+} 
+
+
+@inproceedings{Rohland2001Tempfs,
+ title={Tmpfs is a file system which keeps all files in virtual memory},
+ author = {C. Rohland},
+ note= {git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/tree/Documentation/filesystems/tmpfs.txt},
+ year= {2001},
+}

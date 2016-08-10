@@ -2,9 +2,12 @@
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 1:Linux Scalability의 연구에 대한 설명
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-In order to improve Linux scalability, researchers have been optimized memory
-management in Linux by finding and fixing scalability bottlenecks.
 
+\noindent
+\textbf{Operating system scalability.}
+~\cite{Clements15SCR}In order to improve Linux scalability, researchers have
+been optimized memory management in Linux by finding and fixing scalability
+bottlenecks~\cite{BoydWickizer2008Corey}~\cite{BoydWickizer2012OLS}.
 Shared address spaces in multithreaded applications 
 easily become scalability bottlenecks since kernel operations 
 including \code{mmap} and \code{munmap} system calls and \code{page faults}
@@ -26,8 +29,10 @@ processes~\cite{SilasBoydWickizer2010LinuxScales48}.
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 2:Concurrent updates에 대한 연구
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-Though sufficient level of performance scalability has been achieved for 
-reader intensive operations through RCU and Hazard pointer, 
+\noindent
+\textbf{Scalabe data structure.}
+~\cite{Dodds2015SCT}Though sufficient level of performance scalability has been
+achieved for reader intensive operations through RCU and Hazard pointer, 
 solutions to scalability for update-heavy operations has not been satisfiable.
 A recent paper by Arbel and Attiya~\cite{Arbel2014ConcurrentRCU} shows a new
 design of concurrent search tree called the Citrus tree. The Citrus tree
@@ -42,41 +47,14 @@ Our work focus on update-heavy data structures and uses non-blocking method to
  store the operation log instead of per-core processing.
 
 
-
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 3: Scalable Data Structure and Lock에 대한 연구
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-One method for the concurrent update is using the non-blocking
-algorithms~\cite{Harris2001Lockfree}~\cite{Fomitchev2004Lockfree}~\cite{Timnat2012},
+\noindent
+\textbf{Scalable lock.}
+~\cite{Wang2016BeMyGuest}~\cite{Bueso2015STP}~\cite{Bueso2014MCS}One method for
+the concurrent update is using the non-blocking algorithms~\cite{Harris2001Lockfree}~\cite{Fomitchev2004Lockfree}~\cite{Timnat2012},
  which are based on CAS.
-In non-blocking algorithms, each core tries to read the values of shared
-data structures from its local location, but has possibility of reading 
-obsolete values.
-CAS is performed at the time of reading values that are not the current values
-and CAS fails and requires retrials sometimes when the values have been
- overwritten.
-These algorithms execute optimistically as though they read the value at
-location in their data structure;they may obtain stale data at the time.
-When they observed against the current value, they execute a CAS to compare the
-against value.
-The CAS fails when the value has been overridden, and they must be
-retried later on.
-Consequently, both repeated CAS operation and their iteration loop caused by
-CAS fails cause bottlenecks due to inter-core communication
- overheads~\cite{SilasBoydWickizerPth}.
-Moreover, none of the non-blocking algorithms implements an iterator, whose
-data structure just consists of the insert, delete and contains
-operations~\cite{petrank2013lock}.
-The Linux, however, commonly uses the iteration to read, so when applying
-non-blocking algorithms to the Linux, they may meet this iteration problem.
-Petrank~\cite{petrank2013lock} solved this problem by using a consistent
-snapshot of the data structure; this method, however, may require a lot of
-effort to apply its sophisticated algorithms to Linux.
-For evaluation purposes, we implemented Harris linked
-list~\cite{Harris2001Lockfree} to Linux, and we sometimes have failure where
-reading the pointer that had been deleted by updater concurrently result of the
-problem of the iteration.
 
 
 MCS~\cite{MellorCrummey91}, a scalable exclusive lock, is used in the Linux

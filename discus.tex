@@ -1,25 +1,26 @@
 \section{Discussion and future work}
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 1: LDU and PLDU 장 단점 설명
+%Paragraph 1: 더 General하게 사용되도록 만들어야 한다.
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%LDU: 간단하다, 복잡하지 않다. 어느 경우나 적용가능
-%PDLU : 복잡하다, Hash가 충돌이 많이 발생하는 경우, Global Lock을 사용해야하는데,
-%이 경우는 기존 코드를 많이 수정해야 한다.
-
+우리는 오직 high update rate를 가진 data structure를 대상으로 LDU를 구현되었다. 
+하지만 실제 high update rate를 가진 data structure는 워크로드 마다 상황이 틀리다.
+앞에서 설명한 두가지 reverse mapping도 역시 fork intencive 워크로드이여야지 high update rate를 가진
+data structure라고 말할 수 있다. 
+결국 log-based approach가 low update rate를 가질때는 오히려 성능이 떨어질 수 있다.
+그러므로 log-based approach인 LDU를 high update rate을 가질 때만 적용할 수 있도록 해야 한다.
+본 논문은 이 부분에 대해서는 고려하지 않았다.
+따라서 임베디드 시스템등 다양한 분야에 사용되는 리눅스 커널에 적용되기 위해서는 update rate를 판단하여 동작하도록 해야지 보다
+범용적으로 high update rate 상황과 general학
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 2: reader 쪽을 개선해야 한다. 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
+현재 LDU는 data structure를 보호하기 위해 exclucive lock를 사용하도록 구현하였다. 
+하지만 concurrent read를 위해 concurrent update와 concurrent read를 고려해서 구현해야 한다.
+이 방법은 
 
-
-
-
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 3: contention이 적을 경우 로그를 활용하지 않고, write contention이 
-% 많을 경우만 log를 사용을 하도록 연구를 진행 해야 한다. 
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 
 
