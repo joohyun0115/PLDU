@@ -5,19 +5,65 @@
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 1: Linux의 reverse mapping에 대한 자세한 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-리눅스 커널의 프로세스간 공유자원 중 하나인 reverse page mapping(rmap)은 fork가 수행될 때 update가 많이 발생하는
-data structure이다.
-Rmap의 anonymous page와 file page는 interval trees로 되어 있으며, 이것은 reverse page 성능
-향상으로 위해 지속적으로 최적화가 ~\cite{CorbetLWNRMAP}~\cite{CorbetLWNANON}
+리눅스 커널의 프로세스간 공유자원 중 하나인 reverse page mapping(rmap)은 fork, exit, mmap이 수행될 때
+update가 많이 발생하는 data structure이다.
+Linux's reverse mapping reads walked through each process’s pages mappings and
+selected pages to unmap when it swaps a pyhsical page out to disk, migrates
+other cpu, or turncates a file.
+After all a page’s mappings were removed could it be selected for
+pageout~\cite{OBJMAPOLS}.
+Rmap의 anonymous page와 file page의 관리는 최근 interval trees로 되어 있으며, 이것은 reverse page
+성능 향상으로 위해 지속적으로 최적화가 ~\cite{CorbetLWNRMAP}~\cite{CorbetLWNANON} 이루어지고 있다. 
+
+리눅스는 rmap의 interval tree를 보호하기 위해 rw semapore를 사용한다. 
+따라서, 프로세스들이 fork, exit, mmap를 simultaneosly 수행하면 interval tree를 보호하는
+read-write semapore 때문에 scalability가 떨어진다.
+anonymous page를 위한 rmap과 file mapped page을 위한 rmap 모두 문제가 있다.
+이번 장은 이러한 문제를 해결하기 위해, 어떻게 LDU를 리눅스의 rmap에 적용했는지에대한 내용을 설명하며, 보다 practial한 내용을
+다룬다.
+
+%The Linux rmap implementation can become a bottleneck when many processes
+% simultaneously try to map the same file.
+%For exemaple, simultaneous creation of many processes is likely to cause
+% contention for the lock protecting the interval tree of the libc library,
+
+%Objmap
+%rmap is a mechanism for translating physical addresses to user virtual
+% addresse.
+%commonly called reverse mapping, or rmap. 
+%This meant it was not possible for the memory management subsystem to point to
+% a physical page and remove all its mappings. 
+%There was a mechanism that walked through each process’s mappings and selected
+%pages to unmap.
+%Only after all a page’s mappings were removed could it be selected for pageout
+
+%Many in the memory management community considered this very inefficient.
+%Page aging and removal could be made much more efficient if the page could be
+%directly unmapped when it was ready to be removed.
+%Some form of rmap was clearly needed for this to work.
+
+%Oplog
+%Linux's reverse map(ramp) records, for each physical page, all page table
+% entries that map that page.
+%Linux reads these reverse mappings when it truncates a file or swaps a physical
+% page out to disk, in order to find(and then delete) all page table entries
+% that refer to the deleted page(s).
+%The fork(), exit(), and mmap() system calls update the rmap, but don't need to
+% read it.
+%The Linux designers have heavily optimized the rmap using interval
+% trees[21, 22, 24].
+%Each file has an associated interval tree protected by a lock.
+%A file's interval tree maps intervals of the file to virtual address mappings.
+%Each virrtual address mapping maps one or more pages from the file.
+%The Linux rmap implementation can become a bottleneck when many processes
+% simultaneously try to map the same file.
+%For exemaple, simultaneous creation of many processes is likely to cause
+% contention for the lock protecting the interval tree of the libc library,
+% because creating a process entails creating virtual address mappings for libc
+% and inserting the mappings into the libc ramp interval tree.
 
 
-따라서, fork를 병렬로 수행하면 reverse page mapping의 lock떄문에 scalability가 떨어진다.
-Rmap의 anonymous page를 위한 rmap과 file mapped page을 위한 rmap 모두 문제가 있다. 
-
-
-이번장은 LDU가 어떻게 리눅스에 적용되었는지에 대한 practial한 내용에 대해서 설명한다.
-
-\subsection{anonymous page}
+\subsection{anonymous mapping}
 
 \begin{figure}[tb]
   \begin{center}
@@ -32,43 +78,28 @@ Rmap의 anonymous page를 위한 rmap과 file mapped page을 위한 rmap 모두 
 %Paragraph 1: linux의 anon vma의 공유된 구조에 대한 설명
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 Anonymous rmap의 공유데이터는 서로 상당히 복잡하게 연결되어 있다.
+그림 x-x는 이렇게 복잡하게 연결된 공유데이터를 보여준다. 
 
 
-%A page is said to be anonymous if it belongs to an anonymous memory region of a
-%process (for instance, all pages in the User Mode heap or stack of a process
-%are anonymous) Mapped page: a page is mapped to a file.
-%For instance, all pages in the User Mode address spaces belonging to file
-%memory mappings are mapped, as well as any other page included in the page
-%cache.
-
-
-\noindent
-\textbf{GLDU.} 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 1: anon vma에 ldu 적용한 방법에 대한 설명 
+%Paragraph 1: anon vma에 gldu 적용한 방법에 대한 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 Anonymous rmap을 위한 GLDU는 anon\_vma의 root structure에서 log를 저장하도록 하였다. 
-anon rmap은 
+anon\_vma는 anon\_vma의 root의 lock을 사용함에 따라, anon\_vma의 root의 lock이 걸리면 자식들은
+모두 root의 lock 때문에 많은 contenction이 생긴다.
+따라서 GLDU는 anon\_vma는 항상 root의 lock를 사용하기 때문에, 로그를 anon\_vma의 root에 저장하도록 하여
+불필요한 iteration을 제거하였다. 
 
-
-\noindent
-\textbf{PLDU.} 
-
-
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 1: anon vma에 pldu를 적용이 힘든 이유 설명 
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-Anonymous page에는 per-core 방식을 적용하기 힘들다.
-그 이유는 log를 저장하는 object가 너무 많은 object를 만들어서 global per-core hash table의 충돌이 너무 많이
-발생하기 때문이다. 
+Anonymous rmap에는 per-core 방식인 PLDU를 적용하기 힘들다.
+그 이유는 log를 저장하는 anon\_vma root의 object가 너무이 생겨서 global per-core hash
+table의 충돌이 너무 많이 발생하기 때문이다. 
 이것은 또 다른 lock이 필요하므로 오히려 성능이 떨어진다. 
 만약 per-core 방식을 적용하려면 하나의 per-core memory에 저장한 후 차후 log를 ojbect별 분리 하는 방법이 있으나, 
 이 경우는  mix되어 있는 로그를 구별하면서 해당 data structure만 보호하는 lock을 사용하기가 어려우므로, global
 lock을 사용해야한다.
-결국 이 방법도 역시 global lock에 의한 scalability 문제가 있다.
+이 방법도 역시 global lock에 의한 또 다른 scalability 문제를 야기한다.
 
-
-\subsection{file mapped page}
+\subsection{file mapping}
 
 \begin{figure}[tb]
   \begin{center}
@@ -83,27 +114,24 @@ lock을 사용해야한다.
 file rmap의 공유데이터는 anonymous rmap보다는 덜 복잡하게 연결되어 있다.
 그림 x는 file rmap의 공유데이터를 보여준다. 
 
+%The kernel has the information to do object-based reverse mapping for files.
+%Each struct page for a file has an offset and a pointer to a struct
+%address\_space, which is the base anchor for all memory associated with file. 
+%Every time a range of data from that file is mapped to a process, a
+%vm\_area\_struct or vma is created.
+%The vma contains the virtual address of the mapping and the base offset within
+%the file.
+%It is then added to a linked list of all vmas in the address\_space for that
+%file.
 
-
-\noindent
-\textbf{GLDU.} 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 1: file mapping에 ldu 적용한 방법에 대한 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-file mapping은 
-
-
-
-\noindent
-\textbf{PLDU.} 
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 1: file mapping 에 pldu 적용한 방법에 대한 설명 
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-file mapping은 PLDU를 적용하는데 문제가 없다.
+File mapping의 GLDU는 address\_space object이 interval tree의 head를 가지고 있으므로, 그 곳에
+operation log저장한다. File mapping의 PLDU는 per-core hash 테이블로 구현하였고, PLDU를 적용하는데 문제가
+없다.
 그 이유는 상대적으로 log의 header를 가지고 있는 address\_space가 상대적으로 적게 생성이 되어 hash 충돌이 적게 나타나기
 때문에 scalability가 떨어지지 않는다.
-
-
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$

@@ -1,25 +1,55 @@
 \section{Discussion and future work}
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 1: 더 General하게 사용되도록 만들어야 한다.
+%Paragraph 1: 더 범용적이게 만들어야 한다.
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-우리는 오직 high update rate를 가진 data structure를 대상으로 LDU를 구현되었다. 
-하지만 실제 high update rate를 가진 data structure는 워크로드 마다 상황이 틀리다.
-앞에서 설명한 두가지 reverse mapping도 역시 fork intencive 워크로드이여야지 high update rate를 가진
-data structure라고 말할 수 있다. 
-결국 log-based approach가 low update rate를 가질때는 오히려 성능이 떨어질 수 있다.
-그러므로 log-based approach인 LDU를 high update rate을 가질 때만 적용할 수 있도록 해야 한다.
-본 논문은 이 부분에 대해서는 고려하지 않았다.
-따라서 임베디드 시스템등 다양한 분야에 사용되는 리눅스 커널에 적용되기 위해서는 update rate를 판단하여 동작하도록 해야지 보다
-범용적으로 high update rate 상황과 general학
+\ifkor
+우리는 hight update rate data structure만 고려 하였지만, LDU는 보다 범용적인 상황에 적용 수 있게 만들어져야
+한다.
+그 이유는 실제 high update rate를 가진 상황은 자주 발생되는 상황이 아니다. 
+따라서 data structure의 operation의 update rate이 적을 경우에는 불필요하게 log를 저장하므로 오히려 성능이 떨어
+지는 역효과가 생긴다.
+이것은 임베디드 시스템등 다양한 분야에 사용되는 리눅스 커널이 때문에 문제가 있다. 
+따라서 항상 log-based로 처리하지 않고 update rate이 증가하면, 판단하여 log-based로 처리하도록 해야 한다.
+즉 high update rate과 상관없이 좋은 성능을 보이는 범용적인 알고르즘으로 발전 시켜야한다.
+\else
+\fi
+
+
+\ifkor
+LDU의 두번 째 타입은 Per-core에 log를 저장하는 PLDU이다. 
+PLDU의 원리는 기본적으로 log를 per-core 메모리에 저장하되 timestamp가 필요한 log만 shared memory
+system의 atomic 연산으로 처리를 하자는 것이다.
+When a process logs an insert operation on one core, migrates to another core,
+and logs a remove operation, the remove should eventually execute after the
+insert, so this condition needs the timestamp[].
+
+즉 timestamp 없이 per-core로 merge된 로그가 아래와 같은 상황이 발생하면 문제가 발생한다. 
+
+\inv{1}{A} \inv{2}{B} \inv{3}{C} \res{1}{A} \res{3}{C}
+
+여기서 흥미로운 사실은 같은 object에 대해서 insert-remove operation을 update 할 때 수행해
+주면 결국 per-core에 남은 operation은 insert 또는 remove operation만 남게 된다. 
+즉 per-core log는 timestamp가 없어도 되는 operation만 남게 된다.
+PLDU는 로그를 update-side absorbing 기술로 로그를 바로 바로 지워줌으로 timestamp를 없이도 per-core
+log를 사용할 수 있도록 하였다.
+\else
+If a process logs an insert operation on one core,
+migrates to another core, and logs a remove operation, the remove should
+eventually execute after the insert[OpLog].
+\fi
+
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 2: reader 쪽을 개선해야 한다. 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
+\ifkor
 현재 LDU는 data structure를 보호하기 위해 exclucive lock를 사용하도록 구현하였다. 
 하지만 concurrent read를 위해 concurrent update와 concurrent read를 고려해서 구현해야 한다.
-이 방법은 
+\else
+\fi
+
 
 
 

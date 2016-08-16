@@ -14,6 +14,11 @@ Exim internet mailer.
 \newblock 2015.
 \newblock http://www.exim.org/.
 
+\bibitem{AlBahra2013NAS}
+Samy Al~Bahra.
+\newblock Nonblocking algorithms and scalable multicore programming.
+\newblock {\em Commun. ACM}, 56(7):50--61, July 2013.
+
 \bibitem{Andi2011adding}
 Tim~Chen Andi~Kleen.
 \newblock Scaling problems in fork.

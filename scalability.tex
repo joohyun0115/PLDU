@@ -34,7 +34,6 @@
 \usepackage{xcolor}
 \usepackage{url}
 \usepackage{balance}
-\usepackage{subfig}
 \usepackage{booktabs}
 \usepackage{multirow}
 \usepackage{rotating}
@@ -46,6 +45,35 @@
 \usepackage{fancyhdr}
 \usepackage{listings}
 
+\usepackage{caption}
+\usepackage{subcaption}
+
+\usepackage{tikz}
+\usetikzlibrary{shapes,snakes}
+
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{wasysym}
+
+%The given symbol or text (\text{mytext}) in a circle
+%To be used always in math mode
+\newcommand{\circlesign}[1]{ 
+    \mathbin{
+        \mathchoice
+        {\buildcirclesign{\displaystyle}{#1}}
+        {\buildcirclesign{\textstyle}{#1}}
+        {\buildcirclesign{\scriptstyle}{#1}}
+        {\buildcirclesign{\scriptscriptstyle}{#1}}
+    } 
+}
+
+
+\newcommand\buildcirclesign[2]{%
+    \begin{tikzpicture}[baseline=(X.base), inner sep=0, outer sep=0]
+    \node[draw,circle] (X)  {\ensuremath{#1 #2}};
+    \end{tikzpicture}%
+}
 
 \definecolor{lbcolor}{rgb}{0.9,0.9,0.9}
 \lstset{

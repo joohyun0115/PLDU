@@ -17,31 +17,34 @@
 \def\hist@color@{black}
 \def\hist@height@{0pt}
 
-\def\hist@color@i{red}
-\def\hist@height@i{0pt}
+%(255,0,255)
+\def\hist@color@i{magenta}
+\def\hist@height@i{2pt}
 
-\def\hist@color@ii{blue}
+%(0,128,128)
+\def\hist@color@ii{teal}
 \def\hist@height@ii{0pt}
 
-\def\hist@color@iii{rgb:violet,4;white,3}
-\def\hist@height@iii{0pt}
+%(0,255,255)
+\def\hist@color@iii{cyan}
+\def\hist@height@iii{-2pt}
 
 \def\hist@color@iv{violet}
-\def\hist@height@iv{0pt}
+\def\hist@height@iv{-3pt}
+
 
 %
 % Action shape settings
 %
 
 \tikzstyle{hist/shape}=
-  [rectangle,text=white]
+  [rounded rectangle,inner ysep=2pt,inner xsep=0.75pt,text=white]
 \tikzstyle{hist/shape}=
-  [circle,text=white]
+  [rounded rectangle,inner ysep=2pt,inner xsep=0.75pt,text=white]
 \tikzstyle{hist/shape/inv}=
-  [hist/shape,rectangle]
+  [hist/shape, rounded rectangle ]
 \tikzstyle{hist/shape/res}=
-  [hist/shape,circle]
-
+  [hist/shape, rectangle ]
 %
 % Internal implementation
 %
