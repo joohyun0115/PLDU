@@ -19,8 +19,8 @@ communication overhead를 최소화 하였다.
 operation 시점에 operation 로그를 atomic한 방법으로 삭제 또는 저장을 한다.
 이를 위해 우리는 update-side abosrbing log, reuse garbage log라고 불리우는 2가지 최적화 방법을
 사용하였다.
-최적화 이후 남은 update operation에 대한 로그는 워크로드에 따라 global queue 또는 per-core queue에 저장할
-수 있다.
+최적화 이후 남은 update operation에 대한 로그는 워크로드 특성에 따라 global queue 또는 per-core queue에
+저장할 수 있다.
 본 장에서는 LDU의 Log-based 알고리즘과 어떻게 timestamp를 제거 했는지에 대한 디자인 측면에 대해서
 설명한다.
 \else
@@ -61,7 +61,8 @@ coherence traffic is significantly reduced.
 셋째로, 큰 수정 없이 기존 여러 데이터(tree, queue) structure에 쉽게 적용할 수 있는 장점이 있다.
 마지막으로 저장된 log를 실제 수행하지 않고, 여러가지 optimization 방법을 사용하여 적은 operation으로 Log를 줄일 수
 있다. 
-LDU도 log-based approach를 따른다. 그러므로 앞에서 설명한 log-based 방법의 장점을 모두 가진다.
+LDU도 log-based approach를 따른다. 그러므로 앞에서 설명한 log-based 방법의 장점을 모두 가짐과 동시에
+업데이트 순간 time-sensitive log를 지움으로 성능을 향상시킨다.
 \else
 Log-based approaches can help to support high update rates because
 \fi
@@ -144,7 +145,7 @@ operation log가 서로 다른 코어에 존재하는 log 같은 경우에 log�
 하지만 LDU는 indivisual object를 대상으로 swap atomic operation을 사용하여
 shared log 삭제하는 방법을 사용해서 이런 문제가 없다.
 
-LDU의 update-side absorbing은 shared memory system의 swap operation을 사용한다.
+업데이트 순간 로그를 지우는 방법은 shared memory system의 swap operation을 사용한다.
 이를 위해, LDU는 모든 object에 insert와 remove의 mark 필드를 추가해서 update-side
 absorbing을 수행 하였다.
 예를 들어 만약 A라는 object를 대상으로 insert-remove operation이 수행될 경우 처음 insert operation은
@@ -295,7 +296,8 @@ LDU는 주기적으로 Log를 flush해줌으로써 Log가 쌓여서 발생하는
 먼저 LDU를 보다 정확하게 설명하기위해, 로그를 global queue 저장한 방법과 per-core queue에 저장한 두가지 방법에 대해서
 예를 들어 설명한다. 
 그림 \ref{fig:basic} LDU의 하나의 예에 대해서 보여준다. 그림 \ref{fig:basic}은 예로서 queue를 global
-queue를 사용하였다. 6개의 update operation과 1개의 read operation을 LDU에서 어떻게 처리하는지 보여준다.
+queue를 사용하였다. 
+7개의 update operation과 1개의 read operation을 LDU에서 어떻게 처리하는지 보여준다.
 update operation에 대해서는 앞에서 설명한 심볼을 사용했고 garbage object을 위한 심볼이 추가 되었다.
 garbage object는 \res{1}{D}과 같이 rectangle로 표시한다. 
 이 그림의 실행 순서는 위에서 부터 아래이다.

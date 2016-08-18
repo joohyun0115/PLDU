@@ -9,8 +9,9 @@ This section answers the following questions experimentally:
 \item Does \ldu's design matter for applications?
 
 \item Why does \ldu's scheme scale well?
-\end{CompactItemize}
 
+\item What about \ldu's read-write ratio?
+\end{CompactItemize}
 
 \subsection{Experimental setup}
 
@@ -230,7 +231,7 @@ time due to the their efficient concurrent updates.
 
 
 
-\subsection{lmbench}
+\subsection{Lmbench}
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 1: %워크로드에 대한 설명
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -273,6 +274,35 @@ While stock Linux has 90\% idle time, other methods have approximately 50\%
 idle time since stock Linux waits to acquire reverse mapping locks such as
 \code{anon\_vma's rwsem} and \code{mapping's i\_mmap\_rwsem}.
 
+
+\subsection{Read-write ratio}
+
+\begin{figure*}[t!]
+    \centering
+    \begin{subfigure}[b]{0.3\textwidth}
+        \includegraphics[height=1.2in]{graph/aim7.eps}
+        \caption{Lorem ipsum, lorem ipsum}
+    \end{subfigure}%
+    \begin{subfigure}[b]{0.3\textwidth}
+        \includegraphics[height=1.2in]{graph/exim.eps}
+        \caption{Lorem ipsum, lorem ipsum}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.3\textwidth}
+        \includegraphics[height=1.2in]{graph/lmbench.eps}
+        \caption{Lorem ipsum, lorem ipsum}
+    \end{subfigure}
+    \caption{Caption place holder3}
+    
+\end{figure*}
+
+\ifkor
+LDU는 update-heavy한 데이터 구조를 위한 방법이다. 즉 간혈적으로 read가 발생할 때 
+굉장히 높은 scalabilty를 보여준다.
+하지만 To understand read의 비율을 보기 위해 우리는 아래와 같은 실험을 하였다.
+
+\else
+
+\fi
 
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$

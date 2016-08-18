@@ -6,11 +6,11 @@ void synchronize_ldu(struct obj_root *root)
 	//atomic remove first, lock-less list
 	entry = xchg(&head->first, NULL);
 
-	//iteration all removed log
+	//iterate all logs
 	llist_for_each_entry(dnode, entry, ll_node) {
 		//get log's arguments
 		...
-		//atomic swap due to update-side absorbing
+		//atomic swap due to update-side removing
 		if (xchg(&dnode->mark, 0))
 			ldu_physical_update(dnode->op_num, arg,
 					ACCESS_ONCE(dnode->root));
