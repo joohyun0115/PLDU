@@ -105,11 +105,10 @@ eventually execute after the insert[].
 먼저 $\oplus$와 $\ominus$는 각각 insert와 remove update operation을 의미한다.
 바로 따라오는 심볼은 object의 명을 의미하고 색깔과 높낮이는 서로 다른 CPU를 의미한다.
 \begin{center}
-$\oplus$\inv{1}{A}, $\oplus$\inv{2}{B}, $\oplus$\inv{3}{C},$\oplus$\inv{1}{A},
-$\oplus$\inv{3}{C}, $\oplus$\inv{1}{A}, $\oplus$\inv{2}{B},
-$\oplus$\inv{3}{C},$\oplus$\inv{1}{A}, $\oplus$\inv{3}{C}
+$\oplus$\inv{1}{A}, $\oplus$\inv{2}{B}, $\oplus$\inv{3}{C},$\ominus$\inv{2}{A},
+$\ominus$\inv{3}{C}, $\oplus$\inv{3}{A}, $\oplus$\inv{3}{C},$\ominus$\inv{1}{C}
 \end{center}
-즉 위와 같이 수행되었을 경우 time-sensitive log인 $\oplus$\inv{1}{A}과 $\ominus$\inv{3}{C}에
+즉 위와 같이 수행되었을 경우 time-sensitive log인 $\oplus$\inv{1}{A}과 $\ominus$\inv{2}{A}에
 대해서는 항상 timestamp에 맞게 수행되어야 한다.
 여기서 중요한 사실은 time-sensitive operation log은 삭제해도 괜찮은 operation log들 이다.
 여기서 insert-remove operation 또는 remove-insert operation을 가지는 
@@ -117,8 +116,7 @@ $\ominus$\inv{2}{B}, $\oplus$\inv{3}{C} 삭제되도 괜찮으며, 결국 남은
 object에 대해서 insert 또는 remove operation만 남게 된다.
 위의 log는 아래와 같이 non-time-sensitive한 operation만 남게 된다.
 \begin{center}
-$\oplus$\inv{3}{C}, $\oplus$\inv{1}{A}, $\oplus$\inv{2}{B},
-$\oplus$\inv{3}{C}, $\oplus$\inv{1}{A}, $\oplus$\inv{2}{B}
+ $\oplus$\inv{2}{B}, $\oplus$\inv{3}{A}
 \end{center}
 LDU는 update-side absorbing 기술로 이러한 time-senstivive한 log를 update 순간 바로
 지운다.
@@ -207,6 +205,7 @@ queue에 들어가 있지만 update-side absorbing 때문에 최소되어 insert
 \fi
 
 
+
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 6: log를 저장하는 queue는 non-blocking queue를 사용
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -227,7 +226,6 @@ NULL로 atomic하게 제거한다.
 CAS fail 때문에 발생하는 multiple CAS를 최소화 하기 위해, Linux 커널에 있는 Lock-less list를 활용 하였다.
 \else
 \fi
-
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 7: 두 종류의 queue를 지원하는 이유 : log를 저장하도록 설계 이유는 서로 장 단점이 있음 : (option)
@@ -274,22 +272,22 @@ LDU는 주기적으로 Log를 flush해줌으로써 Log가 쌓여서 발생하는
 \fi
 
 
+\begin{figure*}[t!]
+  \begin{center}
+     \includegraphics[width=0.8\textwidth,height=0.4\textheight,keepaspectratio]{fig/basic_gldu}
+  \end{center}
+  \caption{\deferu example showing six update operations and one read
+  operation. The execution flows from top to bottom. Memory represents original
+  data structure and logging queue at T1, T2 and T3, respectively.}
+  \label{fig:basic}
+\end{figure*}
+
 \subsection{LDU example}
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 1: Flowchart 그림 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %
-
-\begin{figure}[tb]
-  \begin{center}
-     \includegraphics[width=0.5\textwidth,height=0.5\textheight,keepaspectratio]{fig/basic_gldu}
-  \end{center}
-  \caption{\deferu example showing six update operations and one read
-  operation. The execution flows from top to bottom. Memory represents original
-  data structure and logging queue at T1, T2 and T3, respectively.}
-  \label{fig:basic}
-\end{figure}
 
 
 \ifkor
@@ -332,15 +330,6 @@ $\oplus$\inv{1}{C},$\oplus$\res{3}{E} and 가 $\ominus$\inv{3}{A}의 operation�
 수행한다. \code{T4} 시점이 되면 tree에는 
 모든 operation이 수행되어, \inv{0}{B}, \inv{0}{C} and \inv{0}{D} 값이 존재하게 된다.
 결국 로그를 모두 수행하면 마지막 reader는 같은 tree의 값을 읽게 된다. 
-
-\begin{figure}[tb]
-  \begin{center}
-     \includegraphics[width=0.5\textwidth,keepaspectratio]{fig/basic_pldu2}
-  \end{center}
-  \caption{PLDU The execution flows from top to bottom. Memory
-  represents original data structure and logging queue at T1, T2 and T3, respectively.}
-  \label{fig:basicpldu}
-\end{figure}
 
 그림 \ref{fig:basicpldu}는 per-core queue에 log를 저장되는 흐름을 설명한다.
 global queue와의 차이점만 설명하면,
