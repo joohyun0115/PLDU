@@ -81,23 +81,12 @@ Anonymous rmap의 공유데이터는 서로 상당히 복잡하게 연결되어 
 그림 x-x는 이렇게 복잡하게 연결된 공유데이터를 보여준다. 
 
 
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 1: anon vma에 gldu 적용한 방법에 대한 설명 
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-Anonymous rmap을 위한 GLDU는 anon\_vma의 root structure에서 log를 저장하도록 하였다. 
-anon\_vma는 anon\_vma의 root의 lock을 사용함에 따라, anon\_vma의 root의 lock이 걸리면 자식들은
-모두 root의 lock 때문에 많은 contenction이 생긴다.
-따라서 GLDU는 anon\_vma는 항상 root의 lock를 사용하기 때문에, 로그를 anon\_vma의 root에 저장하도록 하여
-불필요한 iteration을 제거하였다. 
 
-Anonymous rmap에는 per-core 방식인 PLDU를 적용하기 힘들다.
-그 이유는 log를 저장하는 anon\_vma root의 object가 너무이 생겨서 global per-core hash
-table의 충돌이 너무 많이 발생하기 때문이다. 
-이것은 또 다른 lock이 필요하므로 오히려 성능이 떨어진다. 
-만약 per-core 방식을 적용하려면 하나의 per-core memory에 저장한 후 차후 log를 ojbect별 분리 하는 방법이 있으나, 
-이 경우는  mix되어 있는 로그를 구별하면서 해당 data structure만 보호하는 lock을 사용하기가 어려우므로, global
-lock을 사용해야한다.
-이 방법도 역시 global lock에 의한 또 다른 scalability 문제를 야기한다.
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 2: anon vma에 ldu 적용한 방법에 대한 설명 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
 
 \subsection{file mapping}
 
@@ -108,6 +97,8 @@ lock을 사용해야한다.
   \caption{An example of applying the \deferu to file reverse mapping. }
   \label{fig:deferu}
 \end{figure}
+
+
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 1: linux의 file mapped page reverse mapping의 구조에 대한 설명
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -125,13 +116,18 @@ file rmap의 공유데이터는 anonymous rmap보다는 덜 복잡하게 연결�
 %file.
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 1: file mapping에 ldu 적용한 방법에 대한 설명 
+%Paragraph 2: file mapping에 ldu 적용한 방법에 대한 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 File mapping의 GLDU는 address\_space object이 interval tree의 head를 가지고 있으므로, 그 곳에
 operation log저장한다. File mapping의 PLDU는 per-core hash 테이블로 구현하였고, PLDU를 적용하는데 문제가
 없다.
 그 이유는 상대적으로 log의 header를 가지고 있는 address\_space가 상대적으로 적게 생성이 되어 hash 충돌이 적게 나타나기
 때문에 scalability가 떨어지지 않는다.
+
+
+
+
+
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$

@@ -1,7 +1,7 @@
 \section{Implementation}\label{sec:implementation}
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 1: 커널 버전 및 코드 분량 설명
+%Paragraph 1: 커널 버전 및 코드 분량, 테스트에 대한 설명
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 We implemented the new deferred update algorithm in Linux 3.19.rc4 kernel, and
 our modified Linux is available as open source.
@@ -9,9 +9,27 @@ our modified Linux is available as open source.
 collector for delayed free.
 
 
+
+
+
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 2: 커널 데이터 구조에 추가한 필드 설명
+%Paragraph 2: per-core queue 구현에 대한 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+Anonymous rmap을 위한 queue 중 global queue를 사용할 경우에는 anon\_vma의 root
+structure에서 log를 저장하도록 하였다.
+anon\_vma는 anon\_vma의 root의 lock을 사용함에 따라, anon\_vma의 root의 lock이 걸리면 자식들은
+모두 root의 lock 때문에 많은 contenction이 생긴다.
+따라서 global queue는 는 anon\_vma는 항상 root의 lock를 사용하기 때문에, 로그를 anon\_vma의 root에
+저장하도록 하여 불필요한 iteration을 제거하였다. 
+반면에 per-core 방식인 PLDU를 적용하기 힘들다.
+그 이유는 log를 저장하는 anon\_vma root의 object가 너무이 생겨서 global per-core hash
+table의 충돌이 너무 많이 발생하기 때문이다. 
+이것은 또 다른 lock이 필요하므로 오히려 성능이 떨어진다. 
+만약 per-core 방식을 적용하려면 하나의 per-core memory에 저장한 후 차후 log를 ojbect별 분리 하는 방법이 있으나, 
+이 경우는  mix되어 있는 로그를 구별하면서 해당 data structure만 보호하는 lock을 사용하기가 어려우므로, global
+lock을 사용해야한다.
+이 방법도 역시 global lock에 의한 또 다른 scalability 문제를 야기한다.
 
 
 

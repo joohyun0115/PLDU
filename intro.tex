@@ -94,14 +94,14 @@ per-core log를 활용하여 update-heavy한 자료구조를 대상으로 동시
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %
 \ifkor
-본 논문은 동기화된 타임스탬프 카운터를 이용함에 따라 생기는 sequencial processing 문제를
+본 논문은 동기화된 타임스탬프 카운터를 이용함에 따라 생기는 추가적인 sequencial processing 문제를
 해결하기 위해 LDU(Lightweitgh log-based Deferred Update)를 개발하였다. 
 LDU는 타임스탬프 카운터가 필요한 operation log를 업데이트 순간마다 지우고, 매번 로그를 생성하지 않고 재활용하는 방법이다.
 이로인해 synchronized timestamp counter 문제와 cache communication bottleneck 문제를 동시에
 해결하였다.
-이러한 해결 방법은 분산 시스템에서 사용하는 log기반의 concurrent updates 방식과 shared-memory system의 
-hardware-based synchronization 기법(compare and swap, test and
-set, atomic swap)을 조합하여 동시적 업데이트 문제를 해결하였다.
+해결 방법은 분산 시스템에서 사용하는 log기반의 concurrent updates 방식과 shared-memory system의 
+hardware-based synchronization 기법(compare and swap, test and set, atomic swap)을
+조합하여 동시적 업데이트 문제를 해결하였다.
 \else
 %본 논문은 high update rate를 가진 data structure를 위한 새로운 방법인 LDU를 제안한다.
 %LDU는 synchronized timestamp counters를 이용함에 따라 생기는 ordering or merging
