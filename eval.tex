@@ -66,21 +66,21 @@ list.
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 2-2: Harris list의 수정 내용 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-In order to further improve performance, we move their ordered list to
-unordered list. 
-A feature of the Harris linked list is all the nodes are ordered by
-their key. 
-Zhang~\cite{zhang2013practical} implements a lock-free unordered list
-algorithm, whose list is each insert and remove operation appends an
-intermediate node at the head of the list;these approach is practically
-hard to implement.
-Indeed, Linux does not require contains operation because the Linux data
-structures such as list, tree and hash table not depended on search key;they
-depend on their unique object.
-This feature can eliminates the ordered list in Harris linked list.
-Therefore, we perform each insert operation appends an intermediate node at
-the first node of the list;on the other hand, each remove operation searches
-from head to their node.
+%In order to further improve performance, we move their ordered list to
+%unordered list. 
+%A feature of the Harris linked list is all the nodes are ordered by
+%their key. 
+%%Zhang~\cite{zhang2013practical} implements a lock-free unordered list
+%%algorithm, whose list is each insert and remove operation appends an
+%intermediate node at the head of the list;these approach is practically
+%hard to implement.
+%Indeed, Linux does not require contains operation because the Linux data
+%structures such as list, tree and hash table not depended on search key;they
+%depend on their unique object.
+%This feature can eliminates the ordered list in Harris linked list.
+%Therefore, we perform each insert operation appends an intermediate node at
+%the first node of the list;on the other hand, each remove operation searches
+%from head to their node.
 
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$

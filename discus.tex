@@ -16,31 +16,6 @@
 
 \fi
 
-
-\ifkor
-LDU의 두번 째 타입은 Per-core에 log를 저장하는 PLDU이다. 
-PLDU의 원리는 기본적으로 log를 per-core 메모리에 저장하되 timestamp가 필요한 log만 shared memory
-system의 atomic 연산으로 처리를 하자는 것이다.
-When a process logs an insert operation on one core, migrates to another core,
-and logs a remove operation, the remove should eventually execute after the
-insert, so this condition needs the timestamp[].
-
-즉 timestamp 없이 per-core로 merge된 로그가 아래와 같은 상황이 발생하면 문제가 발생한다. 
-
-\inv{1}{A} \inv{2}{B} \inv{3}{C} \res{1}{A} \res{3}{C}
-
-여기서 흥미로운 사실은 같은 object에 대해서 insert-remove operation을 update 할 때 수행해
-주면 결국 per-core에 남은 operation은 insert 또는 remove operation만 남게 된다. 
-즉 per-core log는 timestamp가 없어도 되는 operation만 남게 된다.
-PLDU는 로그를 update-side absorbing 기술로 로그를 바로 바로 지워줌으로 timestamp를 없이도 per-core
-log를 사용할 수 있도록 하였다.
-\else
-If a process logs an insert operation on one core,
-migrates to another core, and logs a remove operation, the remove should
-eventually execute after the insert[OpLog].
-\fi
-
-
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 2: reader 쪽을 개선해야 한다. 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
