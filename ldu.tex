@@ -414,16 +414,16 @@ LDU는 주기적으로 log를 비워줘야 하므로, update operation이 수행
 
 \fi
 
-\subsubsection{LDU queues}
-\begin{figure}[tb!]
-\inputminted[linenos,fontsize=\footnotesize, tabsize=2]{c}{src/ldu_queue.c}
-\rule{\columnwidth}{0.5pt}
-\vspace{-\baselineskip}
-\caption{\deferu physical update algorithm. \code{synchronize\_ldu} may be
- called by reader and converts update log to original data structure
- traversing the lock-less list.}
-\label{fig:lduqueue}
-\end{figure}
+%\subsubsection{LDU queues}
+%\begin{figure}[tb!]
+%\inputminted[linenos,fontsize=\footnotesize, tabsize=2]{c}{src/ldu_queue.c}
+%\rule{\columnwidth}{0.5pt}
+%%\vspace{-\baselineskip}
+%\caption{\deferu physical update algorithm. \code{synchronize\_ldu} may be
+% called by reader and converts update log to original data structure
+% traversing the lock-less list.}
+%\label{fig:lduqueue}
+%\end{figure}
 
 \ifkor
 LDU의 로그를 저장하기 위한 2가지 queue에 대한 코드는 그림 \ref{fig:lduqueue}와 같다. 
