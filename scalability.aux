@@ -64,27 +64,24 @@
 \@writefile{toc}{\contentsline {section}{\numberline {IV}Concurrent updates for Linux kernel}{7}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {IV-A}}Case study:reverse mapping}{7}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {IV-B}}anonymous mapping}{7}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {IV-C}}file mapping}{7}}
 \@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces An example of applying the LDU\xspace  to file reverse mapping. \relax }}{7}}
 \newlabel{fig:deferu}{{6}{7}}
 \newlabel{fig:deferu@cref}{{[figure][6][]6}{7}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {IV-C}}file mapping}{7}}
 \@writefile{toc}{\contentsline {section}{\numberline {V}Implementation}{7}}
 \newlabel{sec:implementation}{{V}{7}}
 \newlabel{sec:implementation@cref}{{[section][5][]V}{7}}
-\@writefile{toc}{\contentsline {section}{\numberline {VI}Evaluation}{7}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {VI-A}}Experimental setup}{7}}
 \citation{Harris2001Lockfree}
 \citation{Gramoli2015Synchrobench}
 \citation{David2015ASYNCHRONIZED}
 \citation{petrank2013lock}
 \citation{SilasBoydWickizer2010LinuxScales48}
+\@writefile{toc}{\contentsline {section}{\numberline {VI}Evaluation}{8}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {VI-A}}Experimental setup}{8}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {VI-B}}AIM7}{8}}
 \@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Scalability of AIM7 multiuser for different method. The combination LDU\xspace  with unordered harris list scale well;in contrast, up to 60 core, the stock Linux scale linearly, then it flattens out.\relax }}{8}}
 \newlabel{fig:aim7}{{7}{8}}
 \newlabel{fig:aim7@cref}{{[figure][7][]7}{8}}
-\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Scalability of Exim. The stock Linux collapses after 60 core;in contrast, both unordered harris list and our LDU\xspace  flatten out.\relax }}{8}}
-\newlabel{fig:exim}{{8}{8}}
-\newlabel{fig:exim@cref}{{[figure][8][]8}{8}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {VI-B}}AIM7}{8}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {VI-C}}Exim}{8}}
 \citation{mcvoy1996lmbench}
 \citation{Clements15SCR}
@@ -93,6 +90,9 @@
 \citation{AustinTClements2012RCUBalancedTrees}
 \citation{Clements2013RadixVM}
 \citation{SilasBoydWickizer2010LinuxScales48}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Scalability of Exim. The stock Linux collapses after 60 core;in contrast, both unordered harris list and our LDU\xspace  flatten out.\relax }}{9}}
+\newlabel{fig:exim}{{8}{9}}
+\newlabel{fig:exim@cref}{{[figure][8][]8}{9}}
 \@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Comparison of user, system and idle time at 120 cores.\relax }}{9}}
 \newlabel{tab:memuse}{{I}{9}}
 \newlabel{tab:memuse@cref}{{[table][1][]I}{9}}
@@ -102,9 +102,6 @@
 \newlabel{fig:MicroBench@cref}{{[figure][9][]9}{9}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {VI-E}}Read-write ratio}{9}}
 \@writefile{toc}{\contentsline {section}{\numberline {VII}Discussion and future work}{9}}
-\@writefile{toc}{\contentsline {section}{\numberline {VIII}Related work}{9}}
-\newlabel{sec:RelatedWork}{{VIII}{9}}
-\newlabel{sec:RelatedWork@cref}{{[section][8][]VIII}{9}}
 \citation{Dodds2015SCT}
 \citation{Arbel2014ConcurrentRCU}
 \citation{Matveev2015RLU}
@@ -118,13 +115,15 @@
 \citation{MCSLocksKernel}
 \citation{Courtois71}
 \citation{McKenney98}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Read-write ratio from 50:50 to 1:99 percent\relax }}{10}}
+\@writefile{toc}{\contentsline {section}{\numberline {VIII}Related work}{10}}
+\newlabel{sec:RelatedWork}{{VIII}{10}}
+\newlabel{sec:RelatedWork@cref}{{[section][8][]VIII}{10}}
+\@writefile{toc}{\contentsline {section}{\numberline {IX}Conclusion}{10}}
 \bibstyle{plain}
 \bibdata{ref}
 \bibcite{AIM7Benchmark}{1}
 \bibcite{MOSBENCH}{2}
-\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Read-write ratio from 50:50 to 1:99 percent\relax }}{10}}
-\@writefile{toc}{\contentsline {section}{\numberline {IX}Conclusion}{10}}
-\@writefile{toc}{\contentsline {section}{References}{10}}
 \bibcite{Exim}{3}
 \bibcite{AlBahra2013NAS}{4}
 \bibcite{Andi2011adding}{5}
@@ -150,6 +149,7 @@
 \bibcite{Hendler2010FC}{25}
 \bibcite{Matveev2015RLU}{26}
 \bibcite{PaulDetailLWN}{27}
+\@writefile{toc}{\contentsline {section}{References}{11}}
 \bibcite{mckenney2011parallel}{28}
 \bibcite{McKenney98}{29}
 \bibcite{mcvoy1996lmbench}{30}
