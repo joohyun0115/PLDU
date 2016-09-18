@@ -3,52 +3,31 @@
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 1: 커널 버전 및 코드 분량, 테스트에 대한 설명
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-We implemented the new deferred update algorithm in Linux 3.19.rc4 kernel, and
-our modified Linux is available as open source.
-\deferu's scheme is based on deferred processing, so it needs a garbage
-collector for delayed free.
-
-
+We implemented the new deferred update algorithm in Linux 4.5.rc6 kernel, and
+our modified Linux is available as open source. 
+global queue를 사용한 버전일 경우 코드의 수정량은 xx-xx을 가지며 덜 복잡한 구조이며, 
+percore를 사용할 경우 코드 수정량은 xx-xx을 가진다. 
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 2: per-core queue 구현에 대한 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-Anonymous rmap을 위한 queue 중 global queue를 사용할 경우에는 anon\_vma의 root
-structure에서 log를 저장하도록 하였다.
-anon\_vma는 anon\_vma의 root의 lock을 사용함에 따라, anon\_vma의 root의 lock이 걸리면 자식들은
-모두 root의 lock 때문에 많은 contenction이 생긴다.
-따라서 global queue는 는 anon\_vma는 항상 root의 lock를 사용하기 때문에, 로그를 anon\_vma의 root에
-저장하도록 하여 불필요한 iteration을 제거하였다. 
-반면에 per-core 방식인 PLDU를 적용하기 힘들다.
-그 이유는 log를 저장하는 anon\_vma root의 object가 너무이 생겨서 global per-core hash
-table의 충돌이 너무 많이 발생하기 때문이다. 
-이것은 또 다른 lock이 필요하므로 오히려 성능이 떨어진다. 
-만약 per-core 방식을 적용하려면 하나의 per-core memory에 저장한 후 차후 log를 ojbect별 분리 하는 방법이 있으나, 
-이 경우는  mix되어 있는 로그를 구별하면서 해당 data structure만 보호하는 lock을 사용하기가 어려우므로, global
-lock을 사용해야한다.
-이 방법도 역시 global lock에 의한 또 다른 scalability 문제를 야기한다.
-
-
-
+LDU percore queue는 2가지 방법으로 구현되었다. 
+첫번째 방법은 percore hash table로 구현하는 방법이다.
+percore hash table 방법은 direct-mapped cache 처럼 구현하여, 버켓에는 하나의 object만 존재하도록
+만든 방법이다. 
+만약 hash 충돌이 발생하면 기존 해당 코어의 log를 flush하는 일을 수행한다.
+이것은 file reverse mapping 처럼 object가 많이 생기지 않을 때 유용하다. 
+이 방법은 기존 코드에 대한 수정없이 적용이 가능하고 추가적인 lock이 필요없다.
+하지만 이 방법은 anonymous reverse mapping 처럼 object가 많이 생기는 경우, hash 충돌로 인해 
+성능상 오버헤드가 생긴다. 
+따라서 anonymous reverse mapping의 percore queue는 percore data에 object별로
+구분하지 않고 로그를 저장한 후 실제 percore log를 수행할 때 global lock을 사용하여 보호하였다. 
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 3: lock을 제거한 부분에 대한 설명 
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-
-
-
-
-
-
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 4: object를 나중에 free하는 내용 설명 
+%Paragraph 3: object를 나중에 free하는 내용 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 % 기존 코드를 변경없이 
-
-
-
 
 
 

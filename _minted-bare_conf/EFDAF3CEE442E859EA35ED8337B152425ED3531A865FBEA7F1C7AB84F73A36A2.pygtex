@@ -1,0 +1,24 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kt}{void} \PYG{n+nf}{synchronize\PYGZus{}ldu}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{obj\PYGZus{}root} \PYG{o}{*}\PYG{n}{root}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+	\PYG{p}{...}
+
+	\PYG{c+c1}{//atomic remove first, lock\PYGZhy{}less list}
+	\PYG{n}{entry} \PYG{o}{=} \PYG{n}{xchg}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{head}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{first}\PYG{p}{,} \PYG{n+nb}{NULL}\PYG{p}{);}
+
+	\PYG{c+c1}{//iterate all logs}
+	\PYG{n}{llist\PYGZus{}for\PYGZus{}each\PYGZus{}entry}\PYG{p}{(}\PYG{n}{dnode}\PYG{p}{,} \PYG{n}{entry}\PYG{p}{,} \PYG{n}{ll\PYGZus{}node}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+		\PYG{c+c1}{//get log\PYGZsq{}s arguments}
+		\PYG{p}{...}
+		\PYG{c+c1}{//atomic swap due to update\PYGZhy{}side removing}
+		\PYG{k}{if} \PYG{p}{(}\PYG{n}{xchg}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{dnode}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{mark}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{))}
+			\PYG{n}{ldu\PYGZus{}physical\PYGZus{}update}\PYG{p}{(}\PYG{n}{dnode}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{op\PYGZus{}num}\PYG{p}{,} \PYG{n}{arg}\PYG{p}{,}
+					\PYG{n}{ACCESS\PYGZus{}ONCE}\PYG{p}{(}\PYG{n}{dnode}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{root}\PYG{p}{));}
+		\PYG{n}{clear\PYGZus{}bit}\PYG{p}{(}\PYG{n}{dnode}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{op\PYGZus{}num}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{vma}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{dnode}\PYG{p}{.}\PYG{n}{used}\PYG{p}{);}
+		\PYG{c+c1}{// one more check due to reuse garbage log}
+		\PYG{k}{if} \PYG{p}{(}\PYG{n}{xchg}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{dnode}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{mark}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{))}
+			\PYG{n}{ldu\PYGZus{}physical\PYGZus{}update}\PYG{p}{(}\PYG{n}{dnode}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{op\PYGZus{}num}\PYG{p}{,} \PYG{n}{arg}\PYG{p}{,}
+					\PYG{n}{ACCESS\PYGZus{}ONCE}\PYG{p}{(}\PYG{n}{dnode}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{root}\PYG{p}{));}
+	\PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

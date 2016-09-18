@@ -1,0 +1,41 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kt}{bool} \PYG{n+nf}{ldu\PYGZus{}logical\PYGZus{}insert}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{object\PYGZus{}struct} \PYG{o}{*}\PYG{n}{obj}\PYG{p}{,}
+		\PYG{k+kt}{void} \PYG{o}{*}\PYG{n}{head}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+	\PYG{p}{...}
+	\PYG{c+c1}{// Phase 1 : update\PYGZhy{}side absorbing logs}
+	\PYG{c+c1}{// atomic swap due to synchronize update\PYGZsq{}s logs}
+	\PYG{k}{if}\PYG{p}{(}\PYG{o}{!}\PYG{n}{xchg}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{remove}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{mark}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{))\PYGZob{}}
+		\PYG{n}{BUG\PYGZus{}ON}\PYG{p}{(}\PYG{n}{insert}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{mark}\PYG{p}{);}
+		\PYG{c+c1}{// Phase 2 : reuse garbage log}
+		\PYG{n}{insert}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{mark} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+		\PYG{k}{if}\PYG{p}{(}\PYG{o}{!}\PYG{n}{test\PYGZus{}and\PYGZus{}set\PYGZus{}bit}\PYG{p}{(}\PYG{n}{LDU\PYGZus{}INSERT}\PYG{p}{,}
+				\PYG{o}{\PYGZam{}}\PYG{n}{obj}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{ldu}\PYG{p}{.}\PYG{n}{used}\PYG{p}{))\PYGZob{}}
+			\PYG{c+c1}{// Phase 3 : insert log to queue}
+			\PYG{c+c1}{//...save argument and operation}
+			\PYG{n}{ldu\PYGZus{}insert\PYGZus{}queue}\PYG{p}{(}\PYG{n}{root}\PYG{p}{,} \PYG{n}{insert}\PYG{p}{);}
+		\PYG{p}{\PYGZcb{}}
+	\PYG{p}{\PYGZcb{}}
+	\PYG{p}{...}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{bool} \PYG{n+nf}{ldu\PYGZus{}logical\PYGZus{}remove}\PYG{p}{(}\PYG{k}{struct} \PYG{n}{object\PYGZus{}struct} \PYG{o}{*}\PYG{n}{obj}\PYG{p}{,}
+		\PYG{k+kt}{void} \PYG{o}{*}\PYG{n}{head}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+	\PYG{p}{...}
+
+	\PYG{c+c1}{// Phase 1 : update\PYGZhy{}side absorbing logs}
+	\PYG{c+c1}{// atomic swap due to synchronize update\PYGZsq{}s logs}
+	\PYG{k}{if}\PYG{p}{(}\PYG{o}{!}\PYG{n}{xchg}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{insert}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{mark}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{))\PYGZob{}}
+		\PYG{n}{BUG\PYGZus{}ON}\PYG{p}{(}\PYG{n}{remove}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{mark}\PYG{p}{);}
+		\PYG{c+c1}{// Phase 2 : reuse garbage log}
+		\PYG{n}{remove}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{mark} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+		\PYG{k}{if}\PYG{p}{(}\PYG{o}{!}\PYG{n}{test\PYGZus{}and\PYGZus{}set\PYGZus{}bit}\PYG{p}{(}\PYG{n}{LDU\PYGZus{}REMOVE}\PYG{p}{,}
+				\PYG{o}{\PYGZam{}}\PYG{n}{obj}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{ldu}\PYG{p}{.}\PYG{n}{used}\PYG{p}{))\PYGZob{}}
+			\PYG{c+c1}{// Phase 3 : insert log to queue}
+			\PYG{c+c1}{//...save argument and operation}
+		\PYG{p}{\PYGZcb{}}
+	\PYG{p}{\PYGZcb{}}
+	\PYG{p}{...}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

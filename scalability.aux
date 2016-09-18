@@ -17,71 +17,88 @@
 \citation{Exim}
 \citation{MOSBENCH}
 \citation{mcvoy1996lmbench}
+\@LN@col{1}
 \@writefile{toc}{\contentsline {section}{\numberline {I}Introduction}{1}}
 \newlabel{sec:introduction}{{I}{1}}
 \newlabel{sec:introduction@cref}{{[section][1][]I}{1}}
+\@LN@col{2}
 \citation{Clements15SCR}
 \citation{Bueso2015STP}
 \citation{Bueso2014MCS}
 \citation{Rohland2001Tempfs}
 \citation{Andi2011adding}
 \citation{Tim2013adding}
-\citation{CorbetLWNANON}
 \citation{SilasBoydWickizerPth}
+\@LN@col{1}
 \@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Scalability of AIM7 multiuser. This workload simultaneously create many processes. Up to 60 core, the stock Linux scale linearly, then they flattens out.\relax }}{2}}
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
 \newlabel{fig:aim7_default}{{1}{2}}
 \newlabel{fig:aim7_default@cref}{{[figure][1][]1}{2}}
 \@writefile{toc}{\contentsline {section}{\numberline {II}Background and Problem}{2}}
+\@LN@col{2}
+\@writefile{toc}{\contentsline {section}{\numberline {III}LDU Design}{2}}
 \citation{Clements15SCR}
-\@writefile{toc}{\contentsline {section}{\numberline {III}LDU Design}{3}}
+\@LN@col{1}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {III-A}}Log-based Concurrent updates}{3}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {III-B}}Approach}{3}}
+\@LN@col{2}
 \citation{David2015ASYNCHRONIZED}
 \citation{AlBahra2013NAS}
 \citation{petrank2013lock}
 \citation{zhang2013practical}
 \citation{HuangLocklessList}
+\@LN@col{1}
+\@LN@col{2}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {III-C}}LDU example}{4}}
 \@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces LDU\xspace  example showing six update operations and one read operation. The execution flows from top to bottom. Memory represents original data structure and logging queue at T1, T2 and T3, respectively.\relax }}{5}}
 \newlabel{fig:basic}{{2}{5}}
 \newlabel{fig:basic@cref}{{[figure][2][]2}{5}}
+\@LN@col{1}
+\@LN@col{2}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {III-D}}The LDU Algorithm}{5}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {\unhbox \voidb@x \hbox {III-D}1}logical update: inserting logs}{5}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\unhbox \voidb@x \hbox {III-D}1}logical update - inserting logs}{5}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\unhbox \voidb@x \hbox {III-D}2}physical update - applying logs}{5}}
 \citation{OBJMAPOLS}
 \citation{CorbetLWNRMAP}
 \citation{CorbetLWNANON}
+\@LN@col{1}
 \@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces LDU\xspace  logical update algorithm. {\texttt  {logical\_insert}} represents non-blocking insert function. It may be called by original insert position without locks. The fastpath is that when their object was removed by {\texttt  {logical\_remove}}, {\texttt  {logical\_insert}} just changes node's marking field.\relax }}{6}}
 \newlabel{fig:gldulogicalupdate}{{3}{6}}
 \newlabel{fig:gldulogicalupdate@cref}{{[figure][3][]3}{6}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {\unhbox \voidb@x \hbox {III-D}2}physical update: applying logs}{6}}
+\@LN@col{2}
 \@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces LDU\xspace  physical update algorithm. {\texttt  {synchronize\_ldu}} may be called by reader and converts update log to original data structure traversing the lock-less list.\relax }}{6}}
 \newlabel{fig:glduphysicalupdate}{{4}{6}}
 \newlabel{fig:glduphysicalupdate@cref}{{[figure][4][]4}{6}}
+\@writefile{toc}{\contentsline {section}{\numberline {IV}Concurrent updates for Linux kernel}{6}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {IV-A}}Case study:reverse mapping}{6}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {IV-B}}file mapping}{6}}
+\@LN@col{1}
 \@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces An example of applying the LDU\xspace  to file reverse mapping. \relax }}{7}}
-\newlabel{fig:deferu2}{{5}{7}}
-\newlabel{fig:deferu2@cref}{{[figure][5][]5}{7}}
-\@writefile{toc}{\contentsline {section}{\numberline {IV}Concurrent updates for Linux kernel}{7}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {IV-A}}Case study:reverse mapping}{7}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {IV-B}}anonymous mapping}{7}}
+\newlabel{fig:deferu}{{5}{7}}
+\newlabel{fig:deferu@cref}{{[figure][5][]5}{7}}
 \@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces An example of applying the LDU\xspace  to file reverse mapping. \relax }}{7}}
-\newlabel{fig:deferu}{{6}{7}}
-\newlabel{fig:deferu@cref}{{[figure][6][]6}{7}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {IV-C}}file mapping}{7}}
+\newlabel{fig:deferu2}{{6}{7}}
+\newlabel{fig:deferu2@cref}{{[figure][6][]6}{7}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {IV-C}}anonymous mapping}{7}}
+\@LN@col{2}
 \@writefile{toc}{\contentsline {section}{\numberline {V}Implementation}{7}}
 \newlabel{sec:implementation}{{V}{7}}
 \newlabel{sec:implementation@cref}{{[section][5][]V}{7}}
+\@writefile{toc}{\contentsline {section}{\numberline {VI}Evaluation}{7}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {VI-A}}Experimental setup}{7}}
 \citation{Harris2001Lockfree}
 \citation{Gramoli2015Synchrobench}
 \citation{David2015ASYNCHRONIZED}
-\citation{petrank2013lock}
 \citation{SilasBoydWickizer2010LinuxScales48}
-\@writefile{toc}{\contentsline {section}{\numberline {VI}Evaluation}{8}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {VI-A}}Experimental setup}{8}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {VI-B}}AIM7}{8}}
+\@LN@col{1}
 \@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Scalability of AIM7 multiuser for different method. The combination LDU\xspace  with unordered harris list scale well;in contrast, up to 60 core, the stock Linux scale linearly, then it flattens out.\relax }}{8}}
 \newlabel{fig:aim7}{{7}{8}}
 \newlabel{fig:aim7@cref}{{[figure][7][]7}{8}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {VI-B}}AIM7}{8}}
+\@LN@col{2}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Scalability of Exim. The stock Linux collapses after 60 core;in contrast, both unordered harris list and our LDU\xspace  flatten out.\relax }}{8}}
+\newlabel{fig:exim}{{8}{8}}
+\newlabel{fig:exim@cref}{{[figure][8][]8}{8}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {VI-C}}Exim}{8}}
 \citation{mcvoy1996lmbench}
 \citation{Clements15SCR}
@@ -90,21 +107,21 @@
 \citation{AustinTClements2012RCUBalancedTrees}
 \citation{Clements2013RadixVM}
 \citation{SilasBoydWickizer2010LinuxScales48}
-\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Scalability of Exim. The stock Linux collapses after 60 core;in contrast, both unordered harris list and our LDU\xspace  flatten out.\relax }}{9}}
-\newlabel{fig:exim}{{8}{9}}
-\newlabel{fig:exim@cref}{{[figure][8][]8}{9}}
-\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Comparison of user, system and idle time at 120 cores.\relax }}{9}}
-\newlabel{tab:memuse}{{I}{9}}
-\newlabel{tab:memuse@cref}{{[table][1][]I}{9}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {VI-D}}Lmbench}{9}}
-\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Execution time of lmbench's fork micro benchmark. The fork micro benchmark drops down for all methods up to 15 core but either flattens out or goes up slightly after that. At 15 core, the stock Linux goes up;the others flattens out\relax }}{9}}
-\newlabel{fig:MicroBench}{{9}{9}}
-\newlabel{fig:MicroBench@cref}{{[figure][9][]9}{9}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {VI-E}}Read-write ratio}{9}}
-\@writefile{toc}{\contentsline {section}{\numberline {VII}Discussion and future work}{9}}
 \citation{Dodds2015SCT}
 \citation{Arbel2014ConcurrentRCU}
 \citation{Matveev2015RLU}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Read-write ratio from 50:50 to 1:99 percent\relax }}{9}}
+\@LN@col{1}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Execution time of lmbench's fork micro benchmark. The fork micro benchmark drops down for all methods up to 15 core but either flattens out or goes up slightly after that. At 15 core, the stock Linux goes up;the others flattens out\relax }}{9}}
+\newlabel{fig:MicroBench}{{10}{9}}
+\newlabel{fig:MicroBench@cref}{{[figure][10][]10}{9}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {VI-D}}Lmbench}{9}}
+\@LN@col{2}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {VI-E}}Updates ratio}{9}}
+\@writefile{toc}{\contentsline {section}{\numberline {VII}Discussion}{9}}
+\@writefile{toc}{\contentsline {section}{\numberline {VIII}Related work}{9}}
+\newlabel{sec:RelatedWork}{{VIII}{9}}
+\newlabel{sec:RelatedWork@cref}{{[section][8][]VIII}{9}}
 \citation{Wang2016BeMyGuest}
 \citation{Bueso2015STP}
 \citation{Bueso2014MCS}
@@ -115,54 +132,62 @@
 \citation{MCSLocksKernel}
 \citation{Courtois71}
 \citation{McKenney98}
-\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Read-write ratio from 50:50 to 1:99 percent\relax }}{10}}
-\@writefile{toc}{\contentsline {section}{\numberline {VIII}Related work}{10}}
-\newlabel{sec:RelatedWork}{{VIII}{10}}
-\newlabel{sec:RelatedWork@cref}{{[section][8][]VIII}{10}}
-\@writefile{toc}{\contentsline {section}{\numberline {IX}Conclusion}{10}}
-\bibstyle{plain}
+\bibstyle{IEEEtran}
 \bibdata{ref}
-\bibcite{AIM7Benchmark}{1}
-\bibcite{MOSBENCH}{2}
-\bibcite{Exim}{3}
-\bibcite{AlBahra2013NAS}{4}
-\bibcite{Andi2011adding}{5}
+\bibcite{SilasBoydWickizer2010LinuxScales48}{1}
+\bibcite{Changwoo2016UMSF}{2}
+\bibcite{Matveev2015RLU}{3}
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Read-write ratio from 50:50 to 1:99 percent\relax }}{10}}
+\@LN@col{1}
+\@LN@col{2}
+\@writefile{toc}{\contentsline {section}{\numberline {IX}Conclusion}{10}}
+\@writefile{toc}{\contentsline {section}{References}{10}}
+\bibcite{Dodds2015SCT}{4}
+\bibcite{mckenney2011parallel}{5}
 \bibcite{Arbel2014ConcurrentRCU}{6}
-\bibcite{SilasBoydWickizerPth}{7}
-\bibcite{BoydWickizer2008Corey}{8}
-\bibcite{SilasBoydWickizer2010LinuxScales48}{9}
-\bibcite{BoydWickizer2012OLS}{10}
-\bibcite{Bueso2014MCS}{11}
-\bibcite{Bueso2015STP}{12}
-\bibcite{AustinTClements2012RCUBalancedTrees}{13}
-\bibcite{Clements2013RadixVM}{14}
+\bibcite{Shalev2006PLS}{7}
+\bibcite{Hendler2010FC}{8}
+\bibcite{SilasBoydWickizerPth}{9}
+\bibcite{PaulDetailLWN}{10}
+\bibcite{AIM7Benchmark}{11}
+\bibcite{Exim}{12}
+\bibcite{MOSBENCH}{13}
+\bibcite{mcvoy1996lmbench}{14}
 \bibcite{Clements15SCR}{15}
-\bibcite{MCSLocksKernel}{16}
-\bibcite{CorbetLWNRMAP}{17}
-\bibcite{CorbetLWNANON}{18}
-\bibcite{Courtois71}{19}
-\bibcite{David2015ASYNCHRONIZED}{20}
-\bibcite{Dodds2015SCT}{21}
-\bibcite{Fomitchev2004Lockfree}{22}
-\bibcite{Gramoli2015Synchrobench}{23}
-\bibcite{Harris2001Lockfree}{24}
-\bibcite{Hendler2010FC}{25}
-\bibcite{Matveev2015RLU}{26}
-\bibcite{PaulDetailLWN}{27}
-\@writefile{toc}{\contentsline {section}{References}{11}}
-\bibcite{mckenney2011parallel}{28}
-\bibcite{McKenney98}{29}
-\bibcite{mcvoy1996lmbench}{30}
-\bibcite{MellorCrummey91}{31}
-\bibcite{Changwoo2016UMSF}{32}
-\bibcite{petrank2013lock}{33}
-\bibcite{Rohland2001Tempfs}{34}
-\bibcite{Shalev2006PLS}{35}
-\bibcite{Tim2013adding}{36}
-\bibcite{Timnat2012}{37}
-\bibcite{Wang2016BeMyGuest}{38}
-\bibcite{HuangLocklessList}{39}
-\bibcite{zhang2013practical}{40}
+\bibcite{Bueso2015STP}{16}
+\bibcite{Bueso2014MCS}{17}
+\bibcite{Rohland2001Tempfs}{18}
+\bibcite{Andi2011adding}{19}
+\bibcite{Tim2013adding}{20}
+\bibcite{David2015ASYNCHRONIZED}{21}
+\bibcite{AlBahra2013NAS}{22}
+\bibcite{petrank2013lock}{23}
+\bibcite{zhang2013practical}{24}
+\bibcite{HuangLocklessList}{25}
+\bibcite{CorbetLWNRMAP}{26}
+\bibcite{CorbetLWNANON}{27}
+\bibcite{Harris2001Lockfree}{28}
+\bibcite{Gramoli2015Synchrobench}{29}
+\bibcite{BoydWickizer2008Corey}{30}
+\bibcite{BoydWickizer2012OLS}{31}
+\bibcite{AustinTClements2012RCUBalancedTrees}{32}
+\@LN@col{1}
+\@LN@col{2}
+\bibcite{Clements2013RadixVM}{33}
+\bibcite{Wang2016BeMyGuest}{34}
+\bibcite{Fomitchev2004Lockfree}{35}
+\bibcite{Timnat2012}{36}
+\bibcite{MellorCrummey91}{37}
+\bibcite{MCSLocksKernel}{38}
+\bibcite{Courtois71}{39}
+\bibcite{McKenney98}{40}
+\@LN@col{1}
+\@LN@col{2}
 \newlabel{LastPage}{{}{12}}
 \xdef\lastpage@lastpage{12}
 \gdef\lastpage@lastpageHy{}
+\gdef\minted@oldcachelist{,
+  default.pygstyle,
+  default-pyg-prefix.pygstyle,
+  0D1393A62D361E3B9A2E595DCA285561717F104E9BA6CCBFA194C8CED523703A.pygtex,
+  EFDAF3CEE442E859EA35ED8337B15242896B93EC03DC37296D374CB8EA137CA7.pygtex}

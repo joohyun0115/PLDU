@@ -28,7 +28,7 @@ exhibit high reverse mapping lock contentions.
 Moreover, AIM7 benchmark has widely been used in practical area not only for testing the
 Linux but also for improving the scalability. 
 To evaluate \deferu for real world
-applications, we use Exim which is the most popular email server.
+applications, we use Exim which is the most popular email server[].
 A micro benchmark, Lmbench, has been selected to focus on Linux fork operation-intensive
 fine grained evaluations.
 Finally, we wanted to focus on Linux fork performance and scalability;therefore,
@@ -54,8 +54,8 @@ we could not include comparison between \deferu and Oplog in this paper.
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 We compare our \deferu implementation to a concurrent non-blocking Harris
-linked list ~\cite{Harris2001Lockfree};therefore, we implement the Harris
-% linked list to Linux kernel.
+linked list ~\cite{Harris2001Lockfree};therefore, we implement the Harris linked
+list to Linux kernel.
 The code refers from sysnchrobench~\cite{Gramoli2015Synchrobench} and
 ASCYLIB~\cite{David2015ASYNCHRONIZED}, and we convert their linked list to
 Linux kernel style.
@@ -86,12 +86,9 @@ list.
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 3: 운영체제 및 커널 버전 설명
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-We ran the three benchmarks on Linux 3.19.rc4 with stock Linux with 
-the automatic NUMA balancing feature disabled because the
-Harris linked list has the iteration issue~\cite{petrank2013lock}. 
+We ran the three benchmarks on Linux 4.5.rc6 with stock Linux. 
 All experiments were performed on a 120 core machine with 8-socket, 15-core
 Intel E7-8870 chips equipped with 792 GB DDR3 DRAM.
-
 
 \subsection{AIM7}
 
@@ -159,40 +156,25 @@ scalability because their \code{CAS} fails frequently.
   \label{fig:exim}
 \end{figure}
 
-\begin{table}
-  \centering
-  \small
-  \begin{tabular}{l r r r } \toprule
-    AIM7 & user & sys & idle \\
-    \midrule
-    Stock & 2487 s & 1993 s & 4647 s(51\%)\\ 
-    Harris & 1123 s & 3631 s & 2186 s(31\%)\\
-    LDU - global queue & 3630 s & 2511 s & 1466 s(19\%)\\
-    LDU - percore queue & 3630 s & 1903 s & 1662 s(23\%)\\
-    \bottomrule
-  \end{tabular}
-  \begin{tabular}{l r r r } \toprule
-    EXIM & user & sys & idle \\
-    \midrule
-    Stock & 41 s & 499 s & 1260 s(70\%)\\ 
-    Harris & 47 s & 628 s & 1124 s(62\%)\\
-    LDU - global queue  & 112 s & 1128 s & 559 s(31\%)\\
-    LDU - percore queue & 87 s & 1055 s & 657 s(37\%)\\
-    \bottomrule
-  \end{tabular}
-  \begin{tabular}{l r r r } \toprule
-    lmbench & user & sys & idle \\
-    \midrule
-    Stock & 11 s & 208 s & 2158 s(91\%)\\ 
-    Harris & 11 s & 312 s & 367 s(53\%)\\
-    LDU - global queue & 11 s & 292 s & 315 s(51\%)\\
-    LDU - percore queue & 12 s & 347 s & 349 s(49\%)\\
-    \bottomrule
-  \end{tabular}
+\begin{figure*}[t!]
+    \centering
+    \begin{subfigure}[b]{0.33\textwidth}
+        \includegraphics[height=1.3in]{graph/aim7_cpuutils.eps}
+        \caption{AIM7 - 120core}
+    \end{subfigure}%
+    \begin{subfigure}[b]{0.33\textwidth}
+        \includegraphics[height=1.3in]{graph/exim_cpuutils.eps}
+        \caption{Exim - 120core}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.33\textwidth}
+        \includegraphics[height=1.3in]{graph/lmbench_cpuutils.eps}
+        \caption{Lmbench - 120core}
+    \end{subfigure}
+        \centering
+    \caption{Read-write ratio from 50:50 to 1:99 percent}
+    
+\end{figure*}
 
-  \caption{Comparison of user, system and idle time at 120 cores.}
-  \label{tab:memuse}
-\end{table}
 
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -275,7 +257,6 @@ idle time since stock Linux waits to acquire reverse mapping locks such as
 \code{anon\_vma's rwsem} and \code{mapping's i\_mmap\_rwsem}.
 
 
-\subsection{Read-write ratio}
 
 \begin{figure*}[t!]
     \centering
@@ -308,10 +289,13 @@ idle time since stock Linux waits to acquire reverse mapping locks such as
     
 \end{figure*}
 
+\subsection{Updates ratio}
 \ifkor
-LDU는 update-heavy한 데이터 구조를 위한 방법이다. 즉 간혈적으로 read가 발생할 때 
-굉장히 높은 scalabilty를 보여준다.
-하지만 To understand read의 비율을 보기 위해 우리는 아래와 같은 실험을 하였다.
+LDU는 high update rate operation를 위한 방법이다. 
+즉 read가 간혈적으로 발생하는 data structure에 사용할 때 굉장히 높은 scalabilty를 보여준다.
+우리는 high update rate이라는 것에 대한 기준을 알기 위해, update rate에 따른 성능을 비교하는 실험을 하였다.
+
+AIM7에서의 update rate
 
 \else
 

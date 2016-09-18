@@ -1,0 +1,73 @@
+This is BibTeX, Version 0.99d (TeX Live 2015/Debian)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: scalability.aux
+The style file: IEEEtran.bst
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Database file #1: ref.bib
+Warning--I didn't find a database entry for "OBJMAPOLS"
+-- IEEEtran.bst version 1.14 (2015/08/26) by Michael Shell.
+-- http://www.michaelshell.org/tex/ieeetran/bibtex/
+-- See the "IEEEtran_bst_HOWTO.pdf" manual for usage information.
+Warning--empty booktitle in mckenney2011parallel
+Warning--empty booktitle in PaulDetailLWN
+Warning--empty author in AIM7Benchmark
+Warning--empty booktitle in AIM7Benchmark
+Warning--empty year in AIM7Benchmark
+Warning--empty author in Exim
+Warning--empty booktitle in Exim
+Warning--empty author in MOSBENCH
+Warning--empty booktitle in MOSBENCH
+Warning--empty booktitle in Bueso2014MCS
+Warning--empty booktitle in Rohland2001Tempfs
+Warning--empty booktitle in HuangLocklessList
+Warning--empty booktitle in CorbetLWNRMAP
+Warning--empty booktitle in CorbetLWNANON
+Warning--missing publisher in MCSLocksKernel
+
+Done.
+You've used 40 entries,
+            4087 wiz_defined-function locations,
+            1091 strings with 15326 characters,
+and the built_in function-call counts, 28924 in all, are:
+= -- 2223
+> -- 589
+< -- 205
++ -- 323
+- -- 98
+* -- 1383
+:= -- 4264
+add.period$ -- 85
+call.type$ -- 40
+change.case$ -- 48
+chr.to.int$ -- 516
+cite$ -- 55
+duplicate$ -- 2123
+empty$ -- 2701
+format.name$ -- 121
+if$ -- 6823
+int.to.chr$ -- 0
+int.to.str$ -- 40
+missing$ -- 376
+newline$ -- 161
+num.names$ -- 37
+pop$ -- 958
+preamble$ -- 1
+purify$ -- 0
+quote$ -- 2
+skip$ -- 2258
+stack$ -- 0
+substring$ -- 1257
+swap$ -- 1567
+text.length$ -- 33
+text.prefix$ -- 0
+top$ -- 5
+type$ -- 40
+warning$ -- 15
+while$ -- 127
+width$ -- 42
+write$ -- 408
+(There were 16 warnings)

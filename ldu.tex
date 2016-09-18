@@ -120,7 +120,6 @@ object에 대해서 insert 또는 remove operation만 남게 된다.
 \end{center}
 LDU는 update-side absorbing 기술로 이러한 time-senstivive한 log를 update 순간 바로
 지운다.
-그 결과 synchronized timestamp의 필요성을 줄였다.
 \else
 If a process logs an insert operation on one core,
 migrates to another core, and logs a remove operation, the remove should
@@ -140,7 +139,7 @@ syncronized timestamp counters 기반의 OpLog도 이러한 log 삭제 방법 �
 operation log가 서로 다른 코어에 존재하는 log 같은 경우에 log를 merge와 검색한 후 삭제를 해야한다. 
 즉 syncronized timestamp counters 방법은 워크로드에 따라, 최적화를 위해 또 다른 sequntial 프로세싱이
 요구된다.
-하지만 LDU는 indivisual object를 대상으로 swap atomic operation을 사용하여
+하지만 LDU는 상대적으로 덜 share하는 indivisual object를 대상으로 swap atomic operation을 사용하여
 shared log 삭제하는 방법을 사용해서 이런 문제가 없다.
 
 업데이트 순간 로그를 지우는 방법은 shared memory system의 swap operation을 사용한다.
@@ -163,8 +162,8 @@ atomic하게 지워주는 방식으로 진행된다.
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 \ifkor
-이처럼 update-side absorbing으로 log를 지울 수 있는 근본 이유는 리눅스 커널(freeBSD 커널 역시)
-search가 two update operations(one to insert and one to remove an element)이 함수
+이처럼 synchronize problem없이 update 순간 log를 지울 수 있는 근본 이유는 리눅스
+커널(freeBSD 커널 역시) search가 two update operations(one to insert and one to remove an element)이 함수
 외부해서 수행하는 구조이기 때문에 가능하다.
 즉 리눅스의 data structure의 경우에는 search와 update가 분리되어 있어, 같은 update
 operation이 연달아 호출되지 않는다.
@@ -202,6 +201,7 @@ queue에 들어가 있지만 update-side absorbing 때문에 최소되어 insert
 이러한 경우, 다음 insert operation에 대해서는 새로운 log를 list에 연산으로 다시 넣지 않고, 해당 object의 mark
 필드만 변경하여 log를 재활용하는 방법을 사용한다.
 \else
+
 \fi
 
 
@@ -210,11 +210,12 @@ queue에 들어가 있지만 update-side absorbing 때문에 최소되어 insert
 %Paragraph 6: log를 저장하는 queue는 non-blocking queue를 사용
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 \ifkor
-LDU는 queue의 위치(global or per-core)에 대한 의존성을 없애기 위해 log를 항상 non-blocking queue에
-저장한다.
-따라서 log를 저장하는 시점에 대해서 global lock 또는 per-core lock을 제거 하였다.
+LDU는 log를 저장하기 위한 queue를 non-blocking queue에 저장한다.
+따라서 log를 저장하는 시점에 대해서 per-core lock 또는 global lock을 제거 하였다.
 LDU는 head 포인터에 대한 CAS 연산을 최대한 줄인 multiple producers and single
 consumer에 기반하는 non-blocking queue를 이용하였다.
+%multiple-producer and/or multiple-consumer (MP/MC) variants. 
+
 이러한 큐는 이미 Linux 커널에 Lock-less list~\cite{HuangLocklessList}라는 이름으로 구현되어 있으며, 이미
 커널에 많은 부분에 사용되고 있다.
 이 큐는 다른 non-blocking list[][][]와 다르게, insert operation을 항상 처음 노드에 삽입함에
@@ -352,7 +353,7 @@ It may be called by original insert position without locks. The fastpath is
 \label{fig:gldulogicalupdate}
 \end{figure}
 
-\subsubsection{logical update: inserting logs}
+\subsubsection{logical update - inserting logs}
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 1:LDU Concurrent Updates 알고리즘 코드 및 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -377,7 +378,7 @@ absorbing logs와 reuse garbage logs에 대한 코드이다. \code{logical\_inse
 \fi
 
 
-\subsubsection{physical update: applying logs}
+\subsubsection{physical update - applying logs}
 
 
 \begin{figure}[tb!]
@@ -414,6 +415,9 @@ LDU는 주기적으로 log를 비워줘야 하므로, update operation이 수행
 
 \fi
 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 3: queue 코드 및 설명 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %\subsubsection{LDU queues}
 %\begin{figure}[tb!]
 %\inputminted[linenos,fontsize=\footnotesize, tabsize=2]{c}{src/ldu_queue.c}
@@ -426,14 +430,14 @@ LDU는 주기적으로 log를 비워줘야 하므로, update operation이 수행
 %\end{figure}
 
 \ifkor
-LDU의 로그를 저장하기 위한 2가지 queue에 대한 코드는 그림 \ref{fig:lduqueue}와 같다. 
-앞에서 설명했듯이 LDU는 어떤 queue를 사용해도 문제 없도록 설계하였다.
-따라서 queue 대한 의존성이 없다.
-global queue를 사용할 경우 LDU는 항상 head의 first 포인터에 CAS연산으로 성공할 때까지 반복 수행 후 데이터를 넣는다. 
-per-core queue를 사용할 경우는 per-core의 hash 테이블을 가지고 온 후 hash 테이블이 넣으려는 log의
-data structure와 같은지 체크하고, 다르면 해당 코어에 저장된 log를 lock과 함께 update를 수행한다.
-전체 코어의 log를 flush할 필요없이 해당 코어에 저장된 log만 flush하면 되는 이유는 이미 update-side absorbing에
-의해 time-sencitive한 operation이 삭제되었기 때문이다.
+%LDU의 로그를 저장하기 위한 2가지 queue에 대한 코드는 그림 \ref{fig:lduqueue}와 같다. 
+%앞에서 설명했듯이 LDU는 어떤 queue를 사용해도 문제 없도록 설계하였다.
+%따라서 queue 대한 의존성이 없다.
+%global queue를 사용할 경우 LDU는 항상 head의 first 포인터에 CAS연산으로 성공할 때까지 반복 수행 후 데이터를 넣는다. 
+%per-core queue를 사용할 경우는 per-core의 hash 테이블을 가지고 온 후 hash 테이블이 넣으려는 log의
+%data structure와 같은지 체크하고, 다르면 해당 코어에 저장된 log를 lock과 함께 update를 수행한다.
+%전체 코어의 log를 flush할 필요없이 해당 코어에 저장된 log만 flush하면 되는 이유는 이미 update-side
+% absorbing에 의해 time-sencitive한 operation이 삭제되었기 때문이다.
 
 \else
 
