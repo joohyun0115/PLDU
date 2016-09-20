@@ -1,4 +1,5 @@
 \section{Conclusion}
+\ifkor
 We propose a concurrent update algorithm, \deferu, for update-heavy data
 structures scalable for many-core systems.
 To achieve the scalability during process spawning, 
@@ -8,6 +9,10 @@ Evaluation results using the AIM7, Exim and lmbench reveal that \deferu shows
 better performance up to 2.2 times compared to existing solutions.
 \deferu is implemented on to Linux kernel 4.5 and available as open-source
  from \url{https://github.com/manycore-ldu/ldu}.
+\else
+
+\fi
+
 
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$

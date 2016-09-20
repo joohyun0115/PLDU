@@ -2,7 +2,7 @@
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 1:Linux Scalability의 연구에 대한 설명
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
+\ifkor
 \noindent
 \textbf{Operating system scalability.}
 ~\cite{Clements15SCR}In order to improve Linux scalability, researchers have
@@ -24,11 +24,15 @@ non-overlapping memory regions to scale perfectly.
 Alternatively, to avoid contention caused by shared address space locking,
 system programmers change their multithreaded applications to use
 processes~\cite{SilasBoydWickizer2010LinuxScales48}.
+\else
+
+\fi
 
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 2:Concurrent updates에 대한 연구
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+\ifkor
 \noindent
 \textbf{Scalabe data structure.}
 ~\cite{Dodds2015SCT}Though sufficient level of performance scalability has been
@@ -45,11 +49,16 @@ In high update rate, Oplog can achieve substantially multi-core scaling for
 update-heavy data structures.
 Our work focus on update-heavy data structures and uses non-blocking method to
  store the operation log instead of per-core processing.
+\else
+
+\fi
+
 
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 3: Scalable Data Structure and Lock에 대한 연구
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+\ifkor
 \noindent
 \textbf{Scalable lock.}
 ~\cite{Wang2016BeMyGuest}~\cite{Bueso2015STP}~\cite{Bueso2014MCS}One method for
@@ -77,6 +86,10 @@ Consequently,
 scalable exclusive lock, reader-writer lock
 and RCU require serialization for updates and thus show significant limitation
  on scalability. 
+\else
+
+\fi
+
 
 
 

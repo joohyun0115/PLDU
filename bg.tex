@@ -46,7 +46,7 @@ Up to 60 core, the stock Linux scale linearly, then they flattens out.
 먼저 멀티 프로세스 기반의 벤치마크인 AIM7을 동작시키고 동시에 120코어 대해서 락 경합을 분석하면 
 그림 3과 같은 결과를 가진다. 
 AIM7 벤치마크의 경우 상당히 많은 부분이 anonvma에서 쓰기 락 경합이 발생한다. 
-이는 리눅스 역 매핑(reverse mapping)을 효율적으로 수행하기 위한 자료구인 anonvma를 
+이는 리눅스 역 매핑(reverse mapping)을 효율적으로 수행하기 위한 자료구인 anonvma가
 수많은 fork에 의해 프로세스를 생성하면서 발생하는 락 경합 문제이다. 
 다음으로 우리는 anonvma의 lock 경합을 줄이기 위해, 임시로 fork에서 anonvma를 호출하는 부분과 read와
 관련있는 pageswap이 안되도록 하고, 120코어를 대상으로 다시 Lock 경합을 분석하여 보았다.
@@ -57,6 +57,11 @@ Silas wikizer가 OpLog 논문을 통해 fork의 scalability 문제의 원인으�
 결론적으로 본 연구의 분석 결과 둘 중 하나가 아니라 두 가지 락 모두 fork의 scalabililty 문제를 야기 시킨다.
 즉 두가지 모두 개선해야지 fork의 scalalbility가 향상 된다. 
 \else
+To understand the source of this bottleneck, the Figure-xx shows the cost
+of acquiring the lock when running AIM7 on a stock Linux kernel on the 120 core
+intel xeon machine.
+The graph numbers are collected using lock\_stat, a Linux kernel lock profiler
+that reports how long each lock is held and the wait time to acquire the lock.
 
 \fi
 

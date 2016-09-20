@@ -155,6 +155,7 @@ atomic하게 지워주는 방식으로 진행된다.
 효과를 가져주므로 성능이 향상된다. 
 
 \else
+
 \fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -183,6 +184,7 @@ research 분야에 많이 연구되고 있는 CSDS 알고리즘은 고려하지 
 iteration~\cite{petrank2013lock}, ordering~\cite{zhang2013practical}여러
 practical한 이유로 C언어로 구현된 리눅스 커널 등에 적용하기에는 아직 한계가 있다.
 \else
+
 \fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -226,6 +228,7 @@ NULL로 atomic하게 제거한다.
 결론적으로 LDU는 queue의 위치에 따른 의존성을 제거하고, head pointer의
 CAS fail 때문에 발생하는 multiple CAS를 최소화 하기 위해, Linux 커널에 있는 Lock-less list를 활용 하였다.
 \else
+
 \fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -270,6 +273,8 @@ log-based method periodically apply the time-ordered operations at the head of
 the log to remove these opearation from the log.
 LDU는 주기적으로 Log를 flush해줌으로써 Log가 쌓여서 발생하는 메모리 낭비를 줄인다.
 \else
+
+
 \fi
 
 
@@ -334,7 +339,6 @@ $\oplus$\inv{1}{C},$\oplus$\res{3}{E} and 가 $\ominus$\inv{3}{A}의 operation�
 
 그림 \ref{fig:basicpldu}는 per-core queue에 log를 저장되는 흐름을 설명한다.
 global queue와의 차이점만 설명하면,
-
 
 \else
 
@@ -451,15 +455,17 @@ LDU는 주기적으로 log를 비워줘야 하므로, update operation이 수행
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 \ifkor
+
+
 \else
-* By default OpLog executes logged updates in temporal order. For example,
-consider a linked list. If a process logs an insert operation on one core,
-migrates to another core, and logs a remove operation, the remove should
-eventually execute after the insert.
-* OpLog relies on timestamps from a system-wide synchronized clock to tell it
-how to order entries in different cores' log.
-*This ordering ensures linearizaility, making OpLog compatible with existing
-data structure semantics.
+%* By default OpLog executes logged updates in temporal order. For example,
+%consider a linked list. If a process logs an insert operation on one core,
+%migrates to another core, and logs a remove operation, the remove should
+%eventually execute after the insert.
+%* OpLog relies on timestamps from a system-wide synchronized clock to tell it
+%how to order entries in different cores' log.
+%*This ordering ensures linearizaility, making OpLog compatible with existing
+%data structure semantics.
 \fi
 
 
