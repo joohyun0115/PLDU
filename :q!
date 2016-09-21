@@ -1,0 +1,540 @@
+[1mdiff --git a/ldu.tex b/ldu.tex[m
+[1mindex ee1a73d..4157dfc 100644[m
+[1m--- a/ldu.tex[m
+[1m+++ b/ldu.tex[m
+[36m@@ -15,14 +15,14 @@[m [mmerging 작업을 야기한다.[m
+ 기능을 최소한으로 사용하도록 설계하였다.[m
+ 따라서, LDU는 synchronized timestamp counter를 사용하는 방식의 timestamp를 제거함과 동시에 cache[m
+ communication overhead를 최소화 하였다.[m
+[31m-예를 들어, high update rates data structure의 scalability 문제를 해결하기 위해, LDU는 update[m
+[31m-operation 시점에 operation 로그를 atomic한 방법으로 삭제 또는 저장을 한다.[m
+[31m-이를 위해 우리는 update-side abosrbing log, reuse garbage log라고 불리우는 2가지 최적화 방법을[m
+[31m-사용하였다.[m
+[31m-최적화 이후 남은 update operation에 대한 로그는 워크로드 특성에 따라 global queue 또는 per-core queue에[m
+[31m-저장할 수 있다.[m
+[31m-본 장에서는 LDU의 Log-based 알고리즘과 어떻게 timestamp를 제거 했는지에 대한 디자인 측면에 대해서[m
+[31m-설명한다.[m
+[32m+[m[32m%예를 들어, high update rates data structure의 scalability 문제를 해결하기 위해, LDU는 update[m
+[32m+[m[32m%operation 시점에 operation 로그를 atomic한 방법으로 삭제 또는 저장을 한다.[m
+[32m+[m[32m%이를 위해 우리는 update-side abosrbing log, reuse garbage log라고 불리우는 2가지 최적화 방법을[m
+[32m+[m[32m%사용하였다.[m
+[32m+[m[32m%최적화 이후 남은 update operation에 대한 로그는 워크로드 특성에 따라 global queue 또는 per-core queue에[m
+[32m+[m[32m%저장할 수 있다.[m
+[32m+[m[32m%본 장에서는 LDU의 Log-based 알고리즘과 어떻게 timestamp를 제거 했는지에 대한 디자인 측면에 대해서[m
+[32m+[m[32m%설명한다.[m
+ \else[m
+ This section explains these algorithmic design aspects of LDU.[m
+ \fi[m
+[36m@@ -36,7 +36,8 @@[m [mThis section explains these algorithmic design aspects of LDU.[m
+ %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$[m
+ [m
+ \ifkor[m
+[31m-Update heavy한 구조 때문에 발생하는 scalability 문제에 대한 해결책 중 하나는 Log-based 알고리즘을 사용하는 것이다.[m
+[32m+[m[32mUpdate heavy한 자료구조 때문에 발생하는 scalability 문제에 대한 해결책 중 하나는 Log-based 알고리즘을 사용하는[m
+[32m+[m[32m것이다.[m
+ Log-based 알고리즘은 lock을 피하기 위해 update가 발생하면, data structure의 update[m
+ operation(insert or remove)을 argument와 함께 저장하고, 주기적 또는 read operation을 수행하기 전에[m
+ applies the updates in all the logs to the data structure, so reader can read up to date data structure.[m
+[36m@@ -46,7 +47,6 @@[m [mapplies the updates in all the logs to the data structure, so reader can read up[m
+ [m
+ \fi[m
+ [m
+[31m-[m
+ %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$[m
+ %Paragraph 2: Log 기반의 알고리즘의 장점[m
+ %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$[m
+[36m@@ -62,7 +62,7 @@[m [mcoherence traffic is significantly reduced.[m
+ 마지막으로 저장된 log를 실제 수행하지 않고, 여러가지 optimization 방법을 사용하여 적은 operation으로 Log를 줄일 수[m
+ 있다. [m
+ LDU도 log-based approach를 따른다. 그러므로 앞에서 설명한 log-based 방법의 장점을 모두 가짐과 동시에[m
+[31m-업데이트 순간 time-sensitive log를 지움으로 성능을 향상시킨다.[m
+[32m+[m[32m업데이트 순간 삭제 가능한 log를 지움으로 성능을 향상시킨다.[m
+ \else[m
+ Log-based approaches can help to support high update rates because[m
+ \fi[m
+[36m@@ -94,12 +94,12 @@[m [mlate.[m
+ %Paragraph 2: timestamp가 필요한 이유 : time-sensitive update operation log.[m
+ %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$[m
+ \ifkor[m
+[32m+[m[32mSynchronized timestamp가 근본적으로 필요한 이유는 when a process logs an insert[m
+[32m+[m[32moperation on one core, migrates to another core, and logs a remove operation, the remove should[m
+[32m+[m[32meventually execute after the insert[].[m
+ LDU는 update 순간 time-sensitive log를 제거함으로 synchronized timestamp counter 때문에 발생하는[m
+ 문제를 해결하였다.[m
+ time-sensitive log란 순서가 바꿔서는 안되는 operation log이다. [m
+[31m-Synchronized timestamp가 근본적으로 필요한 이유는 when a process logs an insert[m
+[31m-operation on one core, migrates to another core, and logs a remove operation, the remove should[m
+[31m-eventually execute after the insert[]. [m
+ 본 논문에서는 이러한 time-sensitive log를 설명하기 위해, ~\cite{Clements15SCR}에서 사용한 심볼방법을[m
+ 이용하였다.[m
+ 먼저 $\oplus$와 $\ominus$는 각각 insert와 remove update operation을 의미한다.[m
+[36m@@ -111,14 +111,14 @@[m [m$\ominus$\inv{3}{C}, $\oplus$\inv{3}{A}, $\oplus$\inv{3}{C},$\ominus$\inv{1}{C}[m
+ 즉 위와 같이 수행되었을 경우 time-sensitive log인 $\oplus$\inv{1}{A}과 $\ominus$\inv{2}{A}에[m
+ 대해서는 항상 timestamp에 맞게 수행되어야 한다.[m
+ 여기서 중요한 사실은 time-sensitive operation log은 삭제해도 괜찮은 operation log들 이다.[m
+[31m-여기서 insert-remove operation 또는 remove-insert operation을 가지는 [m
+[32m+[m[32minsert-remove operation 또는 remove-insert operation을 가지는[m[41m [m
+ $\ominus$\inv{2}{B}, $\oplus$\inv{3}{C} 삭제되도 괜찮으며, 결국 남은 operation log은 같은[m
+ object에 대해서 insert 또는 remove operation만 남게 된다.[m
+ 위의 log는 아래와 같이 non-time-sensitive한 operation만 남게 된다.[m
+ \begin{center}[m
+  $\oplus$\inv{2}{B}, $\oplus$\inv{3}{A}[m
+ \end{center}[m
+[31m-LDU는 update-side absorbing 기술로 이러한 time-senstivive한 log를 update 순간 바로[m
+[32m+[m[32mLDU는 update-side removing이라는 방법으로 이러한 time-senstivive한 log를 update 순간 바로[m
+ 지운다.[m
+ \else[m
+ If a process logs an insert operation on one core,[m
+[36m@@ -131,7 +131,7 @@[m [meventually execute after the insert[OpLog].[m
+ %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$[m
+ [m
+ \ifkor[m
+[31m-LDU는 time-senstivive한 log를 제거하기 위해 update-side absorbing이라는 방법을 사용한다.[m
+[32m+[m[32mLDU는 time-senstivive한 log를 제거하기 위해 update-side removing이라는 방법을 사용한다.[m
+ 이 방법은 만약 같은 object에 대해서 insert와 remove가 발생하였으면, 같은 object에[m
+ 대해서, insert oepration과 remove operation에 대한 log를 update시점에 바로 바로 삭제하는 방법이다. [m
+ 이처럼 log가 삭제될 수 있는 이유는 operation log가 deferred로 수행하기 떄문에 가능하다. [m
+[36m@@ -139,7 +139,7 @@[m [msyncronized timestamp counters 기반의 OpLog도 이러한 log 삭제 방법 [m
+ operation log가 서로 다른 코어에 존재하는 log 같은 경우에 log를 merge와 검색한 후 삭제를 해야한다. [m
+ 즉 syncronized timestamp counters 방법은 워크로드에 따라, 최적화를 위해 또 다른 sequntial 프로세싱이[m
+ 요구된다.[m
+[31m-하지만 LDU는 상대적으로 덜 share하는 indivisual object를 대상으로 swap atomic operation을 사용하여[m
+[32m+[m[32m하지만 LDU는 indivisual object를 대상으로 swap atomic operation을 사용하여[m
+ shared log 삭제하는 방법을 사용해서 이런 문제가 없다.[m
+ [m
+ 업데이트 순간 로그를 지우는 방법은 shared memory system의 swap operation을 사용한다.[m
+[36m@@ -155,7 +155,6 @@[m [matomic하게 지워주는 방식으로 진행된다.[m
+ 효과를 가져주므로 성능이 향상된다. [m
+ [m
+ \else[m
+[31m-[m
+ \fi[m
+ [m
+ %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$[m
+[36m@@ -163,8 +162,8 @@[m [matomic하게 지워주는 방식으로 진행된다.[m
+ %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$[m
+ [m
+ \ifkor[m
+[31m-이처럼 synchronize problem없이 update 순간 log를 지울 수 있는 근본 이유는 리눅스[m
+[31m-커널(freeBSD 커널 역시) search가 two update operations(one to insert and one to remove an element)이 함수[m
+[32m+[m[32m이처럼 update-side absorbing으로 log를 지울 수 있는 근본 이유는 리눅스 커널(freeBSD 커널 역시)[m
+[32m+[m[32msearch가 two update operations(one to insert and one to remove an element)이 함수[m
+ 외부해서 수행하는 구조이기 때문에 가능하다.[m
+ 즉 리눅스의 data structure의 경우에는 search와 update가 분리되어 있어, 같은 update[m
+ operation이 연달아 호출되지 않는다.[m
+[36m@@ -184,7 +183,6 @@[m [mresearch 분야에 많이 연구되고 있는 CSDS 알고리즘은 고려하지[m
+ iteration~\cite{petrank2013lock}, ordering~\cite{zhang2013practical}여러[m
+ practical한 이유로 C언어로 구현된 리눅스 커널 등에 적용하기에는 아직 한계가 있다.[m
+ \else[m
+[31m-[m
+ \fi[m
+ [m
+ %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$[m
+[36m@@ -203,21 +201,17 @@[m [mqueue에 들어가 있지만 update-side absorbing 때문에 최소되어 insert[m
+ 이러한 경우, 다음 insert operation에 대해서는 새로운 log를 list에 연산으로 다시 넣지 않고, 해당 object의 mark[m
+ 필드만 변경하여 log를 재활용하는 방법을 사용한다.[m
+ \else[m
+[31m-[m
+ \fi[m
+ [m
+[31m-[m
+[31m-[m
+ %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$[m
+ %Paragraph 6: log를 저장하는 queue는 non-blocking queue를 사용[m
+ %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$[m
+ \ifkor[m
+[31m-LDU는 log를 저장하기 위한 queue를 non-blocking queue에 저장한다.[m
+[31m-따라서 log를 저장하는 시점에 대해서 per-core lock 또는 global lock을 제거 하였다.[m
+[32m+[m[32mLDU는 queue의 위치(global or per-core)에 대한 의존성을 없애기 위해 log를 항상 non-blocking queue에[m
+[32m+[m[32m저장한다.[m
+[32m+[m[32m따라서 log를 저장하는 시점에 대해서 global lock 또는 per-core lock을 제거 하였다.[m
+ LDU는 head 포인터에 대한 CAS 연산을 최대한 줄인 multiple producers and single[m
+ consumer에 기반하는 non-blocking queue를 이용하였다.[m
+[31m-%multiple-producer and/or multiple-consumer (MP/MC) variants. [m
+[31m-[m
+ 이러한 큐는 이미 Linux 커널에 Lock-less list~\cite{HuangLocklessList}라는 이름으로 구현되어 있으며, 이미[m
+ 커널에 많은 부분에 사용되고 있다.[m
+ 이 큐는 다른 non-blocking list[][][]와 다르게, insert operation을 항상 처음 노드에 삽입함에[m
+[36m@@ -228,7 +222,6 @@[m [mNULL로 atomic하게 제거한다.[m
+ 결론적으로 LDU는 queue의 위치에 따른 의존성을 제거하고, head pointer의[m
+ CAS fail 때문에 발생하는 multiple CAS를 최소화 하기 위해, Linux 커널에 있는 Lock-less list를 활용 하였다.[m
+ \else[m
+[31m-[m
+ \fi[m
+ [m
+ %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$[m
+[36m@@ -273,8 +266,6 @@[m [mlog-based method periodically apply the time-ordered operations at the head of[m
+ the log to remove these opearation from the log.[m
+ LDU는 주기적으로 Log를 flush해줌으로써 Log가 쌓여서 발생하는 메모리 낭비를 줄인다.[m
+ \else[m
+[31m-[m
+[31m-[m
+ \fi[m
+ [m
+ [m
+[36m@@ -340,6 +331,7 @@[m [m$\oplus$\inv{1}{C},$\oplus$\res{3}{E} and 가 $\ominus$\inv{3}{A}의 operation[m
+ 그림 \ref{fig:basicpldu}는 per-core queue에 log를 저장되는 흐름을 설명한다.[m
+ global queue와의 차이점만 설명하면,[m
+ [m
+[32m+[m
+ \else[m
+ [m
+ \fi[m
+[36m@@ -357,7 +349,7 @@[m [mIt may be called by original insert position without locks. The fastpath is[m
+ \label{fig:gldulogicalupdate}[m
+ \end{figure}[m
+ [m
+[31m-\subsubsection{logical update - inserting logs}[m
+[32m+[m[32m\subsubsection{logical update: inserting logs}[m
+ %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$[m
+ %Paragraph 1:LDU Concurrent Updates 알고리즘 코드 및 설명 [m
+ %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$[m
+[36m@@ -382,7 +374,7 @@[m [mabsorbing logs와 reuse garbage logs에 대한 코드이다. \code{logical\_inse[m
+ \fi[m
+ [m
+ [m
+[31m-\subsubsection{physical update - applying logs}[m
+[32m+[m[32m\subsubsection{physical update: applying logs}[m
+ [m
+ [m
+ \begin{figure}[tb!][m
+[36m@@ -419,14 +411,11 @@[m [mLDU는 주기적으로 log를 비워줘야 하므로, update operation이 수행[m
+ [m
+ \fi[m
+ [m
+[31m-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$[m
+[31m-%Paragraph 3: queue 코드 및 설명 [m
+[31m-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$[m
+ %\subsubsection{LDU queues}[m
+ %\begin{figure}[tb!][m
+ %\inputminted[linenos,fontsize=\footnotesize, tabsize=2]{c}{src/ldu_queue.c}[m
+ %\rule{\columnwidth}{0.5pt}[m
+[31m-%%\vspace{-\baselineskip}[m
+[32m+[m[32m%\vspace{-\baselineskip}[m
+ %\caption{\deferu physical update algorithm. \code{synchronize\_ldu} may be[m
+ % called by reader and converts update log to original data structure[m
+ % traversing the lock-less list.}[m
+[36m@@ -434,14 +423,14 @@[m [mLDU는 주기적으로 log를 비워줘야 하므로, update operation이 수행[m
+ %\end{figure}[m
+ [m
+ \ifkor[m
+[31m-%LDU의 로그를 저장하기 위한 2가지 queue에 대한 코드는 그림 \ref{fig:lduqueue}와 같다. [m
+[31m-%앞에서 설명했듯이 LDU는 어떤 queue를 사용해도 문제 없도록 설계하였다.[m
+[31m-%따라서 queue 대한 의존성이 없다.[m
+[31m-%global queue를 사용할 경우 LDU는 항상 head의 first 포인터에 CAS연산으로 성공할 때까지 반복 수행 후 데이터를 넣는다. [m
+[31m-%per-core queue를 사용할 경우는 per-core의 hash 테이블을 가지고 온 후 hash 테이블이 넣으려는 log의[m
+[31m-%data structure와 같은지 체크하고, 다르면 해당 코어에 저장된 log를 lock과 함께 update를 수행한다.[m
+[31m-%전체 코어의 log를 flush할 필요없이 해당 코어에 저장된 log만 flush하면 되는 이유는 이미 update-side[m
+[31m-% absorbing에 의해 time-sencitive한 operation이 삭제되었기 때문이다.[m
+[32m+[m[32mLDU의 로그를 저장하기 위한 2가지 queue에 대한 코드는 그림 \ref{fig:lduqueue}와 같다.[m[41m [m
+[32m+[m[32m앞에서 설명했듯이 LDU는 어떤 queue를 사용해도 문제 없도록 설계하였다.[m
+[32m+[m[32m따라서 queue 대한 의존성이 없다.[m
+[32m+[m[32mglobal queue를 사용할 경우 LDU는 항상 head의 first 포인터에 CAS연산으로 성공할 때까지 반복 수행 후 데이터를 넣는다.[m[41m [m
+[32m+[m[32mper-core queue를 사용할 경우는 per-core의 hash 테이블을 가지고 온 후 hash 테이블이 넣으려는 log의[m
+[32m+[m[32mdata structure와 같은지 체크하고, 다르면 해당 코어에 저장된 log를 lock과 함께 update를 수행한다.[m
+[32m+[m[32m전체 코어의 log를 flush할 필요없이 해당 코어에 저장된 log만 flush하면 되는 이유는 이미 update-side absorbing에[m
+[32m+[m[32m의해 time-sencitive한 operation이 삭제되었기 때문이다.[m
+ [m
+ \else[m
+ [m
+[36m@@ -455,17 +444,15 @@[m [mLDU는 주기적으로 log를 비워줘야 하므로, update operation이 수행[m
+ %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$[m
+ [m
+ \ifkor[m
+[31m-[m
+[31m-[m
+ \else[m
+[31m-%* By default OpLog executes logged updates in temporal order. For example,[m
+[31m-%consider a linked list. If a process logs an insert operation on one core,[m
+[31m-%migrates to another core, and logs a remove operation, the remove should[m
+[31m-%eventually execute after the insert.[m
+[31m-%* OpLog relies on timestamps from a system-wide synchronized clock to tell it[m
+[31m-%how to order entries in different cores' log.[m
+[31m-%*This ordering ensures linearizaility, making OpLog compatible with existing[m
+[31m-%data structure semantics.[m
+[32m+[m[32m* By default OpLog executes logged updates in temporal order. For example,[m
+[32m+[m[32mconsider a linked list. If a process logs an insert operation on one core,[m
+[32m+[m[32mmigrates to another core, and logs a remove operation, the remove should[m
+[32m+[m[32meventually execute after the insert.[m
+[32m+[m[32m* OpLog relies on timestamps from a system-wide synchronized clock to tell it[m
+[32m+[m[32mhow to order entries in different cores' log.[m
+[32m+[m[32m*This ordering ensures linearizaility, making OpLog compatible with existing[m
+[32m+[m[32mdata structure semantics.[m
+ \fi[m
+ [m
+ [m
+[1mdiff --git a/scalability.aux b/scalability.aux[m
+[1mindex ac9c75e..75f5ecc 100644[m
+[1m--- a/scalability.aux[m
+[1m+++ b/scalability.aux[m
+[36m@@ -17,11 +17,9 @@[m
+ \citation{Exim}[m
+ \citation{MOSBENCH}[m
+ \citation{mcvoy1996lmbench}[m
+[31m-\@LN@col{1}[m
+ \@writefile{toc}{\contentsline {section}{\numberline {I}Introduction}{1}}[m
+ \newlabel{sec:introduction}{{I}{1}}[m
+ \newlabel{sec:introduction@cref}{{[section][1][]I}{1}}[m
+[31m-\@LN@col{2}[m
+ \citation{Clements15SCR}[m
+ \citation{Bueso2015STP}[m
+ \citation{Bueso2014MCS}[m
+[36m@@ -29,93 +27,85 @@[m
+ \citation{Andi2011adding}[m
+ \citation{Tim2013adding}[m
+ \citation{SilasBoydWickizerPth}[m
+[31m-\@LN@col{1}[m
+ \@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Scalability of AIM7 multiuser. This workload simultaneously create many processes. Up to 60 core, the stock Linux scale linearly, then they flattens out.\relax }}{2}}[m
+ \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}[m
+ \newlabel{fig:aim7_default}{{1}{2}}[m
+ \newlabel{fig:aim7_default@cref}{{[figure][1][]1}{2}}[m
+ \@writefile{toc}{\contentsline {section}{\numberline {II}Background and Problem}{2}}[m
+[31m-\@LN@col{2}[m
+ \@writefile{toc}{\contentsline {section}{\numberline {III}LDU Design}{2}}[m
+ \citation{Clements15SCR}[m
+[31m-\@LN@col{1}[m
+[31m-\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {III-A}}Log-based Concurrent updates}{3}}[m
+[31m-\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {III-B}}Approach}{3}}[m
+[31m-\@LN@col{2}[m
+ \citation{David2015ASYNCHRONIZED}[m
+ \citation{AlBahra2013NAS}[m
+ \citation{petrank2013lock}[m
+ \citation{zhang2013practical}[m
+[32m+[m[32m\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {III-A}}Log-based Concurrent updates}{3}}[m
+[32m+[m[32m\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {III-B}}Approach}{3}}[m
+ \citation{HuangLocklessList}[m
+[31m-\@LN@col{1}[m
+[31m-\@LN@col{2}[m
+ \@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {III-C}}LDU example}{4}}[m
+ \@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces LDU\xspace  example showing six update operations and one read operation. The execution flows from top to bottom. Memory represents original data structure and logging queue at T1, T2 and T3, respectively.\relax }}{5}}[m
+ \newlabel{fig:basic}{{2}{5}}[m
+ \newlabel{fig:basic@cref}{{[figure][2][]2}{5}}[m
+[31m-\@LN@col{1}[m
+[31m-\@LN@col{2}[m
+ \@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {III-D}}The LDU Algorithm}{5}}[m
+[31m-\@writefile{toc}{\contentsline {subsubsection}{\numberline {\unhbox \voidb@x \hbox {III-D}1}logical update - inserting logs}{5}}[m
+[31m-\@writefile{toc}{\contentsline {subsubsection}{\numberline {\unhbox \voidb@x \hbox {III-D}2}physical update - applying logs}{5}}[m
+[32m+[m[32m\@writefile{toc}{\contentsline {subsubsection}{\numberline {\unhbox \voidb@x \hbox {III-D}1}logical update: inserting logs}{5}}[m
+[32m+[m[32m\@writefile{toc}{\contentsline {subsubsection}{\numberline {\unhbox \voidb@x \hbox {III-D}2}physical update: applying logs}{5}}[m
+ \citation{OBJMAPOLS}[m
+ \citation{CorbetLWNRMAP}[m
+ \citation{CorbetLWNANON}[m
+[31m-\@LN@col{1}[m
+ \@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces LDU\xspace  logical update algorithm. {\texttt  {logical\_insert}} represents non-blocking insert function. It may be called by original insert position without locks. The fastpath is that when their object was removed by {\texttt  {logical\_remove}}, {\texttt  {logical\_insert}} just changes node's marking field.\relax }}{6}}[m
+ \newlabel{fig:gldulogicalupdate}{{3}{6}}[m
+ \newlabel{fig:gldulogicalupdate@cref}{{[figure][3][]3}{6}}[m
+[31m-\@LN@col{2}[m
+[32m+[m[32m\@writefile{toc}{\contentsline {subsubsection}{\numberline {\unhbox \voidb@x \hbox {III-D}3}LDU queues}{6}}[m
+ \@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces LDU\xspace  physical update algorithm. {\texttt  {synchronize\_ldu}} may be called by reader and converts update log to original data structure traversing the lock-less list.\relax }}{6}}[m
+ \newlabel{fig:glduphysicalupdate}{{4}{6}}[m
+ \newlabel{fig:glduphysicalupdate@cref}{{[figure][4][]4}{6}}[m
+ \@writefile{toc}{\contentsline {section}{\numberline {IV}Concurrent updates for Linux kernel}{6}}[m
+ \@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {IV-A}}Case study:reverse mapping}{6}}[m
+[31m-\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {IV-B}}file mapping}{6}}[m
+[31m-\@LN@col{1}[m
+[31m-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces An example of applying the LDU\xspace  to file reverse mapping. \relax }}{7}}[m
+[31m-\newlabel{fig:deferu}{{5}{7}}[m
+[31m-\newlabel{fig:deferu@cref}{{[figure][5][]5}{7}}[m
+[32m+[m[32m\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces LDU\xspace  physical update algorithm. {\texttt  {synchronize\_ldu}} may be called by reader and converts update log to original data structure traversing the lock-less list.\relax }}{7}}[m
+[32m+[m[32m\newlabel{fig:lduqueue}{{5}{7}}[m
+[32m+[m[32m\newlabel{fig:lduqueue@cref}{{[figure][5][]5}{7}}[m
+[32m+[m[32m\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {IV-B}}file mapping}{7}}[m
+ \@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces An example of applying the LDU\xspace  to file reverse mapping. \relax }}{7}}[m
+[31m-\newlabel{fig:deferu2}{{6}{7}}[m
+[31m-\newlabel{fig:deferu2@cref}{{[figure][6][]6}{7}}[m
+[32m+[m[32m\newlabel{fig:deferu}{{6}{7}}[m
+[32m+[m[32m\newlabel{fig:deferu@cref}{{[figure][6][]6}{7}}[m
+[32m+[m[32m\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces An example of applying the LDU\xspace  to file reverse mapping. \relax }}{7}}[m
+[32m+[m[32m\newlabel{fig:deferu2}{{7}{7}}[m
+[32m+[m[32m\newlabel{fig:deferu2@cref}{{[figure][7][]7}{7}}[m
+ \@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {IV-C}}anonymous mapping}{7}}[m
+[31m-\@LN@col{2}[m
+[31m-\@writefile{toc}{\contentsline {section}{\numberline {V}Implementation}{7}}[m
+[31m-\newlabel{sec:implementation}{{V}{7}}[m
+[31m-\newlabel{sec:implementation@cref}{{[section][5][]V}{7}}[m
+[31m-\@writefile{toc}{\contentsline {section}{\numberline {VI}Evaluation}{7}}[m
+[31m-\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {VI-A}}Experimental setup}{7}}[m
+ \citation{Harris2001Lockfree}[m
+ \citation{Gramoli2015Synchrobench}[m
+ \citation{David2015ASYNCHRONIZED}[m
+[31m-\citation{SilasBoydWickizer2010LinuxScales48}[m
+[31m-\@LN@col{1}[m
+[31m-\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Scalability of AIM7 multiuser for different method. The combination LDU\xspace  with unordered harris list scale well;in contrast, up to 60 core, the stock Linux scale linearly, then it flattens out.\relax }}{8}}[m
+[31m-\newlabel{fig:aim7}{{7}{8}}[m
+[31m-\newlabel{fig:aim7@cref}{{[figure][7][]7}{8}}[m
+[32m+[m[32m\@writefile{toc}{\contentsline {section}{\numberline {V}Implementation}{8}}[m
+[32m+[m[32m\newlabel{sec:implementation}{{V}{8}}[m
+[32m+[m[32m\newlabel{sec:implementation@cref}{{[section][5][]V}{8}}[m
+[32m+[m[32m\@writefile{toc}{\contentsline {section}{\numberline {VI}Evaluation}{8}}[m
+[32m+[m[32m\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {VI-A}}Experimental setup}{8}}[m
+[32m+[m[32m\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Scalability of AIM7 multiuser for different method. The combination LDU\xspace  with unordered harris list scale well;in contrast, up to 60 core, the stock Linux scale linearly, then it flattens out.\relax }}{8}}[m
+[32m+[m[32m\newlabel{fig:aim7}{{8}{8}}[m
+[32m+[m[32m\newlabel{fig:aim7@cref}{{[figure][8][]8}{8}}[m
+ \@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {VI-B}}AIM7}{8}}[m
+[31m-\@LN@col{2}[m
+[31m-\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Scalability of Exim. The stock Linux collapses after 60 core;in contrast, both unordered harris list and our LDU\xspace  flatten out.\relax }}{8}}[m
+[31m-\newlabel{fig:exim}{{8}{8}}[m
+[31m-\newlabel{fig:exim@cref}{{[figure][8][]8}{8}}[m
+[31m-\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {VI-C}}Exim}{8}}[m
+[32m+[m[32m\citation{SilasBoydWickizer2010LinuxScales48}[m
+ \citation{mcvoy1996lmbench}[m
+[31m-\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Read-write ratio from 50:50 to 1:99 percent\relax }}{9}}[m
+[31m-\@LN@col{1}[m
+[31m-\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Execution time of lmbench's fork micro benchmark. The fork micro benchmark drops down for all methods up to 15 core but either flattens out or goes up slightly after that. At 15 core, the stock Linux goes up;the others flattens out\relax }}{9}}[m
+[31m-\newlabel{fig:MicroBench}{{10}{9}}[m
+[31m-\newlabel{fig:MicroBench@cref}{{[figure][10][]10}{9}}[m
+[32m+[m[32m\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Scalability of Exim. The stock Linux collapses after 60 core;in contrast, both unordered harris list and our LDU\xspace  flatten out.\relax }}{9}}[m
+[32m+[m[32m\newlabel{fig:exim}{{9}{9}}[m
+[32m+[m[32m\newlabel{fig:exim@cref}{{[figure][9][]9}{9}}[m
+[32m+[m[32m\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {VI-C}}Exim}{9}}[m
+ \@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {VI-D}}Lmbench}{9}}[m
+[31m-\@LN@col{2}[m
+[32m+[m[32m\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Execution time of lmbench's fork micro benchmark. The fork micro benchmark drops down for all methods up to 15 core but either flattens out or goes up slightly after that. At 15 core, the stock Linux goes up;the others flattens out\relax }}{9}}[m
+[32m+[m[32m\newlabel{fig:MicroBench}{{11}{9}}[m
+[32m+[m[32m\newlabel{fig:MicroBench@cref}{{[figure][11][]11}{9}}[m
+ \@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {VI-E}}Updates ratio}{9}}[m
+[31m-\@writefile{toc}{\contentsline {section}{\numberline {VII}Discussion}{9}}[m
+ \citation{Clements15SCR}[m
+ \citation{BoydWickizer2008Corey}[m
+ \citation{BoydWickizer2012OLS}[m
+ \citation{AustinTClements2012RCUBalancedTrees}[m
+ \citation{Clements2013RadixVM}[m
+ \citation{SilasBoydWickizer2010LinuxScales48}[m
+[32m+[m[32m\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Read-write ratio from 50:50 to 1:99 percent\relax }}{10}}[m
+[32m+[m[32m\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces Read-write ratio from 50:50 to 1:99 percent\relax }}{10}}[m
+[32m+[m[32m\@writefile{toc}{\contentsline {section}{\numberline {VII}Discussion}{10}}[m
+[32m+[m[32m\@writefile{toc}{\contentsline {section}{\numberline {VIII}Related work}{10}}[m
+[32m+[m[32m\newlabel{sec:RelatedWork}{{VIII}{10}}[m
+[32m+[m[32m\newlabel{sec:RelatedWork@cref}{{[section][8][]VIII}{10}}[m
+ \citation{Dodds2015SCT}[m
+ \citation{Arbel2014ConcurrentRCU}[m
+ \citation{Matveev2015RLU}[m
+[36m@@ -129,12 +119,6 @@[m
+ \citation{MCSLocksKernel}[m
+ \citation{Courtois71}[m
+ \citation{McKenney98}[m
+[31m-\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Read-write ratio from 50:50 to 1:99 percent\relax }}{10}}[m
+[31m-\@LN@col{1}[m
+[31m-\@writefile{toc}{\contentsline {section}{\numberline {VIII}Related work}{10}}[m
+[31m-\newlabel{sec:RelatedWork}{{VIII}{10}}[m
+[31m-\newlabel{sec:RelatedWork@cref}{{[section][8][]VIII}{10}}[m
+[31m-\@LN@col{2}[m
+ \bibstyle{IEEEtran}[m
+ \bibdata{ref}[m
+ \bibcite{SilasBoydWickizer2010LinuxScales48}{1}[m
+[36m@@ -152,6 +136,8 @@[m
+ \bibcite{MOSBENCH}{13}[m
+ \bibcite{mcvoy1996lmbench}{14}[m
+ \bibcite{Clements15SCR}{15}[m
+[32m+[m[32m\@writefile{toc}{\contentsline {section}{\numberline {IX}Conclusion}{11}}[m
+[32m+[m[32m\@writefile{toc}{\contentsline {section}{References}{11}}[m
+ \bibcite{Bueso2015STP}{16}[m
+ \bibcite{Bueso2014MCS}{17}[m
+ \bibcite{Rohland2001Tempfs}{18}[m
+[36m@@ -163,10 +149,6 @@[m
+ \bibcite{zhang2013practical}{24}[m
+ \bibcite{HuangLocklessList}{25}[m
+ \bibcite{CorbetLWNRMAP}{26}[m
+[31m-\@LN@col{1}[m
+[31m-\@writefile{toc}{\contentsline {section}{\numberline {IX}Conclusion}{11}}[m
+[31m-\@writefile{toc}{\contentsline {section}{References}{11}}[m
+[31m-\@LN@col{2}[m
+ \bibcite{CorbetLWNANON}{27}[m
+ \bibcite{Harris2001Lockfree}{28}[m
+ \bibcite{Gramoli2015Synchrobench}{29}[m
+[36m@@ -181,13 +163,6 @@[m
+ \bibcite{MCSLocksKernel}{38}[m
+ \bibcite{Courtois71}{39}[m
+ \bibcite{McKenney98}{40}[m
+[31m-\@LN@col{1}[m
+[31m-\@LN@col{2}[m
+ \newlabel{LastPage}{{}{12}}[m
+ \xdef\lastpage@lastpage{12}[m
+ \gdef\lastpage@lastpageHy{}[m
+[31m-\gdef\minted@oldcachelist{,[m
+[31m-  default.pygstyle,[m
+[31m-  default-pyg-prefix.pygstyle,[m
+[31m-  0D1393A62D361E3B9A2E595DCA285561717F104E9BA6CCBFA194C8CED523703A.pygtex,[m
+[31m-  EFDAF3CEE442E859EA35ED8337B15242896B93EC03DC37296D374CB8EA137CA7.pygtex}[m
+[1mdiff --git a/scalability.blg b/scalability.blg[m
+[1mdeleted file mode 100644[m
+[1mindex 406cf00..0000000[m
+[1m--- a/scalability.blg[m
+[1m+++ /dev/null[m
+[36m@@ -1,73 +0,0 @@[m
+[31m-This is BibTeX, Version 0.99d (TeX Live 2015/Debian)[m
+[31m-Capacity: max_strings=35307, hash_size=35307, hash_prime=30011[m
+[31m-The top-level auxiliary file: scalability.aux[m
+[31m-The style file: IEEEtran.bst[m
+[31m-Reallocated singl_function (elt_size=4) to 100 items from 50.[m
+[31m-Reallocated singl_function (elt_size=4) to 100 items from 50.[m
+[31m-Reallocated singl_function (elt_size=4) to 100 items from 50.[m
+[31m-Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.[m
+[31m-Reallocated singl_function (elt_size=4) to 100 items from 50.[m
+[31m-Database file #1: ref.bib[m
+[31m-Warning--I didn't find a database entry for "OBJMAPOLS"[m
+[31m--- IEEEtran.bst version 1.14 (2015/08/26) by Michael Shell.[m
+[31m--- http://www.michaelshell.org/tex/ieeetran/bibtex/[m
+[31m--- See the "IEEEtran_bst_HOWTO.pdf" manual for usage information.[m
+[31m-Warning--empty booktitle in mckenney2011parallel[m
+[31m-Warning--empty booktitle in PaulDetailLWN[m
+[31m-Warning--empty author in AIM7Benchmark[m
+[31m-Warning--empty booktitle in AIM7Benchmark[m
+[31m-Warning--empty year in AIM7Benchmark[m
+[31m-Warning--empty author in Exim[m
+[31m-Warning--empty booktitle in Exim[m
+[31m-Warning--empty author in MOSBENCH[m
+[31m-Warning--empty booktitle in MOSBENCH[m
+[31m-Warning--empty booktitle in Bueso2014MCS[m
+[31m-Warning--empty booktitle in Rohland2001Tempfs[m
+[31m-Warning--empty booktitle in HuangLocklessList[m
+[31m-Warning--empty booktitle in CorbetLWNRMAP[m
+[31m-Warning--empty booktitle in CorbetLWNANON[m
+[31m-Warning--missing publisher in MCSLocksKernel[m
+[31m-[m
+[31m-Done.[m
+[31m-You've used 40 entries,[m
+[31m-            4087 wiz_defined-function locations,[m
+[31m-            1091 strings with 15326 characters,[m
+[31m-and the built_in function-call counts, 28924 in all, are:[m
+[31m-= -- 2223[m
+[31m-> -- 589[m
+[31m-< -- 205[m
+[31m-+ -- 323[m
+[31m-- -- 98[m
+[31m-* -- 1383[m
+[31m-:= -- 4264[m
+[31m-add.period$ -- 85[m
+[31m-call.type$ -- 40[m
+[31m-change.case$ -- 48[m
+[31m-chr.to.int$ -- 516[m
+[31m-cite$ -- 55[m
+[31m-duplicate$ -- 2123[m
+[31m-empty$ -- 2701[m
+[31m-format.name$ -- 121[m
+[31m-if$ -- 6823[m
+[31m-int.to.chr$ -- 0[m
+[31m-int.to.str$ -- 40[m
+[31m-missing$ -- 376[m
+[31m-newline$ -- 161[m
+[31m-num.names$ -- 37[m
+[31m-pop$ -- 958[m
+[31m-preamble$ -- 1[m
+[31m-purify$ -- 0[m
+[31m-quote$ -- 2[m
+[31m-skip$ -- 2258[m
+[31m-stack$ -- 0[m
+[31m-substring$ -- 1257[m
+[31m-swap$ -- 1567[m
+[31m-text.length$ -- 33[m
+[31m-text.prefix$ -- 0[m
+[31m-top$ -- 5[m
+[31m-type$ -- 40[m
+[31m-warning$ -- 15[m
+[31m-while$ -- 127[m
+[31m-width$ -- 42[m
+[31m-write$ -- 408[m
+[31m-(There were 16 warnings)[m
+[1mdiff --git a/scalability.pdf b/scalability.pdf[m
+[1mindex fe99132..7c195ba 100644[m
+Binary files a/scalability.pdf and b/scalability.pdf differ

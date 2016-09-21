@@ -482,10 +482,6 @@
 % use for special paper notices
 %\IEEEspecialpapernotice{(Invited Paper)}
 
-
-
-
-
 % make the title area
 \maketitle
 
@@ -493,6 +489,10 @@
 \newif\ifkor
 \kortrue 
 %\korfalse
+
+\newif\ifkorthesis
+%\korthesistrue 
+\korthesisfalse
 
 \begin{abstract}
 We propose a novel light weight concurrent updates method, \deferu, 
@@ -504,14 +504,6 @@ using representative benchmark programs.
 Our evaluation reveals that the Linux kernel with \deferu shows performance
 improvement by ranging from Xx through Xx on a 120 core system.
 
-We propose a novel light weight concurrent update method, \deferu, 
-to improve performance scalability for Linux kernel on many-core systems
-through eliminating lock contentions for update-heavy global data structures
-during process spawning and optimizing update logs. 
-The proposed \deferu is implemented into Linux kernel 4.5 and evaluated 
-using representative benchmark programs. 
-Our evaluation reveals that the Linux kernel with \deferu shows performance
-improvement by ranging from Xx through Xx on a 120 core system.
 \end{abstract}
 
 \begin{IEEEkeywords}

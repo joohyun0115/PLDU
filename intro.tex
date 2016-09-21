@@ -16,6 +16,19 @@
 그 이유는 업데이트 오퍼레이션은 여러 쓰레드가 동시에 수행되지 못하기
 때문이다~\cite{mckenney2011parallel}.
 \else
+%최근 number of core가 증가하고 있다. 따라서 multicore system에서 manycore system시스템으로 바뀌고
+% 있다.
+%manycore system에 대한 operationg system kernel의 parallelism은 시스템 전체의
+% parallelism에서 가장 중요하다.
+%만약 kernel이 scale하지 않으면, 그 위에 동작하는 application들도 역시 scale하지 않는다[].
+%이처럼 중요한 operating system kernel 중 multicore or manycore 환경에서 많이
+% 사용되는 operating system가 linux kernel이다[].
+%하지만 Linux kernel은 아직 scalability problem이
+%있다~\cite{SilasBoydWickizer2010LinuxScales48}~\cite{Changwoo2016UMSF}.
+%scalability problem 중 하나는 lock contention 때문에 발생하는 update serialization 
+%problem이다~\cite{Matveev2015RLU}~\cite{Dodds2015SCT}.
+%그 이유는 update operation은 여러 thread 동시에 수행되지 못하기
+%때문이다~\cite{mckenney2011parallel}.
 \fi
 
 
@@ -41,19 +54,15 @@ per-core 또는 atomic하게 log로 저장하고 read operation을 수행하기 
 %방법 들이 연구되고 있다~\cite{Arbel2014ConcurrentRCU}~\cite{Matveev2015RLU}.
 %이러한 concurrent updates 방법들은 워크로드 특성인 update ratio에 따라 많은 성능 차이를
 %보인다~\cite{Matveev2015RLU}.
-%이 중 리눅스 커널의 reverse page mapping과 같이 high update ratio를 가진 update-heavy한 data
-%structure일 경우에는, update lock 경합 때문에 발생하는 scalability 문제를 해결하기 위한 여러 방법이 연구 되고
-%있다.
+%이 중 high update rate을 가진 data stgructure 때문에 발생하는 scalability problem를 해결하기 위한
+% 여러 방법이 연구 되고 있다.
 %그 중 하나는 cache coherence traffic을 줄인 log-based
 %알고리즘~\cite{Shalev2006PLS}~\cite{Hendler2010FC}~\cite{SilasBoydWickizerPth}을
 %사용하는 것이다.
-%Log-based 알고리즘은 lock을 피하기 위해 update가 발생하면, data structure의 update
-%operation(insert or remove)을 argument와 함께 저장하고, 주기적 또는 read operation을 수행하기 전에
-%applies the updates in all the logs to the data structure, so reader can read
-%up to date data structure. 이것은 마치 CoW(Copy On Write)와 유사한 결과를
-%얻는다~\cite{PaulDetailLWN}.
+%Log-based 알고리즘은 update가 발생하면, data structure의 update operation을
+%per-core 또는 atomic하게 log로 저장하고 read operation을 수행하기 전에 저장된 log를 수행하는것이다 .
+%이것은 마치 CoW(Copy On Write)와 유사하다~\cite{PaulDetailLWN}.
 \fi
-
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -72,18 +81,15 @@ per-core log를 활용하여 update-heavy한 자료구조를 대상으로 동시
 이것은 결국 확장성과 성능을 저해한다. 
 \else
 %S. Boyd-Wickizer et al. 는 synchronized timestamp counters 기반의 per-core log를
-% 활용하여 update heavy한 자료구조에서의 concurrent updates 문제를 해결하였다~\cite{SilasBoydWickizerPth}.
+% 활용하여 update heavy한 data structure를 대상으로 concurrent updates 문제를
+%해결함과 동시에 cache communication bottleneck을 줄였다~\cite{SilasBoydWickizerPth}.
 %Synchronized timestamp counters 기반의 per-core log를 활용한 concurrent updates 방법은
-%update 부분만 고려했을 때, per-core에 데이터를 저장함으로 굉장히 높은 scalability를 가질
-%수 있다.
-%하지만 per-core 기반의 synchronized timestamp counters를 사용한 방법은 결국 timestamp ordering
-%and merging 작업을 야기한다.
+%update 부분만 고려했을 때, per-core에 데이터를 저장함으로 굉장히 높은 scalability를 가진다.
+%하지만 per-core 기반의 synchronized timestamp counters를 사용한 방법은 결국 timestamp
+% merging and ordering 작업을 야기한다.
 %만약 코어 수가 늘어 날 경우, resolving logs(merging, absorbing) may require
 %additional sequential processing, which can limit scalalbility and
 %performance.
-%Furthermore, per-core approach does not work well for a all data structure
-%because of limited per-core memory size;some objects need huge per-core hash
-%table size(section X).
 \fi
 
 
@@ -104,18 +110,16 @@ LDU는 타임스탬프 카운터가 필요한 operation log를 업데이트 순�
 최소한의 shared-memory system의 hardware-based synchronization 기법(compare and swap,
 test and set, atomic swap)을 조합하여 동시적 업데이트 문제를 해결하였다.
 \else
-%본 논문은 high update rate를 가진 data structure를 위한 새로운 방법인 LDU를 제안한다.
-%LDU는 synchronized timestamp counters를 이용함에 따라 생기는 ordering or merging
-%overhead에 대한 문제를 줄이기 위해, 조금 더 simple하고 lightweight한 방법을 사용하였다.
-%LDU의 철학은 FC 또는 OpLog와 같이 분산 시스템에서 사용하는 log기반의 concurrent updates 방식과 
-%shared-memory system의 최소한의 hardware-based synchronization 기법(예를 들어, compare and
-%swap, test and set) 이용하여 이 문제를 해결 하였다.
-%LDU는 per-core 방식이기 때문에 발생하는 data structure dependency가 있는 문제를 해결하기 위해, log 저장을
-%global queue를 사용하는 GLDU와 global header의 cache
-%coherece traffic을 줄이기 위해, per-core에 log를 저장하는 PLDU로 개발하였다.
-%이것은 서로간 상호보완적이다.
-%또한 새로운 update-side absorbing과 reuse garbage log등 2가지 optimization 기술을 사용하여 삭제
-%가능한 operation log를 지우고 재활용하는 방법으로 성능 최적화를 수행하였다.
+%본 논문은 synchronized timestamp counters를 이용함에 따라 생기는 추가적인 sequencial processing 문제를
+%해결하기 위해 shared memory system을 위한 새로운 LDU(Lightweitgh log-based Deferred
+% Update)를 개발하였다.
+%LDU는 timestamp counters가 필요한 operation log를 update 순간 지우고, 매번 로그를 생성하지 않고 재활용하는
+% 방법이다.
+%이로인해 synchronized timestamp counter 문제와 cache communication bottleneck 문제를 동시에
+%해결하였다.
+%해결 방법은 분산 시스템에서 사용하는 synchronized timestamp log기반의 concurrent updates 방식[]과
+%최소한의 shared-memory system의 hardware-based synchronization 기법(compare and swap,
+%test and set, atomic swap)을 조합하여 동시적 업데이트 문제를 해결하였다.
 \fi
 
 \ifkor
@@ -129,13 +133,13 @@ cache 효율성이 높아진다~\cite{Hendler2010FC}.
 게다가 마지막으로, log를 저장하기 전에 로그를 삭제하므로 보다 빠르게 log의 수를 줄일 수 있다. 
 \else
 %이처럼 synchronized timestamp counters를 제거함과 동시에, cache communication bottleneck
-% 줄인 LDU는 전형적인 log-based 알고리즘의 장점을 모두 가진다.
+% 줄인 LDU는 기존 log-based algorithm들의 장점들을 모두 포함할 뿐만아니라 추가적인 장점을 가진다.
 %첫째로, update가 수행하는 시점 즉 로그를 저장하는 순간에는 lock이 필요가 없다. 
 %따라서 lock에 대한 오버헤드 없이 concurrent updates를 수행할 수 있다
-%둘째로, 저장된 update operation log를 corse-grain lock과 함께 하나의 코어에서 수행하기 때문에,
+%둘째로, 저장된 update operation log를 coarse-grained lock과 함께 하나의 코어에서 수행하기 때문에,
 %cache 효율성이 높아진다~\cite{Hendler2010FC}.
-%셋째로, 기존 여러 데이터 structure에 쉽게 적용할 수 있는 장점이 있다.
-%마지막으로 저장된 log를 수행하지 전에 여러 optimization 방법을 사용하여 log의 수를 줄일 수 있다. 
+%셋째로, 기존 여러 자료구조에 쉽게 적용할 수 있는 장점이 있다.
+%게다가 마지막으로, log를 저장하기 전에 로그를 삭제하므로 보다 빠르게 log의 수를 줄일 수 있다. 
 \fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -179,18 +183,20 @@ LDU는 hardware-based synchronization 기법을 이용하여 LDU는 로그를 �
 Fork 관련 벤치마크 성능은 워크로드 특성에 따라 1.6x부터 2.2x까지 개선되었다.
 \end{itemize}
 \else
-%\noindent
-%\textbf{Contributions.} This paper makes the following contributions:
-%\begin{itemize}
-%\item 우리는 리눅스 커널을 위한 새로운 log-based concurrnet updates 방법인 LDU를 개발하였다. 
-%LDU는 synchronized timestamp counters를 이용함에 따라 생기는 ordering or merging overhead와
-%workload에 따른 interfaces dependency가 있는 문제를 줄이기 위해, 조금 더 simple하고
-%lightweight한 방법과 새로운 update-side absorbing과 reuse garbage의 optimization을
-%사용하여 log-based concurrent updates를 구현하였다.
-%\item 우리는 LDU을 practical한 manycore system인 intel xeon 120코어 위에 동작하는 리눅스 커널에
-%적용하여, fork scalability 문제를 해결하였다. 
+
+\textbf{Contributions.} This paper makes the following contributions:
+\begin{itemize}
+\item high update rate
+%\item 우리는 high update rate를 가지는 data structuer를 위한 새로운 log-based
+%concurrnet updates 방법인 LDU를 개발하였다.
+%LDU는 동기화된 타임스탬프 카운터를 이용함에 따라 생기는 시간 정렬과 머징에 의한 추가적인 sequencial processing 문제를
+%최소한의 hardware-based synchronization 기법을 사용하여 해결하였다.
+%LDU는 hardware-based synchronization 기법을 이용하여 LDU는 로그를 업데이트 순간 지우고 로그를 재활용한다.
+%\item 우리는 LDU을 practical한 manycore system인 intel xeon 120코어 위에 동작하는 리눅스 커널의
+%2가지 reverse mapping(anonymous, file)에 적용하여, fork scalability 문제를 해결하였다.
 %Fork 관련 벤치마크 성능은 워크로드 특성에 따라 1.6x부터 2.2x까지 개선되었다.
-%\end{itemize}
+\end{itemize}
+
 \fi
 
 
@@ -207,14 +213,13 @@ section 5 explains our implementations in Linux and
 Section 6 shows the results of the experimental evaluation. 
 Finally, section 8 concludes the paper.
 \else
-%The rest of this paper is organized as follows.
-%Section 2 summarizes related works and compare our contributions to previous
-%works. 
-%Section 3 describes the design of the LDU algorithm and 
-%Section 4 explains how to apply to Linux kernel.
-%section 5 explains our implementations in Linux and
-%Section 6 shows the results of the experimental evaluation. 
-%Finally, section 7 concludes the paper.
+The rest of this paper is organized as follows.
+Section 2 describes the background and Linux scalability problem.
+Section 3 describes the design of the LDU algorithm and 
+Section 4 explains how to apply to Linux kernel.
+section 5 explains our implementations in Linux and
+Section 6 shows the results of the experimental evaluation. 
+Finally, section 8 concludes the paper.
 \fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$

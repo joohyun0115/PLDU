@@ -4,6 +4,7 @@
 % Paragraph 1: Linux Scalability : Fork intensive workload 문제점 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
+\ifkor
 \begin{figure}
   \begin{subfigure}[b]{0.23\textwidth}
     \includegraphics[width=\textwidth]{graph/aim7_default}
@@ -19,8 +20,6 @@
   Up to 60 core, the stock Linux scale linearly, then they flattens out.}
   \label{fig:aim7_default}
 \end{figure}
- 
-\ifkor
 
 운영체제 커널의 paralleism은 시스템 전체의 parallesim에서 가장 중요하다. 
 만약에 커널이 scale하지 않으면, 그 위에 동작하는 응용프로그램들도 역시 scale하지 않는다~\cite{Clements15SCR}.
