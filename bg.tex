@@ -31,7 +31,9 @@ File system scalability를 최소화 하기 위해 temp filesystem~\cite{Rohland
 사용하였다.
 This workload simultaneously create many processes.
 Up to 60 core, the stock Linux scale linearly, then they flattens out.
+
 \else
+
 \begin{figure}
   \begin{subfigure}[b]{0.23\textwidth}
     \includegraphics[width=\textwidth]{graph/aim7_default}
@@ -47,6 +49,31 @@ Up to 60 core, the stock Linux scale linearly, then they flattens out.
   Up to 60 core, the stock Linux scale linearly, then they flattens out.}
   \label{fig:aim7_default}
 \end{figure}
+
+
+%운영체제 커널의 paralleism은 시스템 전체의 parallesim에서 가장 중요하다. 
+% Sentence #1:
+Operating system paralleism is of utmost importance for scalable systems.
+
+%만약에 커널이 scale하지 않으면, 그 위에 동작하는 응용프로그램들도 역시 scale하지 않는다~\cite{Clements15SCR}.
+% Sentence #1:
+
+%우리는 이처럼 중요한 부분인 운영체제 커널중 multi-core에 최적화된 리눅스의 scalabiliy를 분석하기 위해, AIM7
+%multiuser[]를 가지고 scalability를 실험해보았다.
+% Sentence #1:
+Our 
+
+%AIM7은 최근에도 scalability를 위해 reserach 진영과 리눅스 커널 진영에서도 활발히 사용되고 있는 벤치마크 중
+%하나이다~\cite{Bueso2015STP}~\cite{Bueso2014MCS}.
+% Sentence #1:
+
+%File system scalability를 최소화 하기 위해 temp filesystem~\cite{Rohland2001Tempfs}을
+%사용하였다.
+% Sentence #1:
+
+%This workload simultaneously create many processes.
+%Up to 60 core, the stock Linux scale linearly, then they flattens out.
+
 
 \fi
 
@@ -70,11 +97,54 @@ Silas wikizer가 OpLog 논문을 통해 fork의 scalability 문제의 원인으�
 결론적으로 본 연구의 분석 결과 둘 중 하나가 아니라 두 가지 락 모두 fork의 scalabililty 문제를 야기 시킨다.
 즉 두가지 모두 개선해야지 fork의 scalalbility가 향상 된다. 
 \else
-To understand the source of this bottleneck, the Figure-xx shows the cost
-of acquiring the lock when running AIM7 on a stock Linux kernel on the 120 core
-intel xeon machine.
-The graph numbers are collected using lock\_stat, a Linux kernel lock profiler
-that reports how long each lock is held and the wait time to acquire the lock.
+
+%우리는 Scalability에 문제가 있는 120코어에서 리눅스의 Lockstat[]를 이용하여 락 경합을 분석하였다. 
+% Sentence #1:
+
+
+%먼저 멀티 프로세스 기반의 벤치마크인 AIM7을 동작시키고 동시에 120코어 대해서 락 경합을 분석하면 
+%그림 3과 같은 결과를 가진다. 
+% Sentence #1:
+
+
+%AIM7 벤치마크의 경우 상당히 많은 부분이 anonvma에서 쓰기 락 경합이 발생한다. 
+% Sentence #1:
+
+
+
+%이는 리눅스 역 매핑(reverse mapping)을 효율적으로 수행하기 위한 자료구인 anonvma가 수 많은 fork에 의해 프로세스를
+% 생성하면서 발생하는 락 경합 문제이다.
+% Sentence #1:
+
+
+
+%다음으로 우리는 anonvma의 lock 경합을 줄이기 위해, 임시로 fork에서 anonvma를 호출하는 부분과 read와
+%관련있는 pageswap이 안되도록 하고, 120코어를 대상으로 다시 Lock 경합을 분석하여 보았다.
+% Sentence #1:
+
+
+%이 때 부터 그동안 상대적으로 가려졌던 file reverse mapping에서 많은 락 경합이 발생되었다. 
+% Sentence #1:
+
+
+%이러한 anonvma reverse page mapping은 리눅스 커뮤니티에서 잘 알려진 락 경합
+%문제~\cite{Andi2011adding}~\cite{Tim2013adding}이고, file mapping에 대한 락 경합 문제는
+%Silas wikizer가 OpLog 논문을 통해 fork의 scalability 문제의 원인으로 제시한 부분이다.
+% Sentence #1:
+
+
+%결론적으로 본 연구의 분석 결과 둘 중 하나가 아니라 두 가지 락 모두 fork의 scalabililty 문제를 야기 시킨다.
+% Sentence #1:
+
+
+%즉 두가지 모두 개선해야지 fork의 scalalbility가 향상 된다. 
+% Sentence #1:
+
+%To understand the source of this bottleneck, the Figure-xx shows the cost
+%of acquiring the lock when running AIM7 on a stock Linux kernel on the 120 core
+%intel xeon machine.
+%The graph numbers are collected using lock\_stat, a Linux kernel lock profiler
+%that reports how long each lock is held and the wait time to acquire the lock.
 
 \fi
 
@@ -92,6 +162,26 @@ high update rate 앞에서는 serialization된다.
 Update는 execulucive lock을 통해 보호해야하기 때문에, update rate 높은 상황이 발생하면 리눅스
 커널은 결국 lock에 의해 serialized되어 scalability가 떨어진다.
 \else
+
+%두가지 revserse page mapping의 근본적인 문제는 hight update operation에 대한 serialization
+%때문에 발생하는 문제이다.
+% Sentence #1:
+
+
+%이러한 revser page mapping은 page frame reclaiming을 위해 존재하며, 리눅스가 fork(), exit(),
+%and mmap() 시스템콜을 사용할 때 rmap을 update한다.
+% Sentence #1:
+
+
+%리눅스 커널은 reader들은 parallal 하게 동작할 수 있는 RW-lock 또는 RCU 같은 락 메카니즘이 있으나, 이러한 락은 결국
+%high update rate 앞에서는 serialization된다.
+% Sentence #1:
+
+
+%Update는 execulucive lock을 통해 보호해야하기 때문에, update rate 높은 상황이 발생하면 리눅스
+%커널은 결국 lock에 의해 serialized되어 scalability가 떨어진다.
+% Sentence #1:
+
 
 \fi
 
@@ -111,6 +201,35 @@ due to inter-core communication overheads~\cite{SilasBoydWickizerPth}.
 방법들이 연구되고 있다.
 우리의 LDU도 이러한 log-based 기반 방법 활용하였으며, log-based 방법에 대한 설명은 다음 장에서 자세히 다룬다.
 \else
+
+%이러한 high update rate이 발생하는 상황의 update serialization 문제에 대한 해결 방법들은 존재한다. 
+% Sentence #1:
+
+
+
+%해결 방법은 concurrent updates를 위한, non-blocking data structure와 log-based 알고리즘을
+% 사용하는 방법이 있다.
+% Sentence #1:
+
+
+%Non-blocking algorithms들은 hardware synchronized atomic 연산들을 활용하여 current 하게
+%update와 read를 수행하게 만든 data structure이다.
+% Sentence #1:
+
+
+%하지만 shared memory global value를 multipul CAS로 접근하여 bottlenecks이 생긴다.
+%due to inter-core communication overheads~\cite{SilasBoydWickizerPth}.
+% Sentence #1:
+
+
+%최근에는 Deu to the multipul CAS, inter-core communication overheads를 줄인 log-based
+%방법들이 연구되고 있다.
+% Sentence #1:
+
+
+
+%우리의 LDU도 이러한 log-based 기반 방법 활용하였으며, log-based 방법에 대한 설명은 다음 장에서 자세히 다룬다.
+% Sentence #1:
 
 
 \fi
