@@ -32,7 +32,21 @@ File system scalability를 최소화 하기 위해 temp filesystem~\cite{Rohland
 This workload simultaneously create many processes.
 Up to 60 core, the stock Linux scale linearly, then they flattens out.
 \else
-
+\begin{figure}
+  \begin{subfigure}[b]{0.23\textwidth}
+    \includegraphics[width=\textwidth]{graph/aim7_default}
+    \caption{aa}
+  \end{subfigure}%
+  \begin{subfigure}[b]{0.25\textwidth}
+    \includegraphics[width=\textwidth]{graph/lockstat}
+    \caption{aa}
+  \end{subfigure}
+  \centering
+  \caption{Scalability of AIM7 multiuser. This workload simultaneously create
+  many processes.
+  Up to 60 core, the stock Linux scale linearly, then they flattens out.}
+  \label{fig:aim7_default}
+\end{figure}
 
 \fi
 
