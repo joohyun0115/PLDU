@@ -26,33 +26,27 @@ communication overhead를 최소화 하였다.
 \else
 %LDU는 리눅스 커널의 high update rates를 가진 data strcuture의 scalability를
 %해결하기 위한 log-based 방법 중에 하나이다.
-% Sentence #1:
-
-
-
+The LDU is a log-based concurrent updates method to remove scalability
+bottlenecks for update-heavy data structure.
 %동기화된 타임스탬프 카운터 기반의 per-core log를 활용한 동시적 업데이트방법은 결국 timestamp ordering and
 %merging 작업을 야기한다.
-% Sentence #1:
-
-
-
+Synchronized timestamp counters method may incur timestamp merging and
+ordering process .
 %특히 코어 수가 늘어 날 경우, per-core 로그를 자료 구조에 적용하는 과정에서 추가적인 sequntial 프로세싱이 요구된다.
 %이것은 확장성과 성능을 저해한다. 
-% Sentence #1:
-
-
-
+When increasing core counts, resolving logs(merging, absorbing) may require
+additional sequential processing, which can limit scalalbility and performance.
 %이러한 문제를 해결하기 위해, LDU는 log기반 방식의 concurrent updates 방법과 atomic synchronization
 %기능을 최소한으로 사용하도록 설계하였다.
-% Sentence #1:
-
-
-
+To solve the sequential processing due to the synchronized timestamp counters
+for shared memory system, we propose a novel lightweight log-based deferred
+update method.
 %따라서, LDU는 synchronized timestamp counter를 사용하는 방식의 timestamp를 제거함과 동시에 cache
 %communication overhead를 최소화 하였다.
-% Sentence #1:
-
-
+LDU simply removes operation log requiring timestamp counter at update time and
+reuses the garbage log in log's queue without creating new log.
+Therefore, we can eliminate synchronized timestamp counter and cache
+communication bottleneck.
 This section explains these algorithmic design aspects of LDU.
 \fi
 
@@ -75,19 +69,19 @@ applies the updates in all the logs to the data structure, so reader can read up
 \else
 %Update heavy한 자료구조 때문에 발생하는 scalability 문제에 대한 해결책 중 하나는 Log-based 알고리즘을 사용하는
 %것이다.
-% Sentence #1:
-
-
+Log-based algorithms~\cite{Hendler2010FC}~\cite{SilasBoydWickizerPth} can solve
+this update serialization problem to reduce cache coherence-related overheads
+for update-heavy data structure.
 %Log-based 알고리즘은 lock을 피하기 위해 update가 발생하면, data structure의 update
 %operation(insert or remove)을 argument와 함께 저장하고, 주기적 또는 read operation을 수행하기 전에
 %applies the updates in all the logs to the data structure, so reader can read
 % up to date data structure.
-% Sentence #1:
-
-
+Log-based algorithm is that when update operations occur, it logs the update
+operation and applies the all operation logs to the data structure
+before read operation, so reader can read up to date data structure;it similar
+to CoW(Copy On Write)~\cite{PaulDetailLWN}.
 %이러한 Log-based 방법은 마치 CoW(Copy on Write)와 유사하다.
 %즉, read 전에 저장된 log가 수행됨으로 read가 간혈적으로 수행되는 data structure에 적합한 방법이다.
-% Sentence #1:
 
 
 \fi
@@ -111,38 +105,21 @@ LDU도 log-based approach를 따른다. 그러므로 앞에서 설명한 log-bas
 \else
 Log-based approaches can help to support high update rates because
 
-%Update heavy한 구조를 위한 Log-based 방법은 총 4가지의 장점을 가진다. 
-% Sentence #1:
-
-
+%Update heavy한 구조를 위한 Log-based 방법은 총 3가지의 장점을 가진다. 
+LDU contains not only benefits of log-based algorithms but also additional benefit.
+In addition, finally, since LDU can eliminate log before inserting log's queue,
+LDU's log management is efficient.
 %첫째로, update가 수행하는 시점 즉 로그를 저장하는 순간에는 lock이 필요가 없다. 
-% Sentence #1:
-
-
 %따라서 update를 concurrent하게 수행할 수 있을 뿐아니라, lock 자체가 가지고 있는 overall coherence
 % traffic is significantly reduced.
-% Sentence #1:
-
-
-% 둘째로, 저장된 sequantial update operation log를 corse-grain lock과 함께 하나의 코어에서 수행하기
-% 때문에, cache 효율성이 높아진다.
-% Sentence #1:
-
-
-% 셋째로, 큰 수정 없이 기존 여러 데이터(tree, queue) structure에 쉽게 적용할 수 있는 장점이 있다.
-% Sentence #1:
-
-
+% 둘째로, 큰 수정 없이 기존 여러 데이터(tree, queue) structure에 쉽게 적용할 수 있는 장점이 있다.
+Second, these techniques can be easily applied to other data structures.
 % 마지막으로 저장된 log를 실제 수행하지 않고, 여러가지 optimization 방법을 사용하여 적은 operation으로 Log를 줄일 수
 % 있다.
-% Sentence #1:
-
-
+First, log-based algorithms can remove synchronization overhead resulted in
+reducing the cache invalidation traffic.
 % LDU도 log-based approach를 따른다. 그러므로 앞에서 설명한 log-based 방법의 장점을 모두 가짐과 동시에 업데이트
 % 순간 삭제 가능한 log를 지움으로 성능을 향상시킨다.
-% Sentence #1:
-
-
 \fi
 
 
@@ -198,71 +175,57 @@ object에 대해서 insert 또는 remove operation만 남게 된다.
 LDU는 update-side removing이라는 방법으로 이러한 time-senstivive한 log를 update 순간 바로
 지운다.
 \else
-
-%If a process logs an insert operation on one core, migrates to another core,
-% and logs a remove operation, the remove should eventually execute after the
-% insert[OpLog].
-
-
 %Synchronized timestamp가 근본적으로 필요한 이유는 when a process logs an insert operation
 % on one core, migrates to another core, and logs a remove operation, the remove
 % should eventually execute after the insert[].
-% Sentence #1:
-
-
-%LDU는 update 순간 time-sensitive log를 제거함으로 synchronized timestamp counter 때문에
-% 발생하는 문제를 해결하였다.
-% Sentence #1:
-
-
-% time-sensitive log란 순서가 바꿔서는 안되는 operation log이다. 
-% Sentence #1:
-
-
+The fundamental reason for requiring synchronized timestamp counters is that 
+some operations should need to be ordered.
+For example, a process logs an insert operation to per-core memory, then
+migrates to another core, and logs a remove operation to per-core memory.
+The remove operation must eventually execute after the insert operation[].
+Thus, OpLog should needs synchronized timestamp counters.
 %본 논문에서는 이러한 time-sensitive log를 설명하기 위해, ~\cite{Clements15SCR}에서 사용한 심볼방법을
 % 이용하였다.
-% Sentence #1:
-
-
+To explain this time-sensitive log, we use symbol label used by this
+paper~\cite{Clements15SCR}.
 %먼저 $\oplus$와 $\ominus$는 각각 insert와 remove update operation을 의미한다.
-% Sentence #1:
-
-
+We describe insert as plus-circles $\oplus$, remove as minus-circles
+$\ominus$ and object as color-circles \inv{2}{B}(object B). 
+Color and vertical offset differentiate cpus.
 %바로 따라오는 심볼은 object의 명을 의미하고 색깔과 높낮이는 서로 다른 CPU를 의미한다.
-% Sentence #1:
-
+For example
 \begin{center}
 $\oplus$\inv{1}{A}, $\oplus$\inv{2}{B}, $\oplus$\inv{3}{C},$\ominus$\inv{2}{A},
 $\ominus$\inv{3}{C}, $\oplus$\inv{3}{A}, $\oplus$\inv{3}{C},$\ominus$\inv{1}{C}
 \end{center}
-
+consists of five insert operations, three remove operation, three cpus, and
+three objects.
 %즉 위와 같이 수행되었을 경우 time-sensitive log인 $\oplus$\inv{1}{A}과 $\ominus$\inv{2}{A}에
 % 대해서는 항상 timestamp에 맞게 수행되어야 한다.
-% Sentence #1:
-
-
+This example show that $\oplus$\inv{1}{A} and $\ominus$\inv{2}{A},
+time-sensitive log, must be executed in chronological order.
+%LDU는 update 순간 이러한 time-sensitive log를 제거함으로 synchronized timestamp counter 때문에
+% 발생하는 문제를 해결하였다.
+LDU can eliminates this time-sensitive log when logs update operations with time
+stamps, so LDU can removes synchronized timestamp counter.
 %여기서 중요한 사실은 time-sensitive operation log은 삭제해도 괜찮은 operation log들 이다.
-% Sentence #1:
-
-
-%insert-remove operation 또는 remove-insert operation을 가지는  $\ominus$\inv{2}{B},
-%$\oplus$\inv{3}{C} 삭제되도 괜찮으며, 결국 남은 operation log은 같은 object에 대해서 insert 또는
+One more important fact that these time-sensitive operation logs may be removed
+by optimization phase.
+%예를 들어, insert-remove operation 또는 remove-insert operation을 가지는 
+% $\ominus$\inv{2}{B}, $\oplus$\inv{3}{C} 삭제되도 괜찮으며, 결국 남은 operation log은 같은 object에 대해서 insert 또는
 % remove operation만 남게 된다.
-% Sentence #1:
-
-
+For example, insert-remove operations or remove-insert operations such as 
+$\ominus$\inv{2}{B}, $\oplus$\inv{3}{C} are cancelable operations before
+the read.
+Eventually remaining operation logs such as
 %위의 log는 아래와 같이 non-time-sensitive한 operation만 남게 된다.
-% Sentence #1:
-
-
 \begin{center}
  $\oplus$\inv{2}{B}, $\oplus$\inv{3}{A}
 \end{center}
-
-
+, which are non-time-sensitive logs.
 %LDU는 update-side removing이라는 방법으로 이러한 time-senstivive한 log를 update 순간 바로 지운다.
-% Sentence #1:
-
+When updates operation occurs, LDU removes these time-sensitive log using
+update-side removing technique.
 \fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -273,7 +236,6 @@ $\ominus$\inv{3}{C}, $\oplus$\inv{3}{A}, $\oplus$\inv{3}{C},$\ominus$\inv{1}{C}
 LDU는 time-senstivive한 log를 제거하기 위해 update-side removing이라는 방법을 사용한다.
 이 방법은 만약 같은 object에 대해서 insert와 remove가 발생하였으면, 같은 object에
 대해서, insert oepration과 remove operation에 대한 log를 update시점에 바로 바로 삭제하는 방법이다. 
-이처럼 log가 삭제될 수 있는 이유는 operation log가 deferred로 수행하기 떄문에 가능하다. 
 syncronized timestamp counters 기반의 OpLog도 이러한 log 삭제 방법 수행하여 최적화를 하였으나,
 operation log가 서로 다른 코어에 존재하는 log 같은 경우에 log를 merge와 검색한 후 삭제를 해야한다. 
 syncronized timestamp counters 방법은 워크로드에 따라, 최적화를 위해 또 다른 sequntial 프로세싱이
@@ -282,40 +244,82 @@ syncronized timestamp counters 방법은 워크로드에 따라, 최적화를 �
 shared log 삭제하는 방법을 사용해서 이런 문제가 없다.
 \else
 %LDU는 time-senstivive한 log를 제거하기 위해 update-side removing이라는 방법을 사용한다.
-% Sentence #1:
-
-
-
 %이 방법은 만약 같은 object에 대해서 insert와 remove가 발생하였으면, 같은 object에 대해서, insert
 % oepration과 remove operation에 대한 log를 update시점에 바로 바로 삭제하는 방법이다.
-% Sentence #1:
-
-
-
-%이처럼 log가 삭제될 수 있는 이유는 operation log가 deferred로 수행하기 떄문에 가능하다. 
-% Sentence #1:
-
-
-
+To remove the time-senstivive log, LDU uses the update-side removing which is if
+insert-remove operation occur in terms of same object, the same object's
+insert-remove operation would be removed on the update time.
 %syncronized timestamp counters 기반의 OpLog도 이러한 log 삭제 방법 수행하여 최적화를 하였으나,
 % operation log가 서로 다른 코어에 존재하는 log 같은 경우에 log를 merge와 검색한 후 삭제를 해야한다.
-% Sentence #1:
-
-
-
 %syncronized timestamp counters 방법은 워크로드에 따라, 최적화를 위해 또 다른 sequntial 프로세싱이 요구된다.
-% Sentence #1:
-
-
-
+Indeed, the OpLog also optimizes by removing the existing operation rather than
+adding the new one.
+OpLog optimization is that becasue it may migrates other core, and then it logs
+per-core memory, it needs to merge and search for removing the operation log,
+which is additional sequntial processing for optimization.
 %하지만 LDU는 indivisual object를 대상으로 swap atomic operation을 사용하여 shared log 삭제하는
 % 방법을 사용해서 이런 문제가 없다.
-% Sentence #1:
+LDU, however, have no problem migrating other core
+\fi
 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 4: 리눅스의 update operation의 특징을 이용한 Update-side Abosrbing 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+\ifkor
+이처럼 log가 삭제될 수 있는 이유는 리눅스 커널의 operation은 순서가
+있기 때문이다.
+LDU는 insert operation 다음에는 반드시 remove opration이 발생하고 remove operation 다음에는 반드시
+insert operation이 발생하는 특징을 이용하였다.
+%이러한 data structure는 search에서 이미 필터링이 되기 때문
+이러한 특징을 가지는 이유는 리눅스의 data structure의 경우에는 search와 update가 분리되어 있어, 같은 update
+operation이 연달아 호출되지 않는다.
+search가 two update operations(one to insert and one to remove an element)이 함수
+외부해서 수행하는 구조이기 때문에 가능하다.
+\else
+%이처럼 update-side absorbing으로 log를 지울 수 있는 근본 이유는 리눅스 커널(freeBSD 커널 역시) search가
+%two update operations(one to insert and one to remove an element)이 함수 외부해서 수행하는
+%구조이기 때문에 가능하다.
+To the best of our knowledge, LDU is the first log-based concurrent updates to
+remove logs on the update time because we found that Linux kernel's updates
+operations involved sequence of operations.
+%예를 들어, 리눅스의 data structure 구조는 search가 update operaton 외부에 있기 때문에 insert
+% operation 다음에는 반드시 remove opration이 발생하고 remove operation 다음에는 반드시 insert operation이
+% 발생하는 특징이 있다. 
+The Linux kernel, for example, if insert operation occur, then next operation
+must be remove operation becasue the kernel's update function has separated
+from search, alloc and free functions.
+Therefore, remove-remove or insert-insert operation in Linux kernel is
+forbidden: if remove-remove operation occur, the second remove operation may
+encounter a crash because this object can be freed by first remove
+operation concurrently.
+%즉 리눅스의 data structure의 경우에는 search와 update가 분리되어 있어, 같은 update operation이 연달아
+% 호출되지 않는다.
+%LDU는 이러한 사실을 이용하여 update-side absorbing log를 개발 하였다. 
+Therefore, the design of the LDU is inspired by these kernel update operations
+sequeunce.
+\fi
 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 4-1: CSDS 방법들
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+\ifkorthesis
+이와 반대로 research 분야에서 많이 연구되는 CSDS(Concurrent search data
+structures)~\cite{David2015ASYNCHRONIZED}의 방법들은 search가 update operation 내부에
+존재하는 구조로 되어 있다.
+따라서 같은 key값의 노드에 대해서 insert-insert 또는 remove-remove 순서로 동작할 수 있다.
+이처럼 CSDS 알고리즘일 경우에는 LDU를 적용하지 못하는 limitation이 있다.
+하지만 본 연구는 리눅스 커널과 같은 practical한 data structure에 초점을 맞추었기 때문에, 
+research 분야에 많이 연구되고 있는 CSDS 알고리즘은 고려하지 않았다.
+아직 CSDS의 non-blocking 알고리즘들은 garbage collector~\cite{AlBahra2013NAS},
+iteration~\cite{petrank2013lock}, ordering~\cite{zhang2013practical}여러
+practical한 이유로 C언어로 구현된 리눅스 커널 등에 적용하기에는 아직 한계가 있다.
 \fi
 
 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 5: 리눅스의 Update-side Abosrbing 수행 방법
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 \ifkor
 업데이트 순간 로그를 지우는 방법은 shared memory system의 swap operation을 사용한다.
 이를 위해, LDU는 모든 object에 insert와 remove의 mark 필드를 추가해서 update-side
@@ -330,126 +334,36 @@ atomic하게 지워주는 방식으로 진행된다.
 효과를 가져주므로 성능이 향상된다. 
 \else
 %업데이트 순간 로그를 지우는 방법은 shared memory system의 swap operation을 사용한다.
-% Sentence #1:
-
-
-
-%이를 위해, LDU는 모든 object에 insert와 remove의 mark 필드를 추가해서 update-side absorbing을 수행
+Update-side removing logs are implemented by performing atomic swap operation
+in an individual object for shared memory systems.
+%이러한 atomic swap operation은 update operation을 취소 가능한 로그와 함께 atomic하게 삭제하는 일을
+% 가능하게 한다.
+This atomic swap operation alows update operations to atomically remove with the
+previous cancelable log.
+%먼저 LDU는 모든 object에 insert와 remove의 mark 필드를 추가해서 update-side absorbing을 수행
 % 하였다.
-% Sentence #1:
-
-
-
+To that these LDU performs adding the marking field in the object structure.
 %예를 들어 만약 A라는 object를 대상으로 insert-remove operation이 수행될 경우 처음 insert operation은
 % insert mark 필드에 표시하고 queue에 저장한다.
-% Sentence #1:
-
-
-
+For example, consider the insert-remove operation sequence at same object.
+The first insert operation marks the feld of mark and then the log inserts
+queue.
 %다음 remove operation 부터는 log를 queue에 저장하지 않고 insert에 표시한 mark 필드에 표시한 값만
 % atomic하게 지워주는 방식으로 진행된다.
-% Sentence #1:
-
-
-
+After the next remove operation, LDU does not logs and proceed with changing
+the mark feld.
 %다음으로 LDU는 log를 적용할 때, queue안에 log가 존재하더라도, mark 필드가 표시된 log만 실행한다.
-% Sentence #1:
-
-
-
+The reader applies logs, marking feld is true, to the original data structure.
 %이것은 swap이라는 상대적으로 가벼운 연산과 상대적으로 덜 share 하는 indivisaul global object의 mark
 % filed를 사용해서 time-sensitive한 operation을 제거할 뿐만 아니라, 동시에 실제 operation을 수행하지 않고
 % log를 지워주는 효과를 가져주므로 성능이 향상된다. 
-% Sentence #1:
-
-
-
+The benefit of this update-side removing is twofold:not only it can eliminates
+the time-sensitive operation but also it can cancels the previous operation log
+in the queue with current operation.
 \fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 4: 리눅스의 update operation의 특징을 이용한 Update-side Abosrbing 
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-\ifkor
-이처럼 update-side absorbing으로 log를 지울 수 있는 근본 이유는 리눅스 커널(freeBSD 커널 역시)
-search가 two update operations(one to insert and one to remove an element)이 함수
-외부해서 수행하는 구조이기 때문에 가능하다.
-즉 리눅스의 data structure의 경우에는 search와 update가 분리되어 있어, 같은 update
-operation이 연달아 호출되지 않는다.
-LDU는 이러한 사실을 이용하여 update-side absorbing log를 개발 하였다. 
-즉 리눅스의 data structure 구조는 search가 update operaton 외부에 있기 때문에 insert operation
-다음에는 반드시 remove opration이 발생하고 remove operation 다음에는 반드시 insert operation이 발생하는
-특징이 있다. %이러한 data structure는 search에서 이미 필터링이 되기 때문
-\else
-
-%이처럼 update-side absorbing으로 log를 지울 수 있는 근본 이유는 리눅스 커널(freeBSD 커널 역시) search가
-%two update operations(one to insert and one to remove an element)이 함수 외부해서 수행하는
-%구조이기 때문에 가능하다.
-% Sentence #1:
-
-
-%즉 리눅스의 data structure의 경우에는 search와 update가 분리되어 있어, 같은 update operation이 연달아
-% 호출되지 않는다.
-% Sentence #1:
-
-
-%LDU는 이러한 사실을 이용하여 update-side absorbing log를 개발 하였다. 
-% Sentence #1:
-
-
-%즉 리눅스의 data structure 구조는 search가 update operaton 외부에 있기 때문에 insert operation
-% 다음에는 반드시 remove opration이 발생하고 remove operation 다음에는 반드시 insert operation이
-% 발생하는 특징이 있다. 
-% Sentence #1:
-
-\fi
-
-
-
-
-
-\ifkor
-이와 반대로 research 분야에서 많이 연구되는 CSDS(Concurrent search data
-structures)~\cite{David2015ASYNCHRONIZED}의 방법들은 search가 update operation 내부에
-존재하는 구조로 되어 있다.
-따라서 같은 key값의 노드에 대해서 insert-insert 또는 remove-remove 순서로 동작할 수 있다.
-이처럼 CSDS 알고리즘일 경우에는 LDU를 적용하지 못하는 limitation이 있다.
-하지만 본 연구는 리눅스 커널과 같은 practical한 data structure에 초점을 맞추었기 때문에, 
-research 분야에 많이 연구되고 있는 CSDS 알고리즘은 고려하지 않았다.
-아직 CSDS의 non-blocking 알고리즘들은 garbage collector~\cite{AlBahra2013NAS},
-iteration~\cite{petrank2013lock}, ordering~\cite{zhang2013practical}여러
-practical한 이유로 C언어로 구현된 리눅스 커널 등에 적용하기에는 아직 한계가 있다.
-\else
-
-%이와 반대로 research 분야에서 많이 연구되는 CSDS(Concurrent search data
-% structures)~\cite{David2015ASYNCHRONIZED}의 방법들은 search가 update operation 내부에
-% 존재하는 구조로 되어 있다.
-% Sentence #1:
-
-
-%따라서 같은 key값의 노드에 대해서 insert-insert 또는 remove-remove 순서로 동작할 수 있다.
-% Sentence #1:
-
-
-%이처럼 CSDS 알고리즘일 경우에는 LDU를 적용하지 못하는 limitation이 있다.
-% Sentence #1:
-
-
-%하지만 본 연구는 리눅스 커널과 같은 practical한 data structure에 초점을 맞추었기 때문에, research 분야에 많이
-% 연구되고 있는 CSDS 알고리즘은 고려하지 않았다.
-% Sentence #1:
-
-
-%아직 CSDS의 non-blocking 알고리즘들은 garbage collector~\cite{AlBahra2013NAS},
-% iteration~\cite{petrank2013lock}, ordering~\cite{zhang2013practical}여러
-% practical한 이유로 C언어로 구현된 리눅스 커널 등에 적용하기에는 아직 한계가 있다.
-% Sentence #1:
-
-
-\fi
-
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 5: 최적화 방법 reusing garbage object : 
+%Paragraph 7: 또 최적화 방법 reusing garbage object : 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 \ifkor
@@ -464,33 +378,27 @@ queue에 들어가 있지만 update-side absorbing 때문에 최소되어 insert
 이러한 경우, 다음 insert operation에 대해서는 새로운 log를 list에 연산으로 다시 넣지 않고, 해당 object의 mark
 필드만 변경하여 log를 재활용하는 방법을 사용한다.
 \else
-%LDU의 또 다른 최적화 기법은 update-side removing 때문에 취소된 garbage log를 재활용하는 것이다.
-% Sentence #1:
-
-
-%이 garbage log는 queue에는 존재하지만 update-side aborsrbing 때문에 취소 되어 garbage가 되어
+%LDU의 또 다른 최적화 기법은 garbage log를 재활용하는 것이다.
+%이 garbage log는 queue에는 존재하지만 update-side removing 때문에 취소 되어 garbage가 되어
 % queue에 보관되어 있는 log이다. 
-% Sentence #1:
-
-
+The second optimization, called reusing garbage logs, reuse garbage log, whose
+log remained queue and aleady canceled through the update-side removing.
 %이러한 garbage log일 경우 다음 update operation에 대해서는 해당 로그를 새로 많들어 넣지 않고 기존 로그를 재활용하는
 % 방법이다.
-% Sentence #1:
+
 
 %예를 들어 A라는 오브젝트에 대해서 insert-remove-insert 순서로 update가 수행될 경우, 세번째 insert 명령어는
 % queue에 들어가 있지만 update-side absorbing 때문에 최소되어 insert mark filed가 zero인
 % 경우(garbage object)이다.
-% Sentence #1:
-
+For example, 
 
 %이러한 경우, 다음 insert operation에 대해서는 새로운 log를 list에 연산으로 다시 넣지 않고, 해당 object의 mark
 % 필드만 변경하여 log를 재활용하는 방법을 사용한다.
-% Sentence #1:
 
 \fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 6: log를 저장하는 queue는 non-blocking queue를 사용
+%Paragraph 8: log를 저장하는 queue는 non-blocking queue를 사용
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 \ifkor
 LDU는 queue의 위치에 대한 의존성을 없애기 위해 log를 항상 non-blocking queue에
@@ -507,47 +415,34 @@ NULL로 atomic하게 제거한다.
 결론적으로 LDU는 queue의 위치에 따른 의존성을 제거하고, head pointer의 CAS fail 때문에 발생하는 multiple
 CAS를 최소화 하기 위한 non-blocking queue를 이용하였다.
 \else
-
 %LDU는 queue의 위치에 대한 의존성을 없애기 위해 log를 항상 non-blocking queue에 저장한다.
-% Sentence #1:
-
-
+To remove dependency of queue, LDU logs in non-blocking queue.
 %LDU는 head 포인터에 대한 CAS 연산을 최대한 줄인 multiple producers and single consumer에 기반하는
 % non-blocking queue를 이용하였다.
-% Sentence #1:
-
-
-%이러한 큐는 이미 Linux 커널에 Lock-less list~\cite{HuangLocklessList}라는 이름으로 구현되어 있으며, 이미
-% 커널에 많은 부분에 사용되고 있다.
-% Sentence #1:
 
 
 
 %이 큐는 다른 non-blocking list[][][]와 다르게, insert operation을 항상 처음 노드에 삽입함에 따라, CAS가
 % 발생되는 횟수를 상대적으로 줄일 수 있다.
-% Sentence #1:
 
 
 %게다가 log를 적용하는 single consumer만 고려 했기 때문에, remove를 위한 복잡한 알고리즘이 필요없다. 
-% Sentence #1:
 
 
 
 %예를 들어 single consumer는 operation log 전체를 얻기 위해, xchg 명령을 사용하여 head pointer를
 % NULL로 atomic하게 제거한다.
-% Sentence #1:
 
 
 
 %결론적으로 LDU는 queue의 위치에 따른 의존성을 제거하고, head pointer의 CAS fail 때문에 발생하는 multiple
 % CAS를 최소화 하기 위한 non-blocking queue를 이용하였다.
-% Sentence #1:
 
 
 \fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 7: 두 종류의 queue를 지원하는 이유 : log를 저장하도록 설계 이유는 서로 장 단점이 있음 : (option)
+%Paragraph 9: 두 종류의 queue를 지원하는 이유 : log를 저장하도록 설계 이유는 서로 장 단점이 있음 : (option)
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 \ifkor
@@ -559,36 +454,29 @@ per-core 메모리에 non-blocking queue를 저장하여 사용하였다.
 하지만 data structure의 head를 가지는 root object가 굉장히 많이 생성되는 워크로드일 경우,
 per-core 방법은 너무 많은 메모리를 요구한다.
 \else
-
 %LDU는 log를 저장하기 위해, global 또는 per-core queue 모두 이용할 수 있게 설계하였다.
-% Sentence #1:
-
-
+LDU design using both global queue and per-core queue.
 
 %즉 저장하는 방법이 global queue이면 global non-blocking queue를 이용하고, per-core queue이면
 %per-core 메모리에 non-blocking queue를 저장하여 사용하였다. 
-% Sentence #1:
 
 
 
 %이러한 두가지 queue를 지원하도록 한것은 서로 장단점을 가지고 있기 때문이다.
-% Sentence #1:
 
 
 
 %예를 들어 일반적으로 per-core 방법이 굉장히 높은 scalability를 가진다. 
-% Sentence #1:
 
 
 %하지만 data structure의 head를 가지는 root object가 굉장히 많이 생성되는 워크로드일 경우, per-core 방법은
 % 너무 많은 메모리를 요구한다.
-% Sentence #1:
 
 
 \fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 8: 두 종류의 queue에 대한 장단점 
+%Paragraph 10: 두 종류의 queue에 대한 장단점 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 \ifkor
 이와 같이 LDU의 두가지 queue는 서로 장단점을 가지고 있다. 
@@ -603,49 +491,40 @@ dependency가 있는 문제가 있다.
 즉 LDU를 사용하면 time-senstivive log가 제거되었더라도 stack과 queue와 같이, 같은 operation에 대한 순서도
 중요한 data structure는 사용하지 못한다.
 \else
-
 %Furthermore, per-core approach does not work well for a all data structure
 %because of limited per-core memory size;some objects need huge per-core hash
 %table size(section X).
-
 %이와 같이 LDU의 두가지 queue는 서로 장단점을 가지고 있다. 
-% Sentence #1:
 
 
 %먼저 global queue의 장점은 광장히 simple하여 어떻한 data structure간에 쉽게 적용이 가능하다.
-% Sentence #1:
 
 
 %global queue를 사용한 방법은 LDU의 light-weight한 queue사용과 update-side absorbing log와
 % reuse garbage log 기법등으로 global head 포인터에 대한 CAS operation 사용을 줄였지만, 여전히 global
 % header에 CAS가 사용되고 있다.
-% Sentence #1:
 
 
 %따라서 cache coherence traffic issue가 여전히 남아있어서 scalability 측면으로는 단점을가지고 있다.
-% Sentence #1:
 
 
 %Per-core queue일 경우 global head 포인터에 대한 CAS operation을 완전히 제거한 장점을 가진다.
-% Sentence #1:
 
 
 %하지만 LDU의 per-core queue 버전은 특정 data structure에는 사용 하지 못하는 data structure의
 % dependency가 있는 문제가 있다.
-% Sentence #1:
 
 
 
 %즉 LDU를 사용하면 time-senstivive log가 제거되었더라도 stack과 queue와 같이, 같은 operation에 대한 순서도
 % 중요한 data structure는 사용하지 못한다.
-% Sentence #1:
 
 
 \fi
 
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 7: 중간에 한번씩 log를 flush
+%Paragraph 11: 중간에 한번씩 log를 flush
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 \ifkor
@@ -654,23 +533,21 @@ log-based method periodically apply the time-ordered operations at the head of
 the log to remove these opearation from the log.
 LDU는 주기적으로 Log를 flush해줌으로써 Log가 쌓여서 발생하는 메모리 낭비를 줄인다.
 \else
-
 %LDU는 log 때문에 불필요하게 메모리 낭비를 방지하고, To keep the log from growing without end,
 %log-based method periodically apply the time-ordered operations at the head of
 % the log to remove these opearation from the log.
-% Sentence #1:
-
-
+To reduce memory usage and to keep the log from growing without end, LDU
+periodically apply the time-ordered operations at the head of the log to remove
+these opearation from the log.
 %LDU는 주기적으로 Log를 flush해줌으로써 Log가 쌓여서 발생하는 메모리 낭비를 줄인다.
-% Sentence #1:
-
 
 \fi
 
 
-
-
-
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 \begin{figure*}[t!]
   \begin{center}
@@ -681,9 +558,6 @@ LDU는 주기적으로 Log를 flush해줌으로써 Log가 쌓여서 발생하는
   data structure and logging queue at T1, T2 and T3, respectively.}
   \label{fig:basic}
 \end{figure*}
-
-
-
 
 
 \subsection{LDU example}
@@ -738,12 +612,15 @@ $\oplus$\inv{1}{C},$\oplus$\res{3}{E} and 가 $\ominus$\inv{3}{A}의 operation�
 그림 \ref{fig:basicpldu}는 per-core queue에 log를 저장되는 흐름을 설명한다.
 global queue와의 차이점만 설명하면,
 
-
 \else
+
+
+
+
 
 \fi
 
-\subsection{The LDU Algorithm}
+\subsection{The LDU Algorithm and Correctness}
 \begin{figure}[tb!]
 \inputminted[linenos,fontsize=\footnotesize, tabsize=2]{c}{src/ldu_logical.c}
 \rule{\columnwidth}{0.5pt}
@@ -777,6 +654,9 @@ absorbing logs와 reuse garbage logs에 대한 코드이다. \code{logical\_inse
 그 이유는 리눅스 update operation이 항상 insert-remove 순서나 remove-insert 순서로 실행되기 때문이다.
 %만약 순서가 insert-insert 또는 remove-remove로 동작하면 
 \else
+
+
+
 
 \fi
 
@@ -817,6 +697,8 @@ LDU는 주기적으로 log를 비워줘야 하므로, update operation이 수행
 따라서 한번 더 mark 필드를 체크하여 log를 비워준다.
 \else
 
+
+
 \fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$:w
@@ -852,14 +734,7 @@ absorbing에 의해 time-sencitive한 operation이 삭제되었기 때문이다.
 
 \ifkor
 \else
-* By default OpLog executes logged updates in temporal order. For example,
-consider a linked list. If a process logs an insert operation on one core,
-migrates to another core, and logs a remove operation, the remove should
-eventually execute after the insert.
-* OpLog relies on timestamps from a system-wide synchronized clock to tell it
-how to order entries in different cores' log.
-*This ordering ensures linearizaility, making OpLog compatible with existing
-data structure semantics.
+
 \fi
 
 

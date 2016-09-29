@@ -130,6 +130,16 @@ To increase the number of users during our experiment and show the results at th
 peak user numbers, 
 we used the crossover.
 \else
+AIM7 forks many processes, each of which concurrently runs. 
+We used AIM7-multiuser, which is one of workload in AIM7.
+The multiuser workload is composed of various workloads such as disk-file
+operations, process creation, virtual memory operations, pipe I/O, and
+arithmetic operation.
+To minimize IO bottlenecks, the workload was executed with tmpfs filesystems, each
+of which is 10 GB.
+To increase the number of users during our experiment and show the results at the
+peak user numbers, 
+we used the crossover.
 \fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -155,6 +165,24 @@ unordered harris list.
 In this benchmark, the ordered harris list has the lowest performance and
 scalability because their \code{CAS} fails frequently.
 \else
+The results for AIM7-multiuser are shown in Figure~\ref{fig:aim7}, and the
+results show the throughput of AIM7-multiuser with four different settings.
+Up to 60 core, the stock Linux scales linearly while serialized updates in
+Linux kernel become bottlenecks. 
+However, up to 120core, unordered harris list and our \deferu scale well because
+these workloads can run concurrently updates and can reduce the locking
+overheads due to reader-writer semaphores(\code{anon\_vma},
+\code{file}).
+The combination of \deferu with unordered harris list has best performance and
+scalability outperforming stock Linux by 1.7x and unordered harris list by
+1.1x.
+While the unordered harris list has 19\% idle time(see
+Table~\ref{tab:memuse}), stock Linux has 51\% idle time waiting to acquire
+both \code{anon\_vma's rwsem} and \code{file's i\_mmap\_rwsem}.
+We can notice that although \deferu has 23\% idle time, the throughput is higher than
+unordered harris list.
+In this benchmark, the ordered harris list has the lowest performance and
+scalability because their \code{CAS} fails frequently.
 \fi
 
 \subsection{Exim}
@@ -207,6 +235,16 @@ cores~\cite{SilasBoydWickizer2010LinuxScales48}.
 Therefore, although we eliminate the fork problem, the Exim may suffer from
 contention on spool directories. 
 \else
+To measure the performance of Exim, shown in Figure~\ref{fig:exim}, we
+used default value of MOSBENCH to use tmpfs for
+spool files, log files, and user mail files.
+Clients run on the same machine and each client sends to a different user to
+prevent contention on user mail file.
+The Exim was bottlenecked by per-directory locks protecting file creation in
+the spool directories and by forks performed on different
+cores~\cite{SilasBoydWickizer2010LinuxScales48}.
+Therefore, although we eliminate the fork problem, the Exim may suffer from
+contention on spool directories. 
 \fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -230,6 +268,22 @@ directories.
 The unordered harris list has 31\% idle time, whereas \deferu has 37\% idle
 time due to the their efficient concurrent updates.
 \else
+Results shown in Figure~\ref{fig:exim} show that Exim scales well for all
+methods up to 60 core but not for higher core counts.
+The stock Linux shows performance degradation for more than 60 core.
+Both unordered harris list
+and our \deferu do not suffer from performance loss 
+because they do not acquire the \code{anon\_vma}
+semaphore and \code{i\_mmap} semaphore in fork.
+\deferu performs better due to the fact that it uses both update-side
+absorbing and lock-less list, outperforming stock Linux by 1.6x and unordered
+harris list by 1.1x.
+Even though we applied scalable solution, Exim shows limitation on scalability
+improvement
+since the main bottleneck is per-directory lock contention on spool
+directories.
+The unordered harris list has 31\% idle time, whereas \deferu has 37\% idle
+time due to the their efficient concurrent updates.
 \fi
 
 
@@ -260,6 +314,13 @@ We configured process create workload to enable the parallelism option which
 specifies the number of benchmark processes to run in
 parallel~\cite{mcvoy1996lmbench}; we used 100 processes.
 \else
+lmbench has various workloads including process creation workload(fork,
+exec, sh -c, exit).
+This workload is used to measure the basic process primitives such as creating
+a new process, running a different program, and context switching. 
+We configured process create workload to enable the parallelism option which
+specifies the number of benchmark processes to run in
+parallel~\cite{mcvoy1996lmbench}; we used 100 processes.
 \fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -282,6 +343,20 @@ idle time since stock Linux waits to acquire reverse mapping locks such as
 \code{anon\_vma's rwsem} and \code{mapping's i\_mmap\_rwsem}.
 
 \else
+The results for lmbench are shown in Figure~\ref{fig:MicroBench}, 
+and the results show the execution times of the fork microbenchmark in lmbench
+with four different methods.
+%The fork micro benchmark drops down for all methods up to 15 core but either
+%flattens out or goes up slightly after that.
+Three methods outperform stock Linux by 2.2x at 120 cores;however, before 30
+core, two harris list have lower performance due to their execution overheads.
+%At 15 core, the stock Linux goes up because of the NUMA effect that accesses
+%the remote memory.
+%On the other hand, the others including the ordered harris list flattens out
+%and then they remain constant.
+While stock Linux has 90\% idle time, other methods have approximately 50\%
+idle time since stock Linux waits to acquire reverse mapping locks such as
+\code{anon\_vma's rwsem} and \code{mapping's i\_mmap\_rwsem}.
 \fi
 
 
