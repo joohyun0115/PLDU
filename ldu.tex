@@ -381,20 +381,22 @@ queue에 들어가 있지만 update-side absorbing 때문에 최소되어 insert
 %LDU의 또 다른 최적화 기법은 garbage log를 재활용하는 것이다.
 %이 garbage log는 queue에는 존재하지만 update-side removing 때문에 취소 되어 garbage가 되어
 % queue에 보관되어 있는 log이다. 
-The second optimization, called reusing garbage logs, reuse garbage log, whose
-log remained queue and aleady canceled through the update-side removing.
-%이러한 garbage log일 경우 다음 update operation에 대해서는 해당 로그를 새로 많들어 넣지 않고 기존 로그를 재활용하는
-% 방법이다.
-
-
+The second technique, called reusing garbage logs, reuse garbage log without
+creating new log.
+The garbage log aleady canceled through the update-side removing, but it
+remained queue.
 %예를 들어 A라는 오브젝트에 대해서 insert-remove-insert 순서로 update가 수행될 경우, 세번째 insert 명령어는
 % queue에 들어가 있지만 update-side absorbing 때문에 최소되어 insert mark filed가 zero인
 % 경우(garbage object)이다.
-For example, 
-
+For example, consider the insert-remove-insert operation.
+After the sencond remove operation, the log remained in the queue, but it
+already canceled log resulted from update-side removing, hence insert mark filed is
+zero in the queue.
 %이러한 경우, 다음 insert operation에 대해서는 새로운 log를 list에 연산으로 다시 넣지 않고, 해당 object의 mark
 % 필드만 변경하여 log를 재활용하는 방법을 사용한다.
-
+In this case, the third insert operation reuse log in the queue instead of 
+creating a new log using atomic swap, so it not only reduce memory overhead but
+also remove queueing overhead.
 \fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
