@@ -104,7 +104,6 @@ LDU도 log-based approach를 따른다. 그러므로 앞에서 설명한 log-bas
 업데이트 순간 삭제 가능한 log를 지움으로 성능을 향상시킨다.
 \else
 Log-based approaches can help to support high update rates because
-
 %Update heavy한 구조를 위한 Log-based 방법은 총 3가지의 장점을 가진다. 
 LDU contains not only benefits of log-based algorithms but also additional benefit.
 In addition, finally, since LDU can eliminate log before inserting log's queue,
@@ -148,9 +147,9 @@ reducing the cache invalidation traffic.
 %Paragraph 2: timestamp가 필요한 이유 : time-sensitive update operation log.
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 \ifkor
-Synchronized timestamp가 근본적으로 필요한 이유는 when a process logs an insert
-operation on one core, migrates to another core, and logs a remove operation, the remove should
-eventually execute after the insert[].
+synchronized timestamp가 근본적으로 필요한 이유는 when a process logs an insert operation
+on one core, migrates to another core, and logs a remove operation, the remove
+should eventually execute after the insert[].
 LDU는 update 순간 time-sensitive log를 제거함으로 synchronized timestamp counter 때문에 발생하는
 문제를 해결하였다.
 time-sensitive log란 순서가 바꿔서는 안되는 operation log이다. 
@@ -300,7 +299,7 @@ sequeunce.
 \fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 4-1: CSDS 방법들
+%Paragraph 4-1: CSDS 방법들 - 졸업논문
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 \ifkorthesis
@@ -318,7 +317,7 @@ practical한 이유로 C언어로 구현된 리눅스 커널 등에 적용하기
 
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 5: 리눅스의 Update-side Abosrbing 수행 방법
+%Paragraph 5: 리눅스의 Update-side removing 수행 방법
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 \ifkor
 업데이트 순간 로그를 지우는 방법은 shared memory system의 swap operation을 사용한다.
@@ -400,130 +399,94 @@ also remove queueing overhead.
 \fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 8: log를 저장하는 queue는 non-blocking queue를 사용
+%Paragraph 8: LDU의 로그는 두 종류의 queue에 저장할 수 있도록 지원
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 \ifkor
-LDU는 queue의 위치에 대한 의존성을 없애기 위해 log를 항상 non-blocking queue에
-저장한다.
-LDU는 head 포인터에 대한 CAS 연산을 최대한 줄인 multiple producers and single
-consumer에 기반하는 non-blocking queue를 이용하였다.
-이러한 큐는 이미 Linux 커널에 Lock-less list~\cite{HuangLocklessList}라는 이름으로 구현되어 있으며, 이미
-커널에 많은 부분에 사용되고 있다.
+LDU는 보다 다양한 데이터 구조를 지원하기 위해, per-core 또는 global queue 모두 이용할 수 있게 설계하였다.
+그 이유는 데이터 구조가 특성에 따라 per-core 구조에 적당한 data structure가 있고,
+global queue 구조에 적당한 데이터 구조가 있기 때문이다.
+먼저 LDU의 Per-core queue는 queue에 log를 저장할 때, global head 포인터에 대한 CAS operation을
+완전히 제거한 장점을 가진다.
+LDU의 per-core queue에 대한 단점으로는 time-senstivive log가 제거되었더라도,
+앞에서 설명한 예와 같이 남은 로그들인 $\oplus$\inv{2}{B}, $\oplus$\inv{3}{A}는 순서가 바뀔 수 있다.
+이러한 경우 tree와 같은 data structure는 문제가 없으나, stack과 같이 남은 operation의
+순서도 민감한 data structure는 사용하지 못하는 문제점이 있다.
+또한 전형적인 per-core queue를 방법의 단점으로 메모리 관리 코드에 대한 복잡도가 증가되고, 
+메모리 사용량도 per-core에 추가적으로 할당을 받으므로 증가된다.
+이를 보완하기 위해 LDU는 global queue도 같이 지원한다.
+LDU의 global queue의 장점은 광장히 simple하여 어떻한 data structure라도 쉽게 적용이 가능하다.
+또한 per-core 처럼 global head포인터에 대한 CAS연산을 완전히 제거하지 못하지만, LDU의 update-side
+removing log와 reuse garbage log 기법등으로 global queue에 log를 저장하는 횟수를 상당히 줄임에 따라,
+cache communication overhead를 상당히 줄일 수 있다.
+\else
+%LDU는 보다 다양한 데이터 구조를 지원하기 위해, per-core 또는 global queue 모두 이용할 수 있게 설계하였다.
+We designs using per-core and global queue for saving the logs becasue it
+can the further support of various data structure.
+%그 이유는 데이터 구조가 특성에 따라 per-core 구조에 적당한 data structure가 있고,
+%global queue 구조에 적당한 데이터 구조가 있기 때문이다.
+If per-core queue does not properly apply to a data structure, may use the
+global queue to reduce the drawback of the per-core queue.
+%먼저 LDU의 Per-core queue는 queue에 log를 저장할 때, global head 포인터에 대한 CAS operation을
+%완전히 제거한 장점을 가진다.
+The per-core queue of the LDU can remove CAS operations that access global head
+pointer when logs update operation. 
+%LDU의 per-core queue에 대한 단점으로는 time-senstivive log가 제거되었더라도,
+%앞에서 설명한 예와 같이 남은 로그들인 $\oplus$\inv{2}{B}, $\oplus$\inv{3}{A}는 순서가 바뀔 수 있다.
+However, although LDU removes time-sensitive log, the LDU can not apply more
+time-sensitive data structures such as stack and queue because these data
+structures corresponding characteristic
+%이러한 경우 tree와 같은 data structure는 문제가 없으나, stack과 같이 남은 operation의
+%순서도 민감한 data structure는 사용하지 못하는 문제점이 있다.
+
+%또한 전형적인 per-core queue를 방법의 단점으로 메모리 관리 코드에 대한 복잡도가 증가되고, 
+%메모리 사용량도 per-core에 추가적으로 할당을 받으므로 증가된다.
+In addition, per-core queue memort usage is high.
+%이를 보완하기 위해 LDU는 global queue도 같이 지원한다.
+To shortcomings, LDU supports the global queue.
+
+%LDU의 global queue의 장점은 광장히 simple하여 어떻한 data structure라도 쉽게 적용이 가능하다.
+
+%또한 per-core 처럼 global head포인터에 대한 CAS연산을 완전히 제거하지 못하지만, LDU의 update-side
+%removing log와 reuse garbage log 기법등으로 global queue에 log를 저장하는 횟수를 상당히 줄임에 따라,
+%cache communication overhead를 상당히 줄일 수 있다.
+However, per-core approach does not work well for a all data structure because
+of limited per-core memory size.
+
+
+\fi
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 9: log를 저장하는 queue의 종류는 non-blocking queue를 사용
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+\ifkor
+LDU logs in non-blocking queue because it can proceed without any lock(per-core
+or global lock).
+Non-blocking queue 중에 LDU는 head 포인터에 대한 CAS 연산을 최대한 줄인 multiple producers and
+single consumer에 활용될 수 있는 자료구조[]를 이용하였다.
 이 큐는 다른 non-blocking list[][][]와 다르게, insert operation을 항상 처음 노드에 삽입함에
 따라, CAS가 발생되는 횟수를 상대적으로 줄일 수 있다.
-게다가 log를 적용하는 single consumer만 고려 했기 때문에, remove를 위한 복잡한 알고리즘이 필요없다. 
+게다가 log를 적용하는 부분에서 single consumer만 고려 했기 때문에, remove를 위한 복잡한 알고리즘이 필요없다. 
 예를 들어 single consumer는 operation log 전체를 얻기 위해, xchg 명령을 사용하여 head pointer를
 NULL로 atomic하게 제거한다. 
 결론적으로 LDU는 queue의 위치에 따른 의존성을 제거하고, head pointer의 CAS fail 때문에 발생하는 multiple
 CAS를 최소화 하기 위한 non-blocking queue를 이용하였다.
 \else
-%LDU는 queue의 위치에 대한 의존성을 없애기 위해 log를 항상 non-blocking queue에 저장한다.
-To remove dependency of queue, LDU logs in non-blocking queue.
-%LDU는 head 포인터에 대한 CAS 연산을 최대한 줄인 multiple producers and single consumer에 기반하는
-% non-blocking queue를 이용하였다.
+LDU logs in non-blocking queue because it can proceed without any lock(per-core
+or global lock).
+%Non-blocking queue 중에 LDU는 head 포인터에 대한 CAS 연산을 최대한 줄인 multiple producers and
+%single consumer에 활용될 수 있는 자료구조[]를 이용하였다.
 
+%이 큐는 다른 non-blocking list[][][]와 다르게, insert operation을 항상 처음 노드에 삽입함에
+%따라, CAS가 발생되는 횟수를 상대적으로 줄일 수 있다.
 
-
-%이 큐는 다른 non-blocking list[][][]와 다르게, insert operation을 항상 처음 노드에 삽입함에 따라, CAS가
-% 발생되는 횟수를 상대적으로 줄일 수 있다.
-
-
-%게다가 log를 적용하는 single consumer만 고려 했기 때문에, remove를 위한 복잡한 알고리즘이 필요없다. 
-
-
-
+%게다가 log를 적용하는 부분에서 single consumer만 고려 했기 때문에, remove를 위한 복잡한 알고리즘이 필요없다. 
 %예를 들어 single consumer는 operation log 전체를 얻기 위해, xchg 명령을 사용하여 head pointer를
-% NULL로 atomic하게 제거한다.
-
-
+%NULL로 atomic하게 제거한다. 
 
 %결론적으로 LDU는 queue의 위치에 따른 의존성을 제거하고, head pointer의 CAS fail 때문에 발생하는 multiple
-% CAS를 최소화 하기 위한 non-blocking queue를 이용하였다.
-
-
+%CAS를 최소화 하기 위한 non-blocking queue를 이용하였다.
+\
 \fi
-
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 9: 두 종류의 queue를 지원하는 이유 : log를 저장하도록 설계 이유는 서로 장 단점이 있음 : (option)
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-\ifkor
-LDU는 log를 저장하기 위해, global 또는 per-core queue 모두 이용할 수 있게 설계하였다.
-즉 저장하는 방법이 global queue이면 global non-blocking queue를 이용하고, per-core queue이면
-per-core 메모리에 non-blocking queue를 저장하여 사용하였다. 
-이러한 두가지 queue를 지원하도록 한것은 서로 장단점을 가지고 있기 때문이다.
-예를 들어 일반적으로 per-core 방법이 굉장히 높은 scalability를 가진다. 
-하지만 data structure의 head를 가지는 root object가 굉장히 많이 생성되는 워크로드일 경우,
-per-core 방법은 너무 많은 메모리를 요구한다.
-\else
-%LDU는 log를 저장하기 위해, global 또는 per-core queue 모두 이용할 수 있게 설계하였다.
-LDU design using both global queue and per-core queue.
-
-%즉 저장하는 방법이 global queue이면 global non-blocking queue를 이용하고, per-core queue이면
-%per-core 메모리에 non-blocking queue를 저장하여 사용하였다. 
-
-
-
-%이러한 두가지 queue를 지원하도록 한것은 서로 장단점을 가지고 있기 때문이다.
-
-
-
-%예를 들어 일반적으로 per-core 방법이 굉장히 높은 scalability를 가진다. 
-
-
-%하지만 data structure의 head를 가지는 root object가 굉장히 많이 생성되는 워크로드일 경우, per-core 방법은
-% 너무 많은 메모리를 요구한다.
-
-
-\fi
-
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 10: 두 종류의 queue에 대한 장단점 
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-\ifkor
-이와 같이 LDU의 두가지 queue는 서로 장단점을 가지고 있다. 
-먼저 global queue의 장점은 광장히 simple하여 어떻한 data structure간에 쉽게 적용이 가능하다.
-global queue를 사용한 방법은 LDU의 light-weight한 queue사용과 update-side absorbing log와
-reuse garbage log 기법등으로 global head 포인터에 대한 CAS operation 사용을 줄였지만, 여전히 global
-header에 CAS가 사용되고 있다. 
-따라서 cache coherence traffic issue가 여전히 남아있어서 scalability 측면으로는 단점을가지고 있다.
-Per-core queue일 경우 global head 포인터에 대한 CAS operation을 완전히 제거한 장점을 가진다.
-하지만 LDU의 per-core queue 버전은 특정 data structure에는 사용 하지 못하는 data structure의
-dependency가 있는 문제가 있다.
-즉 LDU를 사용하면 time-senstivive log가 제거되었더라도 stack과 queue와 같이, 같은 operation에 대한 순서도
-중요한 data structure는 사용하지 못한다.
-\else
-%Furthermore, per-core approach does not work well for a all data structure
-%because of limited per-core memory size;some objects need huge per-core hash
-%table size(section X).
-%이와 같이 LDU의 두가지 queue는 서로 장단점을 가지고 있다. 
-
-
-%먼저 global queue의 장점은 광장히 simple하여 어떻한 data structure간에 쉽게 적용이 가능하다.
-
-
-%global queue를 사용한 방법은 LDU의 light-weight한 queue사용과 update-side absorbing log와
-% reuse garbage log 기법등으로 global head 포인터에 대한 CAS operation 사용을 줄였지만, 여전히 global
-% header에 CAS가 사용되고 있다.
-
-
-%따라서 cache coherence traffic issue가 여전히 남아있어서 scalability 측면으로는 단점을가지고 있다.
-
-
-%Per-core queue일 경우 global head 포인터에 대한 CAS operation을 완전히 제거한 장점을 가진다.
-
-
-%하지만 LDU의 per-core queue 버전은 특정 data structure에는 사용 하지 못하는 data structure의
-% dependency가 있는 문제가 있다.
-
-
-
-%즉 LDU를 사용하면 time-senstivive log가 제거되었더라도 stack과 queue와 같이, 같은 operation에 대한 순서도
-% 중요한 data structure는 사용하지 못한다.
-
-
-\fi
-
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 11: 중간에 한번씩 log를 flush
@@ -565,10 +528,9 @@ these opearation from the log.
 \subsection{LDU example}
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 1: Flowchart 그림 설명 
+%Paragraph 1: Flowchart 구조 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %
-
 
 \ifkor
 먼저 LDU를 보다 정확하게 설명하기위해, 로그를 global queue 저장한 방법과 per-core queue에 저장한 두가지 방법에 대해서
@@ -582,7 +544,19 @@ garbage object는 \res{1}{D}과 같이 rectangle로 표시한다.
 그림의 왼쪽은 CPU의 operation 순서를 보여주고 오른쪽은 특정 시간에 메모리에 저장된 자료구조의 내용을 보여준다.
 초기 data structure의 트리에는 \inv{0}{A} and \inv{0}{B} 두개의 오브젝트가 들어가고, global
 queue에는 아무것도 없다.
+\else
 
+
+
+
+
+\fi
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 2: Flowchart 그림 설명 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%
+\ifkor
 그림 \ref{fig:basic}는 시간 순서대로 각단계에 대해서 LDU의 수행 흐름을 보여준다.
 먼저 그림에서 concurrent updates 단계에서는 \code{Core0}, \code{Core1} and \code{Core2}가 각각
 $\oplus$\inv{1}{C}, $\oplus$\inv{2}{D} and
@@ -703,11 +677,11 @@ LDU는 주기적으로 log를 비워줘야 하므로, update operation이 수행
 
 \fi
 
+\ifkorthesis
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$:w
 % Thesis :
-% Paragraph 2:LDU queue 알고리즘 코드 및 설명 
+% Paragraph 2:LDU queue 알고리즘 코드 및 설명 - 졸업논문
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-\ifkorthesis
 \subsubsection{LDU queues}
 \begin{figure}[tb!]
 \inputminted[linenos,fontsize=\footnotesize, tabsize=2]{c}{src/ldu_queue.c}
@@ -727,16 +701,6 @@ per-core queue를 사용할 경우는 per-core의 hash 테이블을 가지고 �
 data structure와 같은지 체크하고, 다르면 해당 코어에 저장된 log를 lock과 함께 update를 수행한다.
 전체 코어의 log를 flush할 필요없이 해당 코어에 저장된 log만 flush하면 되는 이유는 이미 update-side
 absorbing에 의해 time-sencitive한 operation이 삭제되었기 때문이다.
-\fi
-
-
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Reference Sentence 1
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-\ifkor
-\else
-
 \fi
 
 
