@@ -124,6 +124,16 @@ reducing the cache invalidation traffic.
 
 \subsection{Approach}
 
+\begin{figure*}[tb]
+  \begin{center}
+     \includegraphics[width=1.0\textwidth,height=0.4\textheight]{fig/basic_gldu}
+  \end{center}
+  \caption{\deferu example showing six update operations and one read
+  operation. The execution flows from top to bottom. Memory represents original
+  data structure and logging queue at T1, T2 and T3, respectively.}
+  \label{fig:basic}
+\end{figure*}
+
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 1-삭제 예정: LDU는 another log-based 기법 : read before physical update 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -432,35 +442,33 @@ The per-core queue of the LDU can remove CAS operations that access global head
 pointer when logs update operation. 
 %LDU의 per-core queue에 대한 단점으로는 time-senstivive log가 제거되었더라도,
 %앞에서 설명한 예와 같이 남은 로그들인 $\oplus$\inv{2}{B}, $\oplus$\inv{3}{A}는 순서가 바뀔 수 있다.
-However, although LDU removes time-sensitive log, the LDU can not apply more
-time-sensitive data structures such as stack and queue because these data
-structures corresponding characteristic
+However, although LDU removes time-sensitive log, 
 %이러한 경우 tree와 같은 data structure는 문제가 없으나, stack과 같이 남은 operation의
 %순서도 민감한 data structure는 사용하지 못하는 문제점이 있다.
-
+the LDU can not apply more time-sensitive data structures such as stack and
+queue because these data structures corresponding characteristic
 %또한 전형적인 per-core queue를 방법의 단점으로 메모리 관리 코드에 대한 복잡도가 증가되고, 
 %메모리 사용량도 per-core에 추가적으로 할당을 받으므로 증가된다.
 In addition, per-core queue memort usage is high.
 %이를 보완하기 위해 LDU는 global queue도 같이 지원한다.
-To shortcomings, LDU supports the global queue.
-
+To overcome these shortcomings, LDU also supports the global queue.
 %LDU의 global queue의 장점은 광장히 simple하여 어떻한 data structure라도 쉽게 적용이 가능하다.
-
+The global queue of LDU is simple and easy, so it can use any data structure.
 %또한 per-core 처럼 global head포인터에 대한 CAS연산을 완전히 제거하지 못하지만, LDU의 update-side
 %removing log와 reuse garbage log 기법등으로 global queue에 log를 저장하는 횟수를 상당히 줄임에 따라,
 %cache communication overhead를 상당히 줄일 수 있다.
-However, per-core approach does not work well for a all data structure because
-of limited per-core memory size.
-
-
+Though global queue can not perfactly remove global CAS operations, it can
+reduce cache communication overhead by using update-side removing
+logs and reuse garbage logs because it reduces count of inserting the
+queue.
 \fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 9: log를 저장하는 queue의 종류는 non-blocking queue를 사용
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 \ifkor
-LDU logs in non-blocking queue because it can proceed without any lock(per-core
-or global lock).
+LDU는  non-blocking queue를 이용하여 로깅한다. 그 이유는 Global 또는 Per-core 락 없이 수행될 수 
+있기 때문이다. 
 Non-blocking queue 중에 LDU는 head 포인터에 대한 CAS 연산을 최대한 줄인 multiple producers and
 single consumer에 활용될 수 있는 자료구조[]를 이용하였다.
 이 큐는 다른 non-blocking list[][][]와 다르게, insert operation을 항상 처음 노드에 삽입함에
@@ -468,24 +476,27 @@ single consumer에 활용될 수 있는 자료구조[]를 이용하였다.
 게다가 log를 적용하는 부분에서 single consumer만 고려 했기 때문에, remove를 위한 복잡한 알고리즘이 필요없다. 
 예를 들어 single consumer는 operation log 전체를 얻기 위해, xchg 명령을 사용하여 head pointer를
 NULL로 atomic하게 제거한다. 
-결론적으로 LDU는 queue의 위치에 따른 의존성을 제거하고, head pointer의 CAS fail 때문에 발생하는 multiple
-CAS를 최소화 하기 위한 non-blocking queue를 이용하였다.
 \else
+%LDU는  non-blocking queue를 이용하여 로깅한다. 그 이유는 Global 또는 Per-core 락 없이 수행될 수 
+%있기 때문이다. 
 LDU logs in non-blocking queue because it can proceed without any lock(per-core
 or global lock).
 %Non-blocking queue 중에 LDU는 head 포인터에 대한 CAS 연산을 최대한 줄인 multiple producers and
 %single consumer에 활용될 수 있는 자료구조[]를 이용하였다.
-
+Among non-blocking queues, the LDU uses multiple producers and single consumer
+based non-blocking queue reducing the CAS operationg to global head pointers
+access.
 %이 큐는 다른 non-blocking list[][][]와 다르게, insert operation을 항상 처음 노드에 삽입함에
 %따라, CAS가 발생되는 횟수를 상대적으로 줄일 수 있다.
-
+This queue always inserts node where inserts head-next pointer, so it can
+reduce iteration loop that may make anonther CAS operation.
 %게다가 log를 적용하는 부분에서 single consumer만 고려 했기 때문에, remove를 위한 복잡한 알고리즘이 필요없다. 
+In addition, this queue considers single consumer when applying logs, so it does
+not need complex algorithms for the remove oepration.
 %예를 들어 single consumer는 operation log 전체를 얻기 위해, xchg 명령을 사용하여 head pointer를
 %NULL로 atomic하게 제거한다. 
-
-%결론적으로 LDU는 queue의 위치에 따른 의존성을 제거하고, head pointer의 CAS fail 때문에 발생하는 multiple
-%CAS를 최소화 하기 위한 non-blocking queue를 이용하였다.
-\
+For example, this queue uses atomic SWAP operation, which changes NULL pointer,
+to acquire all operating log.
 \fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -496,7 +507,9 @@ or global lock).
 LDU는 log 때문에 불필요하게 메모리 낭비를 방지하고, To keep the log from growing without end,
 log-based method periodically apply the time-ordered operations at the head of
 the log to remove these opearation from the log.
-LDU는 주기적으로 Log를 flush해줌으로써 Log가 쌓여서 발생하는 메모리 낭비를 줄인다.
+LDU는 주기적으로 Log를 적용함으로 Log가 쌓여서 발생하는 메모리 낭비를 줄인다. 
+이것은 OpLog의 batching updates와 Flat combining의 combiner thread와 같이, 1개의
+thread가 update operation을 수행하므로 cache locality가 높아지는 장점을 가진다. 
 \else
 %LDU는 log 때문에 불필요하게 메모리 낭비를 방지하고, To keep the log from growing without end,
 %log-based method periodically apply the time-ordered operations at the head of
@@ -505,6 +518,11 @@ To reduce memory usage and to keep the log from growing without end, LDU
 periodically apply the time-ordered operations at the head of the log to remove
 these opearation from the log.
 %LDU는 주기적으로 Log를 flush해줌으로써 Log가 쌓여서 발생하는 메모리 낭비를 줄인다.
+The LDU periodically applies logs in queue to reduce the memory overhead.
+%이것은 OpLog의 batching updates와 Flat combining의 combiner thread와 같이, 1개의
+%thread가 update operations을 수행하므로 cache locality가 높아지는 장점을 가진다. 
+This approch is similar with the method of previous research such as OpLog's
+batching updates and FC's combiner thread.
 
 \fi
 
@@ -514,27 +532,15 @@ these opearation from the log.
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-\begin{figure*}[t!]
-  \begin{center}
-     \includegraphics[width=0.8\textwidth,height=0.4\textheight,keepaspectratio]{fig/basic_gldu}
-  \end{center}
-  \caption{\deferu example showing six update operations and one read
-  operation. The execution flows from top to bottom. Memory represents original
-  data structure and logging queue at T1, T2 and T3, respectively.}
-  \label{fig:basic}
-\end{figure*}
-
 
 \subsection{LDU example}
+
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 1: Flowchart 구조 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %
-
 \ifkor
-먼저 LDU를 보다 정확하게 설명하기위해, 로그를 global queue 저장한 방법과 per-core queue에 저장한 두가지 방법에 대해서
-예를 들어 설명한다. 
 그림 \ref{fig:basic} LDU의 하나의 예에 대해서 보여준다. 그림 \ref{fig:basic}은 예로서 queue를 global
 queue를 사용하였다. 
 7개의 update operation과 1개의 read operation을 LDU에서 어떻게 처리하는지 보여준다.
@@ -545,11 +551,27 @@ garbage object는 \res{1}{D}과 같이 rectangle로 표시한다.
 초기 data structure의 트리에는 \inv{0}{A} and \inv{0}{B} 두개의 오브젝트가 들어가고, global
 queue에는 아무것도 없다.
 \else
-
-
-
-
-
+%그림 \ref{fig:basic} LDU의 하나의 예에 대해서 보여준다. 그림 \ref{fig:basic}은 예로서 queue를 global
+%queue를 사용하였다. 
+Figure \ref{fig:basic} shows an example of the LDU with a per-core queue and
+a global queue.
+%LUD는 update-heavy한 자료구조를 해결하였기 때문에 우리는 7개의 update operation과 1개의 read
+% operation을 LDU에서 어떻게 처리하는지 보여준다.
+Becuase LDU can solve update-heavy data structure, we show how six update
+operations can concurrently run without lock before the read operation.
+%update operation을 위한 심볼은 앞에서 설명한 심볼인 사용했고 garbage object을 위한 심볼이 추가 되었다.
+%garbage object는 \res{1}{D}과 같이 rectangle로 표시한다. 
+To explain the LDU, we previously used symbol and add garbage symbol as
+rectangle \res{1}{D}.
+%이 그림의 실행 순서는 위에서 부터 아래이다.
+In this figure, execution flows from top to bottom.
+%그림의 왼쪽은 CPU의 operation 순서를 보여주고 오른쪽은 특정 시간에 메모리에 저장된 자료구조의 내용을 보여준다.
+The left box show cpu operation, and the right box show data structure
+contents at a particular time in the memory.
+%초기 data structure의 트리에는 \inv{0}{A} and \inv{0}{B} 두개의 오브젝트가 들어가고, global
+%queue에는 아무것도 없다.
+Early the tree data structure contains two object, \inv{0}{A} and \inv{0}{B},
+and queue is empty.
 \fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -557,10 +579,9 @@ queue에는 아무것도 없다.
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %
 \ifkor
-그림 \ref{fig:basic}는 시간 순서대로 각단계에 대해서 LDU의 수행 흐름을 보여준다.
-먼저 그림에서 concurrent updates 단계에서는 \code{Core0}, \code{Core1} and \code{Core2}가 각각
-$\oplus$\inv{1}{C}, $\oplus$\inv{2}{D} and
-$\oplus$\inv{3}{E}에 해당하는 3개의 updates oepration을 log로 저장한다. 
+가장 위의 그림에서는  \code{Core0}, \code{Core1} and
+\code{Core2}가 각각 $\oplus$\inv{1}{C}, $\oplus$\inv{2}{D} and
+$\oplus$\inv{3}{E}에 해당하는 3개의 updates oepration을 락 없이 concurrent한 방법으로 log를 저장한다.
 Log를 저장하는 queue를 non-blocking queue를 사용하기 때문에, 이 단계에서의 update는 lock이 필요없다. 
 즉 모든 thread는 lock에 대한 contention없이 병렬적으로 실행된다. 
 \code{T1} 시점이 되면 메모리의 트리는 \inv{0}{A} and \inv{0}{B}의 노드를 가지게 되고, queue에는 
@@ -584,21 +605,44 @@ $\oplus$\inv{1}{C},$\oplus$\res{3}{E} and 가 $\ominus$\inv{3}{A}의 operation�
 수행한다. \code{T4} 시점이 되면 tree에는 
 모든 operation이 수행되어, \inv{0}{B}, \inv{0}{C} and \inv{0}{D} 값이 존재하게 된다.
 결국 로그를 모두 수행하면 마지막 reader는 같은 tree의 값을 읽게 된다. 
-
-그림 \ref{fig:basicpldu}는 per-core queue에 log를 저장되는 흐름을 설명한다.
-global queue와의 차이점만 설명하면,
-
 \else
-
-
-
-
-
+%가장 위의 그림에서는  \code{Core0}, \code{Core1} and
+%\code{Core2}가 각각 $\oplus$\inv{1}{C}, $\oplus$\inv{2}{D} and
+%$\oplus$\inv{3}{E}에 해당하는 3개의 updates oepration을 락 없이 concurrent한 방법으로 log를
+% 저장한다.
+The data structure for \emph{physical update} is a tree, and initial values in
+the tree are node \code{A} and \code{B}.
+In contrast, the data structure for \emph{logical update} is lock-less list.
+In the top figure, \code{Core0}, \code{Core1} and \code{Core2} perform the
+logical insert operation to nodes \code{C}, \code{D} and \code{E},
+ respectively.
+The logical inserts set the insert mark, and they then insert their
+nodes into lock-less list.
+In this case, none of the lock is needed because \deferu uses the lock-less
+list;all threads can execute the update concurrently.
+At \code{T1}, the tree contains node \code{A}
+and \code{B} and 
+the lock-less list contains node \code{E}, \code{D} and \code{C}.
+When removing the node \code{C}, the node \code{C}, whose mark field was marked
+by insert, atomically cleans up the insert marked field.
+At \code{T2}, the lock-less list contains nodes
+\code{A}, \code{E}, \code{D}, and \code{C}, and the marking field is zero for 
+nodes \code{E} and \code{C}.
+Before running the \code{synchronize} function, they need to lock the original
+ tree's lock using the exclusive lock in order to protect the tree's
+ operation.
+The \code{synchronize} migrates from lock-less list node to tree node, each of 
+which is the marked node, so nodes \code{A} and \code{D} are migrated.
+Finally, the tree contains nodes \code{D} and \code{B}, so the reader can read
+ eventually consistent data.
 \fi
 
 \subsection{The LDU Algorithm and Correctness}
-\begin{figure}[tb!]
+
+\begin{figure}[tb]
+\begin{center}
 \inputminted[linenos,fontsize=\footnotesize, tabsize=2]{c}{src/ldu_logical.c}
+\end{center}
 \rule{\columnwidth}{0.5pt}
 \vspace{-\baselineskip}
 \caption{\deferu logical update algorithm. \code{logical\_insert} represents
@@ -609,18 +653,31 @@ It may be called by original insert position without locks. The fastpath is
 \label{fig:gldulogicalupdate}
 \end{figure}
 
+\begin{figure}[tb]
+\begin{center}
+\inputminted[linenos,fontsize=\footnotesize, tabsize=2]{c}{src/ldu_physical.c}
+\end{center}
+\rule{\columnwidth}{0.5pt}
+\vspace{-\baselineskip}
+\caption{\deferu physical update algorithm. \code{synchronize\_ldu} may be
+ called by reader and converts update log to original data structure
+ traversing the lock-less list.}
+\label{fig:glduphysicalupdate}
+\end{figure}
+
 \subsubsection{logical update: inserting logs}
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 1:LDU Concurrent Updates 알고리즘 코드 및 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 \ifkor
-
 그림 \ref{fig:gldulogicalupdate}는 concurrent updates를 수행하는 코드와 앞에서 설명한 update-side
-absorbing logs와 reuse garbage logs에 대한 코드이다. \code{logical\_insert}과
-\code{logical\_remove}의 코드에서 가장 먼저하는 것은 이미 update operation이 수행되어 log가 queue에 들어
-있는지에 대해서 체크를 한다. 이것은 update함수가 수행하는 도중 어느때나 log를 flush하는 \code{synchronize} 함수가
-수행 될 수 있기 때문에, \code{xchg} 함수를 통해 atomic하게 체크를 한다. 또한 \code{xchg}를 통해 old mark
-필드가 true라면 이미 queue에 log가 있다는 뜻이므로, atomic하게 false로 수정을 한다.
+absorbing logs와 reuse garbage logs에 대한 코드이다. 
+\code{logical\_insert}과 \code{logical\_remove}의 코드에서 가장 먼저하는 것은 이미 update
+operation이 수행되어 log가 queue에 들어 있는지에 대해서 체크를 한다. 
+이것은 update함수가 수행하는 도중 어느때나 log를 flush하는 \code{synchronize} 함수가 수행 될 수 있기 때문에,
+\code{xchg} 함수를 통해 atomic하게 체크를 한다. 
+또한 \code{xchg}를 통해 old mark 필드가 true라면 이미 queue에 log가 있다는 뜻이므로, atomic하게 false로
+수정을 한다.
 이것은 앞에서 설명한 update-side absorbing log 기능이며, 1개의 atomic operation으로 update를 수행할 수
 있다.
 만약 mark 필드카 체크되지 않았다면, 두번째로 queue에 존재하는 로그인지 체크를 한 후, 존재하는 로그라면
@@ -632,23 +689,12 @@ absorbing logs와 reuse garbage logs에 대한 코드이다. \code{logical\_inse
 \else
 
 
-
-
 \fi
 
 
-\subsubsection{physical update: applying logs}
+\subsubsection{synchronize update: applying logs}
 
 
-\begin{figure}[tb!]
-\inputminted[linenos,fontsize=\footnotesize, tabsize=2]{c}{src/ldu_physical.c}
-\rule{\columnwidth}{0.5pt}
-\vspace{-\baselineskip}
-\caption{\deferu physical update algorithm. \code{synchronize\_ldu} may be
- called by reader and converts update log to original data structure
- traversing the lock-less list.}
-\label{fig:glduphysicalupdate}
-\end{figure}
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 2:LDU Deferred Updates 알고리즘 코드 및 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -673,8 +719,6 @@ LDU는 주기적으로 log를 비워줘야 하므로, update operation이 수행
 따라서 한번 더 mark 필드를 체크하여 log를 비워준다.
 \else
 
-
-
 \fi
 
 \ifkorthesis
@@ -683,7 +727,7 @@ LDU는 주기적으로 log를 비워줘야 하므로, update operation이 수행
 % Paragraph 2:LDU queue 알고리즘 코드 및 설명 - 졸업논문
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 \subsubsection{LDU queues}
-\begin{figure}[tb!]
+\begin{figure}[tb]
 \inputminted[linenos,fontsize=\footnotesize, tabsize=2]{c}{src/ldu_queue.c}
 \rule{\columnwidth}{0.5pt}
 \vspace{-\baselineskip}
@@ -702,7 +746,6 @@ data structure와 같은지 체크하고, 다르면 해당 코어에 저장된 l
 전체 코어의 log를 flush할 필요없이 해당 코어에 저장된 log만 flush하면 되는 이유는 이미 update-side
 absorbing에 의해 time-sencitive한 operation이 삭제되었기 때문이다.
 \fi
-
 
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$

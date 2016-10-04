@@ -17,6 +17,8 @@ pageout~\cite{OBJMAPOLS}.
 Rmap의 anonymous page와 file page의 관리는 최근 interval trees로 되어 있으며, 이것은 reverse page
 성능 향상으로 위해 지속적으로 최적화가 ~\cite{CorbetLWNRMAP}~\cite{CorbetLWNANON} 이루어지고 있다. 
 \else
+
+
 \fi
 
 \ifkor
@@ -27,6 +29,7 @@ anonymous page를 위한 rmap과 file mapped page을 위한 rmap 모두 문제�
 이번 장은 이러한 문제를 해결하기 위해, 어떻게 LDU를 리눅스의 rmap에 적용했는지에대한 내용을 설명하며, 보다 practial한 내용을
 다룬다.
 \else
+
 
 \fi
 %The Linux rmap implementation can become a bottleneck when many processes
@@ -93,6 +96,7 @@ Tree를 보호하기 위한 lock은 프로세스마다 공유하는 데이터인
 보호되며, anonymous ramp의 lock보다 contention이 덜 발생 하지만, file ramp역시 fork, exit과
 mmap을 자주하는 워크로드 일 경우, scalability의 문제를 만든다[]. 
 \else
+
 \fi
 
 %The kernel has the information to do object-based reverse mapping for files.
@@ -115,6 +119,8 @@ concurrent updates 때문에 발생하는 lock contention을 제거하기 위해
 head pointer를 추가하고, percore queue를 이용할 경우에는, 각각의 per-core memory에 추가하여 로그를 
 저장한다. 
 \else
+
+
 \fi
 
 \subsection{anonymous mapping}
@@ -139,6 +145,8 @@ fork가 수행되면 부모의 anon\_vma\_chain(avc)는 복사가 되며 해당 
 수행할 때 사용되는 lock은 root가 가지고 있는 lock을 이용한다. 
 따라서 자식이 많아지는 경우 root의 lock 때문에 심한 lock contention이 발생한다[].
 \else
+
+
 \fi
 
 
@@ -152,6 +160,8 @@ anonymous rmap역시 global queue를 사용한다면, lock을 root의 lock을 �
 x-x와 같이 root의 anon\_vma에 해당하는 object에 로그를 저장한다. 
 만약 percore queue를 사용하면, percore에 위치에 root 포인터 정보와 함께 operation log를 저장한다.
 \else
+
+
 \fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
