@@ -17,8 +17,28 @@ pageout~\cite{OBJMAPOLS}.
 Rmap의 anonymous page와 file page의 관리는 최근 interval trees로 되어 있으며, 이것은 reverse page
 성능 향상으로 위해 지속적으로 최적화가 ~\cite{CorbetLWNRMAP}~\cite{CorbetLWNANON} 이루어지고 있다. 
 \else
-
-
+%리눅스 커널의 프로세스간 공유자원 중 하나인 reverse page mapping(rmap)은 fork, exit, mmap이 수행될 때
+%update가 많이 사용하는 data structure이다.
+The reverse page mapping(rmap) a kernel memory management mechanism, and
+consists of anonymous rmap and the file rmap.
+These two rmap maintains virtual address (VMAs) in order to translate physical
+addresses to virtual addresse[], and are a shared global resource.
+These global resource of rmap are managed by using interval tree, and any
+processes can update the one.
+To protect the shared interval tree, the Linux use a semaphore.
+This update operations such as tree's insert and remove operation are invoked by
+fork, exit and mmap, so simultaneous creation of many processes causes
+bottlenect becasue not only the update can not run in palarrel but also update's
+lock can cache invalidation traffic.
+On the contrary, the rmap reads walked through each process’s pages
+mappings and selected pages to unmap when it swaps a pyhsical page out to disk, migrates
+other cpu, or turncates a file.
+After all a page’s mappings were removed could it be selected for
+pageout~\cite{OBJMAPOLS}.
+%Rmap의 anonymous page와 file page의 관리는 최근 interval trees로 되어 있으며, 이것은 reverse
+% page 성능 향상으로 위해 지속적으로 최적화가 ~\cite{CorbetLWNRMAP}~\cite{CorbetLWNANON} 이루어지고 있다. 
+This section show how to apply LDU to Linux to solve these bottlent, and it
+deals with more practical contents.
 \fi
 
 \ifkor
@@ -29,7 +49,6 @@ anonymous page를 위한 rmap과 file mapped page을 위한 rmap 모두 문제�
 이번 장은 이러한 문제를 해결하기 위해, 어떻게 LDU를 리눅스의 rmap에 적용했는지에대한 내용을 설명하며, 보다 practial한 내용을
 다룬다.
 \else
-
 
 \fi
 %The Linux rmap implementation can become a bottleneck when many processes
@@ -73,30 +92,103 @@ anonymous page를 위한 rmap과 file mapped page을 위한 rmap 모두 문제�
 % and inserting the mappings into the libc ramp interval tree.
 
 
-\subsection{file mapping}
+\subsection{anonymous mapping}
+
 
 \begin{figure}[tb]
   \begin{center}
-     \includegraphics[width=0.5\textwidth,height=0.5\textheight,keepaspectratio]{fig/file_rmap}
+     \includegraphics[width=0.5\textwidth,height=0.5\textheight,keepaspectratio]{fig/anon_vma}
   \end{center}
   \caption{An example of applying the \deferu to file reverse mapping. }
-  \label{fig:deferu}
+  \label{fig:deferu2}
 \end{figure}
 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 1: linux의 anon vma의 공유된 구조에 대한 설명
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+\ifkor
+Anonymous rmap의 공유데이터는 서로 상당히 복잡하게 연결되어 있다. 
+그림 x-x는 이렇게 복잡하게 연결된 공유데이터를 보여준다.
+fork가 수행되면 부모의 anon\_vma\_chain(avc)는 복사가 되며 해당 avc를 관리하는 새로운 anon\_vma가 생성된다. 
+여기서 Anonymous rmap의 file rmap과 다른점은 자식에 해당하는 anon\_vma에 대한 tree operation을
+수행할 때 사용되는 lock은 root가 가지고 있는 lock을 이용한다. 
+따라서 자식이 많아지는 경우 root의 lock 때문에 심한 lock contention이 발생한다[].
+\else
+%fork가 수행되면 부모의 anon\_vma\_chain(avc)는 복사가 되며 해당 avc를 관리하는 새로운 anon\_vma가 생성된다. 
+When a process spawns, the parent's anonymous vma chain(avc) are copyed to
+child, and then the new anonymous vma indicating the child's avc is created.
+%Anonymous rmap의 공유데이터는 서로 상당히 복잡하게 연결되어 있다. 
+%그림 x-x는 이렇게 복잡하게 연결된 공유데이터를 보여준다.
+Due to the fact that the continuous process spawns, it become more complex
+anonymous ramp data structre.
+That is, the anonymous ramp is one of the complex data structure in the Linux
+kernel[].
+Figure x-x shows this complex anonymous rmap data structure.
+%여기서 Anonymous rmap은 자식에 해당하는 anon\_vma에 대한 tree operation을
+%수행할 때 사용되는 lock은 root가 가지고 있는 lock을 이용한다. 
+To prevent the udpate operations for the interval tree, the anonymous rmap
+uses root lock, so when the that makes the Linux fork.
+Therefore, when the child is increased, root lock makes lock contention
+problem[].
+\fi
+
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 2: anon vma에 ldu 적용한 방법에 대한 설명 
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+\ifkor
+이러한 lock contention을 제거하기 위해 LDU는 각각의 anon\_vma\_chain object에 대해서
+mark 필드를 추가하여, update-side removing을 수행한다.
+anonymous rmap역시 global queue를 사용한다면, lock을 root의 lock을 사용하기 때문에, log의 위치는 그림
+x-x와 같이 root의 anon\_vma에 해당하는 object에 로그를 저장한다. 
+만약 percore queue를 사용하면, percore에 위치에 root 포인터 정보와 함께 operation log를 저장한다.
+\else
+
+%이러한 lock contention을 제거하기 위해 LDU는 각각의 anon\_vma\_chain object에 대해서
+%mark 필드를 추가하여, update-side removing을 수행한다.
+In anonymous ramp, in order to eliminate the lock contention, LDU adds insert
+and remove mark field in avc object for concurrent update, and it performs the
+update-side removing logs.
+%앞에서 설명한 봐와 같이, anonymous rmap는 root의 lock을 사용하기 때문에, 로그를 저장하는
+%위치를 global queue를 사용한다면, x-x와 같이 root의 anon\_vma에 해당하는 object에 로그를 저장하고,
+%per-core queu를 사용한다면 root 정보와 함께 log를 per-core 메모리에 저장한다.
+Understanding the log's position of queue header in anonymous rmap is important.
+As noted earlier, since anonymous rmap locks using the root lock, LDU global
+queue logs in the position of the root data structure, and the per-core queue
+also logs in the per-core queue with root information.
+\fi
+
+
+\subsection{file mapping}
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 1: linux의 file mapped page reverse mapping의 구조에 대한 설명
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 \ifkor
-file을 위한 rmap의 구조는 그림 x과 같다. reverse page map을 위한 page는 inode가 가지고 있는
-address\_space를 가리키며, 이것은 vm\_area\_struct(vma)을, containg the virtual address
-of the mapping, interval tree를 이용하여 관리한다. 이것은 fork가 되면 부모의 address\_space의
-interval tree에 추가된다.
+file을 위한 rmap의 구조는 그림 x과 같다. 
+reverse page map을 위한 page는 inode가 가지고 있는 address\_space를 가리키며, 이것은
+vm\_area\_struct(vma)을, containg the virtual address of the mapping, interval
+tree를 이용하여 관리한다. 이것은 fork가 되면 부모의 address\_space의 interval tree에 추가된다.
 Tree를 보호하기 위한 lock은 프로세스마다 공유하는 데이터인 address\_space의 lock을 사용하여
 보호되며, anonymous ramp의 lock보다 contention이 덜 발생 하지만, file ramp역시 fork, exit과
 mmap을 자주하는 워크로드 일 경우, scalability의 문제를 만든다[]. 
 \else
-
+%file을 위한 rmap의 구조는 그림 x과 같다. 
+Figure x-x show rmap for file.
+%reverse page map을 위한 page는 inode가 가지고 있는 address\_space를 가리키며, 이것은
+%vm\_area\_struct(vma)을, containg the virtual address of the mapping, interval
+%tree를 이용하여 관리한다. 이것은 fork가 되면 부모의 address\_space의 interval tree에 추가된다.
+The struct page for file rmap indicates address\_space, which is
+managed by inode, and address\_space manages interval tree that contains the
+VMAs.
+%Tree를 보호하기 위한 lock은 프로세스마다 공유하는 데이터인 address\_space의 lock을 사용하여
+%보호되며, anonymous ramp의 lock보다 contention이 덜 발생 하지만, file ramp역시 fork, exit과
+%mmap을 자주하는 워크로드 일 경우, scalability의 문제를 만든다[]. 
+To protect this interval tree in the address\_space that is shared between
+processes, the Linux uses the read-write semaphore.
+Therefore, file rmap also has the update serialization problem when
+the process concurrently invokes fork, exit and mmap, which entails inserting the VMA
+associated with file into the interval tree or removing the VMA.
 \fi
 
 %The kernel has the information to do object-based reverse mapping for files.
@@ -115,54 +207,48 @@ mmap을 자주하는 워크로드 일 경우, scalability의 문제를 만든다
 \ifkor
 concurrent updates 때문에 발생하는 lock contention을 제거하기 위해 LDU를 사용하려면,
 각각의 object에 insert와 remove에 해당하는 mark필드가 추가되야하며, queue 종류에 따라 head 포인터를
-추가해야 한다. 만약 global queue를 사용할 경우에는 address\_space object에 global queue에 대한
+추가해야 한다. 
+만약 global queue를 사용할 경우에는 address\_space object에 global queue에 대한
 head pointer를 추가하고, percore queue를 이용할 경우에는, 각각의 per-core memory에 추가하여 로그를 
 저장한다. 
 \else
-
-
+%concurrent updates 때문에 발생하는 lock contention을 제거하기 위해 LDU를 사용하려면,
+%각각의 object에 insert와 remove에 해당하는 mark필드가 추가되야하며, queue 종류에 따라 head 포인터를
+%추가해야 한다. 
+The LDU can easily be applied to eliminate the update serialization problem in
+the file rmap because it does not use the synchronized timestamp counters.
+To use the LDU, the mark fields are added in the VMA, and 
+the log's queue is added according to the kind of queue.
+%예를 들어 global queue를 사용할 경우에는 address\_space object에 global queue에 대한
+%head pointer를 추가하고, percore queue를 이용할 경우에는, 각각의 per-core memory에 추가하여 로그를 
+%저장한다. 
+For instance, if uses global queue, the queue header is located in the struct
+address\_spcae. If not, the queue header is located in the per-core memory.
 \fi
 
-\subsection{anonymous mapping}
+\ifkor
+\else
+In addition, this figure clearly shows why the LDU additionally supports the
+global queue because it is a simpler and easier scheme.
+For example, consider the global queue, a developer just adds queue header in
+the header of original data structuer(struct address\_space), and then add mark
+field in individual object(struct vma\_area\_struct).
+Finaly, the developer creates synchronize function and call before the
+read.
+On the other hand, the per-core queue may need an additional per-core
+queue management scheme because it separates between interval tree head pinter
+and log's head pointer.
+\fi
 
 \begin{figure}[tb]
   \begin{center}
-     \includegraphics[width=0.5\textwidth,height=0.5\textheight,keepaspectratio]{fig/anon_vma}
+     \includegraphics[width=0.5\textwidth,height=0.5\textheight,keepaspectratio]{fig/file_rmap}
   \end{center}
   \caption{An example of applying the \deferu to file reverse mapping. }
-  \label{fig:deferu2}
+  \label{fig:deferu}
 \end{figure}
 
 
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 1: linux의 anon vma의 공유된 구조에 대한 설명
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-\ifkor
-Anonymous rmap의 공유데이터는 서로 상당히 복잡하게 연결되어 있다. 
-그림 x-x는 이렇게 복잡하게 연결된 공유데이터를 보여준다.
-fork가 수행되면 부모의 anon\_vma\_chain(avc)는 복사가 되며 해당 avc를 관리하는 새로운 anon\_vma가 생성된다. 
-여기서 Anonymous rmap의 file rmap과 다른점은 자식에 해당하는 anon\_vma에 대한 tree operation을
-수행할 때 사용되는 lock은 root가 가지고 있는 lock을 이용한다. 
-따라서 자식이 많아지는 경우 root의 lock 때문에 심한 lock contention이 발생한다[].
-\else
-
-
-\fi
-
-
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 2: anon vma에 ldu 적용한 방법에 대한 설명 
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-\ifkor
-이러한 lock contention을 제거하기 위해 LDU는 각각의 anon\_vma\_chain object에 대해서
-mark 필드를 추가하여, update-side removing을 수행한다.
-anonymous rmap역시 global queue를 사용한다면, lock을 root의 lock을 사용하기 때문에, log의 위치는 그림
-x-x와 같이 root의 anon\_vma에 해당하는 object에 로그를 저장한다. 
-만약 percore queue를 사용하면, percore에 위치에 root 포인터 정보와 함께 operation log를 저장한다.
-\else
-
-
-\fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$

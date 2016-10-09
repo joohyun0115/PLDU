@@ -189,7 +189,7 @@ LDU는 update-side removing이라는 방법으로 이러한 time-senstivive한 l
 % should eventually execute after the insert[].
 The fundamental reason for requiring synchronized timestamp counters is that 
 some operations should need to be ordered.
-For example, a process logs an insert operation to per-core memory, then
+For example, a process logs an insert operation to the per-core memory, then
 migrates to another core, and logs a remove operation to per-core memory.
 The remove operation must eventually execute after the insert operation[].
 Thus, OpLog should needs synchronized timestamp counters.
@@ -225,8 +225,7 @@ by optimization phase.
 % remove operation만 남게 된다.
 For example, insert-remove operations or remove-insert operations such as 
 $\ominus$\inv{2}{B}, $\oplus$\inv{3}{C} are cancelable operations before
-the read.
-Eventually remaining operation logs such as
+the read, so eventually remaining operation logs such as
 %위의 log는 아래와 같이 non-time-sensitive한 operation만 남게 된다.
 \begin{center}
  $\oplus$\inv{2}{B}, $\oplus$\inv{3}{A}
@@ -234,7 +233,7 @@ Eventually remaining operation logs such as
 , which are non-time-sensitive logs.
 %LDU는 update-side removing이라는 방법으로 이러한 time-senstivive한 log를 update 순간 바로 지운다.
 When updates operation occurs, LDU removes these time-sensitive log using
-update-side removing technique.
+the update-side removing technique.
 \fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -289,22 +288,22 @@ search가 two update operations(one to insert and one to remove an element)이 �
 %two update operations(one to insert and one to remove an element)이 함수 외부해서 수행하는
 %구조이기 때문에 가능하다.
 To the best of our knowledge, LDU is the first log-based concurrent updates to
-remove logs on the update time because we found that Linux kernel's updates
+remove logs on the update time because Linux kernel's updates
 operations involved sequence of operations.
 %예를 들어, 리눅스의 data structure 구조는 search가 update operaton 외부에 있기 때문에 insert
 % operation 다음에는 반드시 remove opration이 발생하고 remove operation 다음에는 반드시 insert operation이
 % 발생하는 특징이 있다. 
-The Linux kernel, for example, if insert operation occur, then next operation
-must be remove operation becasue the kernel's update function has separated
+,and we found that the Linux kernel, for example, if insert operation occur,
+then next operation must be remove operation becasue the kernel's update function has separated
 from search, alloc and free functions.
 Therefore, remove-remove or insert-insert operation in Linux kernel is
 forbidden: if remove-remove operation occur, the second remove operation may
-encounter a crash because this object can be freed by first remove
-operation concurrently.
+encounter a crash because this object can be concurrently freed by first remove
+operation.
 %즉 리눅스의 data structure의 경우에는 search와 update가 분리되어 있어, 같은 update operation이 연달아
 % 호출되지 않는다.
 %LDU는 이러한 사실을 이용하여 update-side absorbing log를 개발 하였다. 
-Therefore, the design of the LDU is inspired by these kernel update operations
+The design of the LDU is inspired by these kernel update operations
 sequeunce.
 \fi
 
@@ -343,7 +342,7 @@ atomic하게 지워주는 방식으로 진행된다.
 효과를 가져주므로 성능이 향상된다. 
 \else
 %업데이트 순간 로그를 지우는 방법은 shared memory system의 swap operation을 사용한다.
-Update-side removing logs are implemented by performing atomic swap operation
+Update-side removing logs are designed by performing atomic swap operation
 in an individual object for shared memory systems.
 %이러한 atomic swap operation은 update operation을 취소 가능한 로그와 함께 atomic하게 삭제하는 일을
 % 가능하게 한다.
@@ -351,7 +350,7 @@ This atomic swap operation alows update operations to atomically remove with the
 previous cancelable log.
 %먼저 LDU는 모든 object에 insert와 remove의 mark 필드를 추가해서 update-side absorbing을 수행
 % 하였다.
-To that these LDU performs adding the marking field in the object structure.
+To achieve these LDU performs adding the marking field in the object structure.
 %예를 들어 만약 A라는 object를 대상으로 insert-remove operation이 수행될 경우 처음 insert operation은
 % insert mark 필드에 표시하고 queue에 저장한다.
 For example, consider the insert-remove operation sequence at same object.
@@ -359,8 +358,8 @@ The first insert operation marks the feld of mark and then the log inserts
 queue.
 %다음 remove operation 부터는 log를 queue에 저장하지 않고 insert에 표시한 mark 필드에 표시한 값만
 % atomic하게 지워주는 방식으로 진행된다.
-After the next remove operation, LDU does not logs and proceed with changing
-the mark feld.
+After the next remove operation, LDU does not logs and just proceed with
+changing the mark feld.
 %다음으로 LDU는 log를 적용할 때, queue안에 log가 존재하더라도, mark 필드가 표시된 log만 실행한다.
 The reader applies logs, marking feld is true, to the original data structure.
 %이것은 swap이라는 상대적으로 가벼운 연산과 상대적으로 덜 share 하는 indivisaul global object의 mark
@@ -368,7 +367,7 @@ The reader applies logs, marking feld is true, to the original data structure.
 % log를 지워주는 효과를 가져주므로 성능이 향상된다. 
 The benefit of this update-side removing is twofold:not only it can eliminates
 the time-sensitive operation but also it can cancels the previous operation log
-in the queue with current operation.
+in the queue.
 \fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -399,8 +398,8 @@ remained queue.
 % 경우(garbage object)이다.
 For example, consider the insert-remove-insert operation.
 After the sencond remove operation, the log remained in the queue, but it
-already canceled log resulted from update-side removing, hence insert mark filed is
-zero in the queue.
+already canceled log resulted from update-side removing, hence insert mark filed
+remained zero in the queue.
 %이러한 경우, 다음 insert operation에 대해서는 새로운 log를 list에 연산으로 다시 넣지 않고, 해당 object의 mark
 % 필드만 변경하여 log를 재활용하는 방법을 사용한다.
 In this case, the third insert operation reuse log in the queue instead of 
@@ -430,8 +429,8 @@ removing log와 reuse garbage log 기법등으로 global queue에 log를 저장�
 cache communication overhead를 상당히 줄일 수 있다.
 \else
 %LDU는 보다 다양한 데이터 구조를 지원하기 위해, per-core 또는 global queue 모두 이용할 수 있게 설계하였다.
-We designs using per-core and global queue for saving the logs becasue it
-can the further support of various data structure.
+In order to save the logs, we designs using per-core and global queue becasue
+it can be the further support of various data structure.
 %그 이유는 데이터 구조가 특성에 따라 per-core 구조에 적당한 data structure가 있고,
 %global queue 구조에 적당한 데이터 구조가 있기 때문이다.
 If per-core queue does not properly apply to a data structure, may use the
@@ -484,15 +483,15 @@ or global lock).
 %Non-blocking queue 중에 LDU는 head 포인터에 대한 CAS 연산을 최대한 줄인 multiple producers and
 %single consumer에 활용될 수 있는 자료구조[]를 이용하였다.
 Among non-blocking queues, the LDU uses multiple producers and single consumer
-based non-blocking queue reducing the CAS operationg to global head pointers
-access.
+based non-blocking queue thereby reducing the CAS operationg to global head
+pointers access.
 %이 큐는 다른 non-blocking list[][][]와 다르게, insert operation을 항상 처음 노드에 삽입함에
 %따라, CAS가 발생되는 횟수를 상대적으로 줄일 수 있다.
 This queue always inserts node where inserts head-next pointer, so it can
-reduce iteration loop that may make anonther CAS operation.
+minimize iteration loop that will make anonther CAS operation.
 %게다가 log를 적용하는 부분에서 single consumer만 고려 했기 때문에, remove를 위한 복잡한 알고리즘이 필요없다. 
-In addition, this queue considers single consumer when applying logs, so it does
-not need complex algorithms for the remove oepration.
+In addition, this queue just considers single consumer when applying logs, so it
+does not need complex algorithms for the remove oepration.
 %예를 들어 single consumer는 operation log 전체를 얻기 위해, xchg 명령을 사용하여 head pointer를
 %NULL로 atomic하게 제거한다. 
 For example, this queue uses atomic SWAP operation, which changes NULL pointer,
@@ -515,10 +514,9 @@ thread가 update operation을 수행하므로 cache locality가 높아지는 장
 %log-based method periodically apply the time-ordered operations at the head of
 % the log to remove these opearation from the log.
 To reduce memory usage and to keep the log from growing without end, LDU
-periodically apply the time-ordered operations at the head of the log to remove
-these opearation from the log.
+periodically applying the operations  of the log to
+remove these opearation from the log.
 %LDU는 주기적으로 Log를 flush해줌으로써 Log가 쌓여서 발생하는 메모리 낭비를 줄인다.
-The LDU periodically applies logs in queue to reduce the memory overhead.
 %이것은 OpLog의 batching updates와 Flat combining의 combiner thread와 같이, 1개의
 %thread가 update operations을 수행하므로 cache locality가 높아지는 장점을 가진다. 
 This approch is similar with the method of previous research such as OpLog's
@@ -665,6 +663,14 @@ It may be called by original insert position without locks. The fastpath is
 \label{fig:glduphysicalupdate}
 \end{figure}
 
+\ifkor
+\else
+This section shows a skeleton of algorithms.
+For exposition simplicity, we except the concurrent queue and LDU's detailed
+data structure.
+\fi
+
+
 \subsubsection{logical update: inserting logs}
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 1:LDU Concurrent Updates 알고리즘 코드 및 설명 
@@ -687,8 +693,22 @@ operation이 수행되어 log가 queue에 들어 있는지에 대해서 체크�
 그 이유는 리눅스 update operation이 항상 insert-remove 순서나 remove-insert 순서로 실행되기 때문이다.
 %만약 순서가 insert-insert 또는 remove-remove로 동작하면 
 \else
-
-
+Figure \ref{fig:gldulogicalupdate} shows concurrent updates functions.
+The concurrent updates can be divided into three phase.
+The first phase checks the already this object's to see whether or not the
+object has already inserted in the queue(Line 5, 22).
+When the excution of this code, at th phase 1, a reader or a periodic timer can
+call the synchronize function, which concurruntly applies the logs, so phase 1
+needs the atomic operation.
+If old mark field is true, then its mark field is changed to true value, called
+update-side removing logs.
+If not, this function checks insert mark field because LDU's update operation
+can not alow update operations to excute the insert-insert or remove-remove
+sequence(LINE6, 23).
+In phase 2, reusing the garbage logs, checks the already this object's to see
+wether or not has already inserted in the queue.
+If so, because mark field is makred(Line 7), this function returns.
+If it is first used operation log, the insert non-blocking queue.
 \fi
 
 
@@ -718,7 +738,24 @@ LDU는 주기적으로 log를 비워줘야 하므로, update operation이 수행
 언제든지 다시 concurrent updates operation을 통해 mark 필드가 설정될 수 있다.
 따라서 한번 더 mark 필드를 체크하여 log를 비워준다.
 \else
-
+Figure \ref{fig:glduphysicalupdate} shows deferred update function, which
+applies operation logs.
+Generally, the synchronize\_ldu call before the read, but it can be periodically
+invoked by the timer handler because of preventing the continous growing the
+logs.
+Before the execution fo synchronize function, it is locked by using object's
+data structure lock.
+This function proceed with single consumer, so it changes queue's head pointer
+by using atomic swap operation(Line x).
+Because LDU periodically flushs logs queue, the update operation can proceed
+with synchronize function.
+Thus, before the applying original data structure, the mark field must be set
+to false(Line 9~10).
+The used flag of the garbage sentinel is set to false indicating that the queue
+does not contain this object(Line 11).
+The mark field is annotated with between first applying logs(Line 9) and clear
+garbage bit(Line 11), so once again the synchronize function checks to apply the
+logs (Line 13~14).
 \fi
 
 \ifkorthesis

@@ -1,3 +1,15 @@
+
+
+\begin{figure}[tb]
+  \begin{center}
+    \includegraphics[scale=0.65]{graph/aim7.eps}
+  \end{center}
+  \caption{Scalability of AIM7 multiuser for different method.  The combination
+  \deferu with unordered harris list scale well;in contrast, up to 60 core, the
+  stock Linux scale linearly, then it  flattens out.}
+  \label{fig:aim7}
+\end{figure}
+
 \section{Evaluation}
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -15,6 +27,21 @@ This section answers the following questions experimentally:
 
 \subsection{Experimental setup}
 
+
+
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 3: 운영체제 및 커널 버전 설명
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+\ifkor
+We ran the three benchmarks on Linux 4.5.rc6 with stock Linux. 
+All experiments were performed on a 120 core machine with 8-socket, 15-core
+Intel E7-8870 chips equipped with 792 GB DDR3 DRAM.
+\else
+We ran the three benchmarks on Linux 4.5.rc6 with stock Linux. 
+All experiments were performed on a 120 core machine with 8-socket, 15-core
+Intel E7-8870 chips equipped with 792 GB DDR3 DRAM.
+\fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 1: 벤치 마크 대한 설명
@@ -34,6 +61,19 @@ fine grained evaluations.
 Finally, we wanted to focus on Linux fork performance and scalability;therefore,
 we selected lmbench, a micro benchmark.
 \else
+To evaluate the performance of \deferu, we use well-known
+three benchmarks:AIM7 Linux scalability benchmark, Exim email server in
+MOSBENCH and lmbench.
+We selected these three benchmarks because they are fork-intensive workloads and
+exhibit high reverse mapping lock contentions.
+Moreover, AIM7 benchmark has widely been used in practical area not only for testing the
+Linux but also for improving the scalability. 
+To evaluate \deferu for real world
+applications, we use Exim which is the most popular email server[].
+A micro benchmark, Lmbench, has been selected to focus on Linux fork operation-intensive
+fine grained evaluations.
+Finally, we wanted to focus on Linux fork performance and scalability;therefore,
+we selected lmbench, a micro benchmark.
 \fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -51,6 +91,16 @@ our \deferu for file mapping.
 Since we cannot obtain detailed implementation of Oplog, 
 we could not include comparison between \deferu and Oplog in this paper.
 \else
+In order to evaluate Linux scalability, we used four different experiment
+settings.
+First, we used the stock Linux as the baseline reference. 
+Second, we used ordered Harris lock-free list while 
+we apply unordered Harris lock-free list for the third setting
+(see section ~\ref{sec:implementation}). 
+Finally, we used combination of unordered Harris lock-free list for anonymous mapping and
+our \deferu for file mapping.
+Since we cannot obtain detailed implementation of Oplog, 
+we could not include comparison between \deferu and Oplog in this paper.
 \fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -67,37 +117,47 @@ Because both synchrobench and ASCYLIB leak memory, we implement additional
 garbage collector for the Linux kernel using Linux's work queues and lock-less
 list.
 \else
+We compare our \deferu implementation to a concurrent non-blocking Harris
+linked list ~\cite{Harris2001Lockfree};therefore, we implement the Harris linked
+list to Linux kernel.
+The code refers from sysnchrobench~\cite{Gramoli2015Synchrobench} and
+ASCYLIB~\cite{David2015ASYNCHRONIZED}, and we convert their linked list to
+Linux kernel style.
+Because both synchrobench and ASCYLIB leak memory, we implement additional
+garbage collector for the Linux kernel using Linux's work queues and lock-less
+list.
 \fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 2-2: Harris list의 수정 내용 설명 
+%Paragraph 2-2: Harris list의 수정 내용 설명  - 졸업논문 내용
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%In order to further improve performance, we move their ordered list to
-%unordered list. 
-%A feature of the Harris linked list is all the nodes are ordered by
-%their key. 
-%%Zhang~\cite{zhang2013practical} implements a lock-free unordered list
-%%algorithm, whose list is each insert and remove operation appends an
-%intermediate node at the head of the list;these approach is practically
-%hard to implement.
-%Indeed, Linux does not require contains operation because the Linux data
-%structures such as list, tree and hash table not depended on search key;they
-%depend on their unique object.
-%This feature can eliminates the ordered list in Harris linked list.
-%Therefore, we perform each insert operation appends an intermediate node at
-%the first node of the list;on the other hand, each remove operation searches
-%from head to their node.
-
-
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 3: 운영체제 및 커널 버전 설명
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-\ifkor
-We ran the three benchmarks on Linux 4.5.rc6 with stock Linux. 
-All experiments were performed on a 120 core machine with 8-socket, 15-core
-Intel E7-8870 chips equipped with 792 GB DDR3 DRAM.
-\else
+\ifkorthesis
+In order to further improve performance, we move their ordered list to
+unordered list. 
+A feature of the Harris linked list is all the nodes are ordered by
+their key. 
+Zhang~\cite{zhang2013practical} implements a lock-free unordered list
+algorithm, whose list is each insert and remove operation appends an
+intermediate node at the head of the list;these approach is practically
+hard to implement.
+Indeed, Linux does not require contains operation because the Linux data
+structures such as list, tree and hash table not depended on search key;they
+depend on their unique object.
+This feature can eliminates the ordered list in Harris linked list.
+Therefore, we perform each insert operation appends an intermediate node at
+the first node of the list;on the other hand, each remove operation searches
+from head to their node.
 \fi
+
+\begin{figure}[tb]
+  \begin{center}
+    \includegraphics[scale=0.65]{graph/exim.eps}
+  \end{center}
+  \caption{Scalability of Exim. The stock Linux collapses after 60 core;in
+  contrast, both unordered harris list and our \deferu flatten out.}
+  \label{fig:exim}
+\end{figure}
+
 
 \subsection{AIM7}
 
@@ -105,15 +165,6 @@ Intel E7-8870 chips equipped with 792 GB DDR3 DRAM.
 %Paragraph 1: AIM7 실험 결과
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-\begin{figure}[tb]
-  \begin{center}
-    \includegraphics[scale=0.65]{graph/aim7.eps}
-  \end{center}
-  \caption{Scalability of AIM7 multiuser for different method.  The combination
-  \deferu with unordered harris list scale well;in contrast, up to 60 core, the
-  stock Linux scale linearly, then it  flattens out.}
-  \label{fig:aim7}
-\end{figure}
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 1: 워크로드에 대한 설명
@@ -141,6 +192,26 @@ To increase the number of users during our experiment and show the results at th
 peak user numbers, 
 we used the crossover.
 \fi
+
+
+\begin{figure*}[tb]
+    \centering
+    \begin{subfigure}[b]{0.33\textwidth}
+        \includegraphics[height=1.3in]{graph/aim7_cpuutils.eps}
+        \caption{AIM7 - 120core}
+    \end{subfigure}%
+    \begin{subfigure}[b]{0.33\textwidth}
+        \includegraphics[height=1.3in]{graph/exim_cpuutils.eps}
+        \caption{Exim - 120core}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.33\textwidth}
+        \includegraphics[height=1.3in]{graph/lmbench_cpuutils.eps}
+        \caption{Lmbench - 120core}
+    \end{subfigure}
+        \centering
+    \caption{Read-write ratio from 50:50 to 1:99 percent}
+    
+\end{figure*}
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 2: 실험 결과에 대한 설명
@@ -190,33 +261,6 @@ scalability because their \code{CAS} fails frequently.
 %Paragraph 1:  EXIM 실험 결과
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-\begin{figure}[tb]
-  \begin{center}
-    \includegraphics[scale=0.65]{graph/exim.eps}
-  \end{center}
-  \caption{Scalability of Exim. The stock Linux collapses after 60 core;in
-  contrast, both unordered harris list and our \deferu flatten out.}
-  \label{fig:exim}
-\end{figure}
-
-\begin{figure*}[t!]
-    \centering
-    \begin{subfigure}[b]{0.33\textwidth}
-        \includegraphics[height=1.3in]{graph/aim7_cpuutils.eps}
-        \caption{AIM7 - 120core}
-    \end{subfigure}%
-    \begin{subfigure}[b]{0.33\textwidth}
-        \includegraphics[height=1.3in]{graph/exim_cpuutils.eps}
-        \caption{Exim - 120core}
-    \end{subfigure}
-    \begin{subfigure}[b]{0.33\textwidth}
-        \includegraphics[height=1.3in]{graph/lmbench_cpuutils.eps}
-        \caption{Lmbench - 120core}
-    \end{subfigure}
-        \centering
-    \caption{Read-write ratio from 50:50 to 1:99 percent}
-    
-\end{figure*}
 
 
 
@@ -288,12 +332,6 @@ time due to the their efficient concurrent updates.
 
 
 
-\subsection{Lmbench}
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 1: %워크로드에 대한 설명
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-
 \begin{figure}[tb]
   \begin{center}
     \includegraphics[scale=0.65]{graph/lmbench.eps}
@@ -304,6 +342,12 @@ time due to the their efficient concurrent updates.
   flattens out}
   \label{fig:MicroBench}
 \end{figure}
+
+\subsection{Lmbench}
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 1: %워크로드에 대한 설명
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
 
 \ifkor
 lmbench has various workloads including process creation workload(fork,
@@ -408,9 +452,26 @@ scalabilty를 보여준다.
 보다 범위를 좁혀 구체적인 실험 결과를 보기 위해, anonymous rmap은 ldu를 적용한 버전을 대상으로 실험을 하였고,
 file ramp에서 update operation(insert or remove)이 수행할 때 read operation(lock +
 synchronize)을 비율에 맞게 추가하여 실험하였다.
-
 \else
-
+%LDU는 high update rate operation가지는 update-heavy한 data structure를 위한 방법이다.
+The LDU is a method for update-heavy data structure.
+%즉 linux kernel의 rmap과 같이 read가 간혈적으로 발생하는 data structure를 대상으로 사용될 때 굉장히 높은
+%scalabilty를 보여준다.
+That is, the LDU can show substantial scalability where the data structures are
+frequently updates but rarely read because the read operation executes the
+synchronize function to apply logs.
+That means the read operations can be slower.
+%우리는 어느 정도의 update rate을 가진 data structure에 LDU를 적용하면 효율적인지 
+%판단하기 위해, 리눅스의 rmap을 대상으로 log를 적용하는 read operation을 추가하여 
+%성능과 확장성을 비교하는 실험을 하였다. 
+To further evaluate LDU and to understand the effect of read operation, we
+perform the additional read operation with respect to the rmap.
+%보다 범위를 좁혀 구체적인 실험 결과를 보기 위해, anonymous rmap은 ldu를 적용한 버전을 대상으로 실험을 하였고,
+%file ramp에서 update operation(insert or remove)이 수행할 때 read operation(lock +
+%synchronize)을 비율에 맞게 추가하여 실험하였다.
+The anonymous rmap uses the version of ldu with global queue because we
+merely focus on read ratio and then we sequentially increase read (lock and
+synchronize) ratios regarding the file rmap.
 \fi
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 2: 실험 결과에 대한 설명
@@ -425,16 +486,44 @@ read operation 상대적으로 덜 호출된다.
 Scalability를 보면 90프로 이상의 update rate를 가질 때는 상당히 높은 scalability을 가지며 
 80프로 이상의 update rate를 가질 경우에도 scalability가 약간 떨어지나, stock 리눅스보다는
 높은 성능을 가진다. 
+\else
+%그림 <x-x>의 위의 그래프들은 120코어에서 update rate에 따른 성능을 보여주고 아래 그림은
+%rmap의 update rate에 따른 확장성을 보여준다. 
+The upper graphs of Figure x-x  shows the performance on 120 core depending
+on read rate, and the lower graphs represent the scalability.
+%AIM7은 EXIM과 Lmbench와 다르게 보다 덜 fork-intensive한 특징을 가지므로, log를 적용하는
+%read operation 상대적으로 덜 호출된다.
+Since the AIM7 has less fork-intensive workload feature than other ones, the
+read operations are invoked relatively infrequently.
+%따라서 75프로(3 update operation + 1 read)의 update rate을 가지는 data structure에도 stock
+%리눅스보다 높은 성능을 가진다.
+As a result, although the data structure uses 75 percent(3
+update, 1 read) update rate, the AIM7 has outstanding performance than stock
+Linux.
+%Scalability를 보면 90프로 이상의 update rate를 가질 때는 상당히 높은 scalability을 가지며 
+%80프로 이상의 update rate를 가질 경우에도 scalability가 약간 떨어지나, stock 리눅스보다는
+%높은 성능을 가진다.
+The scalability of AIM7 shows that LDU substantially high scalability at the
+over the 90 percent update rate, and 80 percent update rates slightly. 
+\fi
 
-Exim과 Lmbench 경우에는 AIM7 보다 더 fork-intensive한 워크로드 특징을 가진다.
+\ifkor
+Exim과 Lmbench 경우에는 AIM7 보다 상당히 높은 fork-intensive한 워크로드 특징을 가진다.
 Log를 적용하는 read operation이 상당히 짧은 주기로 호출됨에 따라, AIM7보다 높은 85프로 이상의 update rate를 가질
 때 디폴트보다 높은 성능을 가진다.
 Lmbench의 scalability의 경우 log를 merge하는 read operation이 호출되는 주기가 짧아짐에 따라, 비록
 update rate이 90프로를 가져도 코어 수가 90 core 이상에서 scalability가 떨어지나, stock 리눅스 보다는
 높은 성능을 가진다. 
-
 \else
+%Exim과 Lmbench 경우에는 AIM7 보다 상당히 높은 fork-intensive한 워크로드 특징을 가진다.
+The result of the Exim and the Lmbench shows the more high fork-intensive
+workload represents the read operations high effects
+%Log를 적용하는 read operation이 상당히 짧은 주기로 호출됨에 따라, AIM7보다 높은 85프로 이상의 update rate를
+% 가질 때 디폴트보다 높은 성능을 가진다.
 
+%Lmbench의 scalability의 경우 log를 merge하는 read operation이 호출되는 주기가 짧아짐에 따라, 비록
+%update rate이 90프로를 가져도 코어 수가 90 core 이상에서 scalability가 떨어지나, stock 리눅스 보다는
+%높은 성능을 가진다. 
 \fi
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
