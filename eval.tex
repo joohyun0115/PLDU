@@ -12,6 +12,28 @@
 
 \section{Evaluation}
 
+
+
+\begin{figure*}[tb]
+    \centering
+    \begin{subfigure}[b]{0.33\textwidth}
+        \includegraphics[height=1.3in]{graph/aim7_cpuutils.eps}
+        \caption{AIM7 - 120core}
+    \end{subfigure}%
+    \begin{subfigure}[b]{0.33\textwidth}
+        \includegraphics[height=1.3in]{graph/exim_cpuutils.eps}
+        \caption{Exim - 120core}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.33\textwidth}
+        \includegraphics[height=1.3in]{graph/lmbench_cpuutils.eps}
+        \caption{Lmbench - 120core}
+    \end{subfigure}
+        \centering
+    \caption{Read-write ratio from 50:50 to 1:99 percent}
+    
+\end{figure*}
+
+
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 1: 무엇을 평가 했는지에 대한 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -22,7 +44,8 @@ This section answers the following questions experimentally:
 
 \item Why does \ldu's scheme scale well?
 
-\item What about \ldu's read-write ratio?
+\item What is acceptable \ldu's update ratios for the update-heavy data
+structure?
 \end{CompactItemize}
 
 \subsection{Experimental setup}
@@ -46,87 +69,44 @@ Intel E7-8870 chips equipped with 792 GB DDR3 DRAM.
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 1: 벤치 마크 대한 설명
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-\ifkor
-To evaluate the performance of \deferu, we use well-known
-three benchmarks:AIM7 Linux scalability benchmark, Exim email server in
-MOSBENCH and lmbench.
-We selected these three benchmarks because they are fork-intensive workloads and
-exhibit high reverse mapping lock contentions.
-Moreover, AIM7 benchmark has widely been used in practical area not only for testing the
-Linux but also for improving the scalability. 
-To evaluate \deferu for real world
-applications, we use Exim which is the most popular email server[].
-A micro benchmark, Lmbench, has been selected to focus on Linux fork operation-intensive
-fine grained evaluations.
-Finally, we wanted to focus on Linux fork performance and scalability;therefore,
-we selected lmbench, a micro benchmark.
-\else
-To evaluate the performance of \deferu, we use well-known
-three benchmarks:AIM7 Linux scalability benchmark, Exim email server in
-MOSBENCH and lmbench.
-We selected these three benchmarks because they are fork-intensive workloads and
-exhibit high reverse mapping lock contentions.
-Moreover, AIM7 benchmark has widely been used in practical area not only for testing the
-Linux but also for improving the scalability. 
-To evaluate \deferu for real world
-applications, we use Exim which is the most popular email server[].
-A micro benchmark, Lmbench, has been selected to focus on Linux fork operation-intensive
-fine grained evaluations.
-Finally, we wanted to focus on Linux fork performance and scalability;therefore,
-we selected lmbench, a micro benchmark.
-\fi
-
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 2: 비교 대상에 대한 설명
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-\ifkor
-In order to evaluate Linux scalability, we used four different experiment
-settings.
-First, we used the stock Linux as the baseline reference. 
-Second, we used ordered Harris lock-free list while 
-we apply unordered Harris lock-free list for the third setting
-(see section ~\ref{sec:implementation}). 
-Finally, we used combination of unordered Harris lock-free list for anonymous mapping and
-our \deferu for file mapping.
-Since we cannot obtain detailed implementation of Oplog, 
-we could not include comparison between \deferu and Oplog in this paper.
-\else
-In order to evaluate Linux scalability, we used four different experiment
-settings.
-First, we used the stock Linux as the baseline reference. 
-Second, we used ordered Harris lock-free list while 
-we apply unordered Harris lock-free list for the third setting
-(see section ~\ref{sec:implementation}). 
-Finally, we used combination of unordered Harris lock-free list for anonymous mapping and
-our \deferu for file mapping.
-Since we cannot obtain detailed implementation of Oplog, 
-we could not include comparison between \deferu and Oplog in this paper.
-\fi
+Fork-intensive applications benefit from the designs described in this
+research, so we use well-known three fork-intensive benchmarks:AIM7, a Linux
+scalability benchmark;Exim, an email server in MOSBENCH;and Lmbench, a micro
+benchmark.
+The workloads exhibit the high lock contentions because of the reverse mapping.
+Moreover, the AIM7 benchmark is widely used in the Linux community not only for
+testing the Linux kernel but also for improving the scalability. 
+The Exim is a real world application, but it has scalability bottlenecks caused
+by the Linux fork.
+Finally, in order to only focus on the fork performance and scalability, we
+selected the Lmbench.
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 2-1: Harris Lock free list 구현 내용에 대한 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-\ifkor
-We compare our \deferu implementation to a concurrent non-blocking Harris
-linked list ~\cite{Harris2001Lockfree};therefore, we implement the Harris linked
-list to Linux kernel.
-The code refers from sysnchrobench~\cite{Gramoli2015Synchrobench} and
-ASCYLIB~\cite{David2015ASYNCHRONIZED}, and we convert their linked list to
-Linux kernel style.
-Because both synchrobench and ASCYLIB leak memory, we implement additional
-garbage collector for the Linux kernel using Linux's work queues and lock-less
-list.
-\else
-We compare our \deferu implementation to a concurrent non-blocking Harris
-linked list ~\cite{Harris2001Lockfree};therefore, we implement the Harris linked
-list to Linux kernel.
-The code refers from sysnchrobench~\cite{Gramoli2015Synchrobench} and
-ASCYLIB~\cite{David2015ASYNCHRONIZED}, and we convert their linked list to
-Linux kernel style.
-Because both synchrobench and ASCYLIB leak memory, we implement additional
-garbage collector for the Linux kernel using Linux's work queues and lock-less
-list.
-\fi
+In order to compare our \deferu implementation to a concurrent non-blocking
+Harris linked list ~\cite{Harris2001Lockfree}, we implemented the
+Harris linked list to Linux kernel.
+The Harris linked list refers from sysnchrobench~\cite{Gramoli2015Synchrobench}
+and ASCYLIB~\cite{David2015ASYNCHRONIZED}, and we slightly convert the
+Harris linked list to Linux kernel style.
+In addition, we replace the two rmaps data structure to the Harris linked list.
+Since the Harris linked list in the synchrobench and the ASCYLIB leaks memory,
+we additionally implemented a garbage collector for the Linux kernel
+using the Linux's work queues and non-blocking linked list.
+
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+%Paragraph 2: 비교 대상에 대한 설명
+%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+We used four different experiment settings. 
+First, we used the stock Linux as the baseline reference. 
+Second, we used Harris lock-free list version of the Linux kernel as we
+mentioned earlier.
+Next, we used the LDU version of the Linux kenrel that used global queue.
+Finally, we used the per-core queue version of LDU in the Linux.
+Unfortunately, since we could not obtain the detailed implementation of the
+Oplog, we excluded the comparison of between \deferu and Oplog in this paper.
+
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 2-2: Harris list의 수정 내용 설명  - 졸업논문 내용
@@ -149,14 +129,6 @@ the first node of the list;on the other hand, each remove operation searches
 from head to their node.
 \fi
 
-\begin{figure}[tb]
-  \begin{center}
-    \includegraphics[scale=0.65]{graph/exim.eps}
-  \end{center}
-  \caption{Scalability of Exim. The stock Linux collapses after 60 core;in
-  contrast, both unordered harris list and our \deferu flatten out.}
-  \label{fig:exim}
-\end{figure}
 
 
 \subsection{AIM7}
@@ -192,26 +164,6 @@ To increase the number of users during our experiment and show the results at th
 peak user numbers, 
 we used the crossover.
 \fi
-
-
-\begin{figure*}[tb]
-    \centering
-    \begin{subfigure}[b]{0.33\textwidth}
-        \includegraphics[height=1.3in]{graph/aim7_cpuutils.eps}
-        \caption{AIM7 - 120core}
-    \end{subfigure}%
-    \begin{subfigure}[b]{0.33\textwidth}
-        \includegraphics[height=1.3in]{graph/exim_cpuutils.eps}
-        \caption{Exim - 120core}
-    \end{subfigure}
-    \begin{subfigure}[b]{0.33\textwidth}
-        \includegraphics[height=1.3in]{graph/lmbench_cpuutils.eps}
-        \caption{Lmbench - 120core}
-    \end{subfigure}
-        \centering
-    \caption{Read-write ratio from 50:50 to 1:99 percent}
-    
-\end{figure*}
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 2: 실험 결과에 대한 설명
@@ -256,11 +208,29 @@ In this benchmark, the ordered harris list has the lowest performance and
 scalability because their \code{CAS} fails frequently.
 \fi
 
+\begin{figure}[tb]
+  \begin{center}
+    \includegraphics[scale=0.65]{graph/exim.eps}
+  \end{center}
+  \caption{Scalability of Exim. The stock Linux collapses after 60 core;in
+  contrast, both unordered harris list and our \deferu flatten out.}
+  \label{fig:exim}
+\end{figure}
 \subsection{Exim}
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 1:  EXIM 실험 결과
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
+\begin{figure}[tb]
+  \begin{center}
+    \includegraphics[scale=0.65]{graph/lmbench.eps}
+  \end{center}
+  \caption{Execution time of lmbench's fork micro benchmark. The fork micro
+  benchmark drops down for all methods up to 15 core but either flattens out or
+  goes up slightly after that. At 15 core, the stock Linux goes up;the others
+  flattens out}
+  \label{fig:MicroBench}
+\end{figure}
 
 
 
@@ -332,16 +302,36 @@ time due to the their efficient concurrent updates.
 
 
 
-\begin{figure}[tb]
-  \begin{center}
-    \includegraphics[scale=0.65]{graph/lmbench.eps}
-  \end{center}
-  \caption{Execution time of lmbench's fork micro benchmark. The fork micro
-  benchmark drops down for all methods up to 15 core but either flattens out or
-  goes up slightly after that. At 15 core, the stock Linux goes up;the others
-  flattens out}
-  \label{fig:MicroBench}
-\end{figure}
+\begin{figure*}[t!]
+    \centering
+    \begin{subfigure}[b]{0.33\textwidth}
+        \includegraphics[height=1.3in]{graph/ratio_aim7.eps}
+        \caption{AIM7 - 120core}
+    \end{subfigure}%
+    \begin{subfigure}[b]{0.33\textwidth}
+        \includegraphics[height=1.3in]{graph/ratio_exim.eps}
+        \caption{Exim - 120core}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.33\textwidth}
+        \includegraphics[height=1.3in]{graph/ratio_lmbench.eps}
+        \caption{Lmbench - 120core}
+    \end{subfigure}
+        \centering
+    \begin{subfigure}[b]{0.33\textwidth}
+        \includegraphics[height=1.3in]{graph/ratio_aim7_core.eps}
+        \caption{AIM7 - scalability}
+    \end{subfigure}%
+    \begin{subfigure}[b]{0.33\textwidth}
+        \includegraphics[height=1.3in]{graph/ratio_exim_core.eps}
+        \caption{Exim - scalability}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.33\textwidth}
+        \includegraphics[height=1.3in]{graph/ratio_lmbench_core.eps}
+        \caption{Lmbench - scalability}
+    \end{subfigure}
+    \caption{Read-write ratio from 50:50 to 1:99 percent}
+    
+\end{figure*}
 
 \subsection{Lmbench}
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -405,36 +395,6 @@ idle time since stock Linux waits to acquire reverse mapping locks such as
 
 
 
-\begin{figure*}[t!]
-    \centering
-    \begin{subfigure}[b]{0.33\textwidth}
-        \includegraphics[height=1.3in]{graph/ratio_aim7.eps}
-        \caption{AIM7 - 120core}
-    \end{subfigure}%
-    \begin{subfigure}[b]{0.33\textwidth}
-        \includegraphics[height=1.3in]{graph/ratio_exim.eps}
-        \caption{Exim - 120core}
-    \end{subfigure}
-    \begin{subfigure}[b]{0.33\textwidth}
-        \includegraphics[height=1.3in]{graph/ratio_lmbench.eps}
-        \caption{Lmbench - 120core}
-    \end{subfigure}
-        \centering
-    \begin{subfigure}[b]{0.33\textwidth}
-        \includegraphics[height=1.3in]{graph/ratio_aim7_core.eps}
-        \caption{AIM7 - scalability}
-    \end{subfigure}%
-    \begin{subfigure}[b]{0.33\textwidth}
-        \includegraphics[height=1.3in]{graph/ratio_exim_core.eps}
-        \caption{Exim - scalability}
-    \end{subfigure}
-    \begin{subfigure}[b]{0.33\textwidth}
-        \includegraphics[height=1.3in]{graph/ratio_lmbench_core.eps}
-        \caption{Lmbench - scalability}
-    \end{subfigure}
-    \caption{Read-write ratio from 50:50 to 1:99 percent}
-    
-\end{figure*}
 
 \subsection{Updates ratio}
 

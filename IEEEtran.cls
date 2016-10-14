@@ -3162,7 +3162,7 @@ between column types.}%
 \@IEEEcompsocnotconfonly{\def\@biblabel#1{[#1]\hfill}}
 
 % controls bib item spacing
-\def\IEEEbibitemsep{0pt plus .5pt}
+\def\IEEEbibitemsep{0pt plus .0pt}
 
 \@IEEEcompsocconfonly{\def\IEEEbibitemsep{1\baselineskip plus 0.25\baselineskip minus 0.25\baselineskip}}
 
@@ -3170,7 +3170,7 @@ between column types.}%
 \def\thebibliography#1{\section*{\refname}%
     \addcontentsline{toc}{section}{\refname}%
     % V1.6 add some rubber space here and provide a command trigger
-    \footnotesize\@IEEEcompsocconfonly{\small}\vskip 0.3\baselineskip plus 0.1\baselineskip minus 0.1\baselineskip%
+    \footnotesize\@IEEEcompsocconfonly{\footnotesize}\vskip 0.3\baselineskip plus 0.1\baselineskip minus 0.1\baselineskip%
     \list{\@biblabel{\@arabic\c@enumiv}}%
     {\settowidth\labelwidth{\@biblabel{#1}}%
     \leftmargin\labelwidth
@@ -3194,6 +3194,11 @@ between column types.}%
 \else\sloppy\clubpenalty4000\widowpenalty4000\interlinepenalty500\fi%
     \sfcode`\.=1000\relax}
 \let\endthebibliography=\endlist
+\let\oldbibliography\thebibliography
+\renewcommand{\thebibliography}[1]{%
+  \oldbibliography{#1}%
+  \setlength{\itemsep}{0pt}%
+}
 
 
 

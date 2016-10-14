@@ -27,7 +27,7 @@ queue(section x).
 %이러한 문제를 해결하기 위해서  LDU와 synchronized timestamp counters 방법을 
 %결합하여 해결할 수 있다.
 One mightly soulution is that combine two techniques(LDU and synchronized
-timestamp counters) in order to solve this problem.
+timestamp counters) in order to allow this limited data structure to support.
 %즉 다시 말해서, LDU를 적용하여 최대한  the sequential processing 부분을 줄이고, 
 %남은 일부분의 로그에 대해서는 timestamp를 활용하여 선형화를 지키는 방법이 있다. 
 
@@ -35,9 +35,10 @@ timestamp counters) in order to solve this problem.
 
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 2: 더 범용적이게 만들어야 한다.
+% Paragraph 2: 더 범용적이게 만들어야 한다.
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-\ifkor
+
+\ifkorthesis
 우리는 리눅스 커널과 같이 update operation이 insert-insert또는 remove-remove와 같이 같은 operation에
 대해서 발생하지 않는 data structure의 경우에 대해서만 사용 가능하도록 LDU를 구현하였다.
 이러한 방법은 굉장히 practical한 방법으로 리눅스와 freeBSD와 같은 커널에는 적용 할 수 있으나 

@@ -369,6 +369,7 @@
 \usepackage{cleveref} % After hyperref, listings
 \usepackage{fancyhdr}
 \usepackage{listings}
+\usepackage{setspace}
 
 \usepackage{caption}
 \usepackage{subcaption}
@@ -495,26 +496,29 @@
 \korthesisfalse
 
 \begin{abstract}
-We propose a novel light weight concurrent updates method, \deferu, 
-to improve performance scalability for Linux kernel on many-core systems
-through eliminating lock contentions for update-heavy global data structures
-during process spawning and optimizing update logs. 
-The proposed \deferu is implemented into Linux kernel 4.5 and evaluated 
-using representative benchmark programs. 
-Our evaluation reveals that the Linux kernel with \deferu shows performance
-improvement by ranging from Xx through Xx on a 120 core system.
-We propose a novel light weight concurrent updates method, \deferu, 
-to improve performance scalability for Linux kernel on many-core systems
-through eliminating lock contentions for update-heavy global data structures
-during process spawning and optimizing update logs. 
-The proposed \deferu is implemented into Linux kernel 4.5 and evaluated 
-using representative benchmark programs. 
-Our evaluation reveals that the Linux kernel with \deferu shows performance
-improvement by ranging from Xx through Xx on a 120 core system.
+In many-core systems, high update rate data structures can pose operating
+systems scalability bottlenecks becasue the operating systems suffer from cache
+communication overheads.
+To avoid these bottlenecks, an existing technique applies some distributed
+systems concepts(e.g., google spanner's synchronized clocks scheme) to
+shared-memory systems.
+However, this distributed systems concept, synchronized timestamp counters
+based method, requires additional sequential processing during merging
+the logs.
+
+We introduce a lightweight log-based deferred update
+method, combining the log-based concepts in the distributed systems and the
+minimal hardware-based synchronization in the shared memory systems.
+The main contribution of our research is twofold:(i) we propose a lightweight
+log-based deferred update method, which can eliminate synchronized timestamp
+counters;and (ii) we apply the our scheme to two reverse mapping(anonymous,
+file) in the Linux 4.5.0 kernel in order to reduce fork scalability bottlenecks,
+and our scheme reveals that performance improvement by ranging from 1.6x
+through 2.4x on a 120 core system.
 \end{abstract}
 
 \begin{IEEEkeywords}
-component; formatting; style; styling;
+scalability; Linux; udpate-heavy; log-based;
 
 \end{IEEEkeywords}
 
@@ -545,10 +549,11 @@ component; formatting; style; styling;
 \input{related}
 \input{concl}
 
+%\begin{thebibliography}{1}
 \bibliographystyle{IEEEtran}
 %\bibliographystyle{plain}
 \bibliography{ref}
-
+%\end{thebibliography}
 \ifkor
 \end{CJK}
 \fi
