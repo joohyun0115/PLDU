@@ -3,71 +3,12 @@
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 1: 남은 operation 로그도 순서를 지키도록 만들어야 한다.
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-\ifkor
-본 논문의 목적은 the sequential processing due to the synchronized timestamp counters
-문제점을 해결하기 위해, synchronized timestamp counters를 제거하는데 초점을 맞추었다.
-하지만, 본 논문의 해결방법은 update side removing을 통해 남은 log도 시간 정보가 필요한
-자료구조인 stack과 queue 같은 자료구조에는 사용 못하는 문제점이 있다(setiton x).
-이러한 문제를 해결하기 위해서  LDU와 synchronized timestamp counters 방법을 
-결합하여 해결할 수 있다.
-즉 다시 말해서, LDU를 적용하여 최대한  the sequential processing 부분을 줄이고, 
-남은 일부분의 로그에 대해서는 timestamp를 활용하여 선형화를 지키는 방법이 있다. 
-\else
-%본 논문의 목적은 the sequential processing due to the synchronized timestamp counters
-%문제점을 해결하기 위해, synchronized timestamp counters를 제거하는데 초점을 맞추었다.
 Our goal is to eliminate the sequential processing due to the synchronized
 timestamp counters.
 To achieve our goal, this paper only focus on the eliminating the synchronized
 timestamp counters.
-%하지만, 본 논문의 해결방법은 update side removing을 통해 남은 log도 시간 정보가 필요한
-%자료구조인 stack과 queue 같은 자료구조에는 사용 못하는 문제점이 있다(setiton x).
 However, although the LDU eliminate time-sensitive log by using update-side
 removing, the remain logs can not apply some data structure such as stack and
 queue(section x).
-%이러한 문제를 해결하기 위해서  LDU와 synchronized timestamp counters 방법을 
-%결합하여 해결할 수 있다.
 One mightly soulution is that combine two techniques(LDU and synchronized
 timestamp counters) in order to allow this limited data structure to support.
-%즉 다시 말해서, LDU를 적용하여 최대한  the sequential processing 부분을 줄이고, 
-%남은 일부분의 로그에 대해서는 timestamp를 활용하여 선형화를 지키는 방법이 있다. 
-
-\fi
-
-
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-% Paragraph 2: 더 범용적이게 만들어야 한다.
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-\ifkorthesis
-우리는 리눅스 커널과 같이 update operation이 insert-insert또는 remove-remove와 같이 같은 operation에
-대해서 발생하지 않는 data structure의 경우에 대해서만 사용 가능하도록 LDU를 구현하였다.
-이러한 방법은 굉장히 practical한 방법으로 리눅스와 freeBSD와 같은 커널에는 적용 할 수 있으나 
-보다 연구 중심적인 data structure인 CSDS 알고리즘과 비교 실험하는데는 무리가 있다. 
-따라서 LDU 또는 Oplog와 같이 log-based 방법을 보다 연구 중심적인 data structure와 비교 실험이
-가능하도록 보다 일반화할 필요가 있다. 
-\else
-%우리는 리눅스 커널과 같이 update operation이 insert-insert또는 remove-remove와 같이 같은
-% operation에 대해서 발생하지 않는 data structure의 경우에 대해서만 사용 가능하도록 LDU를 구현하였다.
-
-
-%이러한 방법은 굉장히 practical한 방법으로 리눅스와 freeBSD와 같은 커널에는 적용 할 수 있으나 
-%보다 연구 중심적인 data structure인 CSDS 알고리즘과 비교 실험하는데는 무리가 있다. 
-
-
-%따라서 LDU 또는 Oplog와 같이 log-based 방법을 보다 연구 중심적인 data structure와 비교 실험이
-%가능하도록 보다 일반화할 필요가 있다. 
-\fi
-
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Reference Sentence 1
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-
-
-
-
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Reference Sentence 2:LDU paper
-%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
