@@ -1,7 +1,7 @@
 \section{Background and Problem}
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-% Paragraph 1: Linux Scalability : Fork intensive workload 문제점 설명 
+% Paragraph : Linux Scalability : Fork intensive workload 문제점 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 \begin{figure}
@@ -23,7 +23,7 @@
   \label{fig:aim7_default} }
 \end{figure}
 
-Aplications performance would be limited by the operating system when the
+Applications performance would be limited by the operating system when the
 operating system does not scale~\cite{Clements15SCR}[Corey].
 Linux has heavily optimized for multi-core operating systems, so we examine
 AIM7-multiuser benchmark on the Linux.
@@ -31,13 +31,13 @@ The AIM benchmark has, until recently, been widely used in research area
 and Linux community~\cite{Bueso2015STP}~\cite{Bueso2014MCS}.
 This AIM7-multiuser workload simultaneously creates many processes with
 disk-file operations, virtual memory operations, pipe I/O, and arithmetic
-operation, and we uses the temp filesystem to minimaize the file system
+operation, and we uses the temp filesystem to minimize the file system
 bottleneck.
 The results of scalability shows the stock Linux scales linearly up to 60 core,
 then they flattens out(Figure xx(a)).
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-% Paragraph 2: Lockstat로 분석 결과 설명 
+% Paragraph: Lockstat로 분석 결과 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 To understand the source of scalability bottleneck on 120core, we profile a lock
@@ -57,7 +57,7 @@ When the anon\_vma is removed, the Linux is contended on file reverse page
 mapping(i\_mmaping-rwsem).
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-% Paragraph 3: 리눅스 reverse page map의 write serialization 문제점
+% Paragraph : 리눅스 reverse page map의 write serialization 문제점
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 Our research recognized both the anonymous reverse page mapping
@@ -71,7 +71,7 @@ serialized updates operation because operating system kernel are serialized at
 the updates operation.
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-% Paragraph 4: update heavy한 상황에 대한 설명과 해결 방법에 대한 설명
+% Paragraph : update heavy한 상황에 대한 설명과 해결 방법에 대한 설명
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 In order to achieve scalable concurrent update that allows update operations
@@ -92,7 +92,7 @@ proposed.
 % numbers of cores.
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-%Paragraph 1: Log 기반의 알고리즘 대략적인 설명 
+%Paragraph : Log 기반의 알고리즘 대략적인 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 Log-based algorithm is that when update operations occur, it logs the update

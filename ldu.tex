@@ -9,7 +9,7 @@ bottlenecks for the update-heavy data structure.
 The previous research using the synchronized timestamp counters method may incur
 timestamp merging and ordering process.
 Therefore, when core counts increases, the timestamp merging and ordering
-process may require sequential processing, which can limit scalalbility and
+process may require sequential processing, which can limit scalability and
 performance.
 The LDU can solve these sequential processing.
 LDU instantly removes operation logs at update time that require timestamp
@@ -75,15 +75,15 @@ the update-side removing technique.
 %Paragraph 3:  time-sensitive update operation 삭제 방법: Update-side Abosrbing 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-To remove the time-senstivive log, LDU uses the update-side removing scheme.
+To remove the time-sensitive log, LDU uses the update-side removing scheme.
 If insert-remove operations occur in terms of the same object, the scheme will
 remove the insert-remove operations at update time.
 The OpLog also optimizes by removing the existing operation rather than
 adding the new one, but OpLog can not remove log when a thread 
-migrates other core, so it needs additional sequntial processing for
+migrates other core, so it needs additional sequential processing for
 the optimization.
 LDU, however, have no problem with migrating other core during logging because
-it uses the shared atomic swap operation in the indivisual object.
+it uses the shared atomic swap operation in the individual object.
 
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -91,17 +91,17 @@ it uses the shared atomic swap operation in the indivisual object.
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 The update-side removing logs scheme performs atomic swap operation in an
 individual object for shared memory systems.
-This atomic swap operation alows update operations to atomically remove with the
+This atomic swap operation allows update operations to atomically remove with the
 previous cancelable log.
 To achieve update-side removing log, first adds the mark field in the object
 structure then use it as a status flag. 
 For example, consider the insert-remove operation sequence at the same object.
-The first insert operation marks the feild of mark and then the opepration logs
+The first insert operation marks the field of mark and then the operation logs
 in the queue.
-Then, the remove operation occur, LDU does not logs;it just proceed with
-changing the mark feild.
+Then, the remove operation occur, \LDU does not logs;it just proceed with
+changing the mark field.
 When the reader applies logs, LDU applies the logs to the original data
-structure in case of the true value of marking feild.
+structure in case of the true value of marking field.
 The benefit of this update-side removing scheme is twofold:not only it can
 eliminate the time-sensitive operation but also it can cancel the previous
 operation log in the queue.
@@ -115,11 +115,11 @@ instead of creating a new log.
 The garbage log is already canceled by using the update-side removing scheme,
 but it has remained queue.
 For example, consider the insert-remove-insert operation.
-After the sencond remove operation, the log has remained in the queue, but it is 
+After the second remove operation, the log has remained in the queue, but it is 
 already canceled by using update-side removing, hence insert mark filed
 has remained zero in the queue.
 In this case, the third insert operation reuses the log in the queue instead of 
-creating a new log using atomic swap, so it can reduece not only the memory
+creating a new log using atomic swap, so it can reduce not only the memory
 overhead but also the queueing overhead.
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -136,7 +136,7 @@ an additional management code for per-core memory management.
 To overcome these shortcomings, LDU also supports the global queue.
 The global queue of LDU is simple and easy to apply, so it can easily use any
 data structure.
-Though global queue can not perfactly remove global CAS operations, it can
+Though global queue can not perfectly remove global CAS operations, it can
 reduce cache communication overhead by using update-side removing
 logs and reuse garbage logs because it reduces count of inserting the
 queue.
@@ -149,9 +149,9 @@ of the per-core queue or global queue.
 Among non-blocking queues, the LDU uses multiple producers and single consumer
 based non-blocking queue thereby reducing the CAS operations.
 This queue always inserts node where is first pointer, so it can minimize
-iteration loop because it makes anonther CAS operation.
-In addition, this queue merely considers single consumer when it applyies
-the logs, so it does not need complex algorithms for the remove oepration.
+iteration loop because it makes another CAS operation.
+In addition, this queue merely considers single consumer when it applies
+the logs, so it does not need complex algorithms for the remove operation.
 For example, this queue uses atomic swap operation to acquire all operation 
 logs.
 
@@ -160,8 +160,8 @@ logs.
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 To reduce memory usage and to keep the log from growing without end, LDU
-periodically applyies the operation logs to reduce the memory usage.
-This approch is similar with the method of previous research such as OpLog's
+periodically applies the operation logs to reduce the memory usage.
+This approach is similar with the method of previous research such as OpLog's
 batching updates and FC's combiner thread.
 
 
@@ -196,8 +196,8 @@ and queue is empty.
 In the top of figure, \code{Core0}, \code{Core1} and \code{Core2} perform the
 concurrent update operations, $\oplus$\inv{1}{C}, $\oplus$\inv{2}{D} and
 $\oplus$\inv{3}{E}, without lock.
-Since LDU uses non-blcking queue to save the logs, this step does not need
-update lock, so all threads can excute parallel without the lock contention.
+Since LDU uses non-blocking queue to save the logs, this step does not need
+update lock, so all threads can execute parallel without the lock contention.
 At \code{T1}, the tree contains objects \inv{0}{A} and \inv{0}{B}. 
 The per-core queue contains $\oplus$\inv{1}{C}, $\oplus$\inv{2}{D} and
 $\oplus$\inv{3}{E} that insert mark field is set the true in the per-core
@@ -259,16 +259,16 @@ Figure \ref{fig:gldulogicalupdate} shows concurrent updates functions.
 The concurrent updates can be divided into three phase.
 The first phase checks this object's to see whether or not the
 object has already inserted in the queue(Line 5, 22).
-When this code is executed, at th phase 1, a reader or a periodic timer can
+When this code is executed, at the phase 1, a reader or a periodic timer can
 invoke the \code{synchronize} function that applies the logs, so
 phase 1 needs the atomic operation.
 If the old mark field is true, then its mark field is changed to true.
 If not, this function checks insert mark field because LDU's update operation
-does not alow same update operation sequence to excute such as insert-insert
+does not allow same update operation sequence to execute such as insert-insert
 and remove-remove operation sequence(Line 6, 23).
-In phase 2 checks this log to see wether or not has already inserted in
+In phase 2 checks this log to see weather or not has already inserted in
 the queue.
-If so, because mark field is makred(Line 7, 24), this function directly returns
+If so, because mark field is marked(Line 7, 24), this function directly returns
 true.
 In the last phase, when the operation log is first used log, the
 operation log inserts the non-blocking queue(Line 13, 30).
@@ -279,13 +279,13 @@ operation log inserts the non-blocking queue(Line 13, 30).
 This algorithms are correct because the Linux kernel has a unique update
 operations sequence.
 For example, if an insert operation occur, then next operation must be a remove
-operation becasue the kernel's update function has separated from search, alloc
+operation because the kernel's update function has separated from search, alloc
 and free functions.
 The remove-remove or insert-insert operation in Linux kernel is
 forbidden: if remove-remove operation occur, the second remove operation may
 encounter a crash because this object can be concurrently freed by first remove
 operation.
-The algorithms is inspired by the unique operations sequeunce in the
+The algorithms is inspired by the unique operations sequence in the
 Linux kernel.
 
 \subsubsection{applying logs}
@@ -309,7 +309,7 @@ Linux kernel.
 Figure \ref{fig:glduphysicalupdate} shows deferred update function, which
 applies operation logs.
 The \code{synchronize} is invoked before the read, and it can be
-periodically invoked by the timer handler because of preventing the continous
+periodically invoked by the timer handler because of preventing the continuous
 growing the logs.
 Before the execution of the \code{synchronize} function, it is locked by using
 the lock of the object's data structure, so this function proceed with a single

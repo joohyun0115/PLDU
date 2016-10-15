@@ -1,5 +1,5 @@
 \section{Conclusion and Discussion}
-We eliminated the synchronized timestamp counters by using the \deferu, and
+We eliminated the synchronized timestamp counters by using the \LDU, and
 we applied the LDU to Linux reverse mapping in order to achieve the scalability
 during process spawning.
 Evaluation results reveal that \deferu shows better performance up to 2.2 times
@@ -10,7 +10,7 @@ timestamp counters.
 However, although the LDU eliminate time-sensitive log by using update-side
 removing, the remain logs can not apply some data structure such as stack and
 queue(section x).
-One mightly soulution is that combine two techniques(LDU and synchronized
+One mightily solution is that combine two techniques(LDU and synchronized
 timestamp counters) in order to allow this limited data structure to support.
 
 \deferu is implemented on to Linux kernel 4.5 and available as open-source

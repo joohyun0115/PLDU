@@ -9,16 +9,16 @@
 The reverse page mapping(rmap), a kernel memory management mechanism, consists
 of anonymous rmap and the file rmap.
 These two rmap maintains virtual address (VMAs) in order to translate physical
-addresses to virtual addresse[], and the rmaps are a shared global resource.
+addresses to virtual address[], and the rmaps are a shared global resource.
 These global resource of rmap are managed by using a interval tree that means
 any processes can update the one.
 To protect the shared resource, the Linux kernel uses a semaphore.
 This update operations such as tree's insert and remove operation are invoked by
 \code{fork()}, \code{exit()} and \code{mmap()}, so simultaneous creation of many
-processes causes bottlenects becasue not only the update operations can not run
-in palarrel but also update's lock brings about the cache invalidation traffic.
-On the contrary, the rmap rarely reads the tree when it swaps a pyhsical page
-out to disk, migrates other cpu, or turncates a file.
+processes causes bottlenecks because not only the update operations can not run
+in parallel but also update's lock brings about the cache invalidation traffic.
+On the contrary, the rmap rarely reads the tree when it swaps a physical page
+out to disk, migrates other cpu, or truncates a file.
 Therefore, the Linux rmaps are a update-heavy data structure. 
 
 This section show how to apply LDU to the Linux rmaps to solve the update
@@ -41,7 +41,7 @@ When a process spawns, the parent's \code{anonymous vma chain(avc)} are copyed
 to a child, and then the new anonymous vma, indicating the child's avc, is
 created.
 Due to the fact that the continuous process spawns, it becomes more the complex
-anonymous rmap data structre;the anonymous ramp is one of the complex data
+anonymous rmap data structure;the anonymous ramp is one of the complex data
 structure in the Linux kernel[].
 Figure \ref{fig:anonvmaramp} shows this complex anonymous rmap data
 structure.
@@ -95,13 +95,13 @@ per-core memory.
 In addition, this figure clearly shows why the LDU additionally supports the
 global queue because it is a simpler and easier scheme.
 For example, consider the global queue, a developer just adds queue header in
-the header of original data structuer(struct address\_space), and then add mark
+the header of original data structure(struct address\_space), and then add mark
 field in individual object(struct vma\_area\_struct).
-Finaly, the developer creates synchronize function and call before the
+Finally, the developer creates synchronize function and call before the
 read.
 On the other hand, the per-core queue may need an additional per-core
 queue management scheme because the data structure separates between interval
-tree head pinter and log's head pointer.
+tree head pointer and log's head pointer.
 
 \begin{figure}[tb]
   \begin{center}
@@ -126,20 +126,20 @@ and file related testing in the Linux Test Procject[1].
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 2: per-core queue 구현에 대한 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-The implimentation of per-core queue in the LDU uses per-core hash table that 
+The implementation of per-core queue in the LDU uses per-core hash table that 
 can easily distinguish each object.
 The LDU per-core hash table implemented as a direct-mapped cache, which one
 bucket only has an object because recently used objects will be in the hash
 table[Oplog].
-When this hash table is met a hash conflict, the LDU evits the object in the
+When this hash table is met a hash conflict, the LDU evicts the object in the
 hash slot located in the per-core memory.
 This method is useful when the number of the root objects is small like the file
 rmap(\code{struct address\_space}).
-Moreover, this method reduce additional tasks of programers because it can
+Moreover, this method reduce additional tasks of programmers because it can
 minimize code modifications and does not need additional locks.
 The per-core hash table, however, incurs a hash conflict overhead.
 Since the anonymous rmap creates many of child root object(anon\_vma), so it
 incurs a hash conflict overhead.
 In the case of the anonymous ramp, we do not distinguish object headers to
-avoid the hash conflict overhead, but it needs addictional tasks with global
+avoid the hash conflict overhead, but it needs additional tasks with global
 lock.

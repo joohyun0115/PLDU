@@ -48,7 +48,7 @@ cache communication overhead when it logs per-core memory.
 However, the synchronized timestamp counters method may incur timestamp merging
 and ordering process .
 When core counts increase, resolving logs(merging, absorbing) may require
-additional sequential processing, which can limit scalalbility and performance.
+additional sequential processing, which can limit scalability and performance.
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -94,14 +94,14 @@ time on 120 core by 1.7x, 1.6x, 2.2x respectively, relative to stock Linux.
 %Contribution 정리
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-\textbf{Contributions.} Our resesarch makes the following contributions:
+\textbf{Contributions.} Our research makes the following contributions:
 \begin{itemize}
 \item We have developed a novel lightweight log-based deferred update method,
 which can remove operation log that requires timestamp counter and reuses
 the garbage log in log's queue;therefore, LDU can solve the Oplog's sequential processing problem due to the synchronized timestamp counters.
 \item 
-We appiled LDU in Linux kernel to two reverse mapping(anonymous, file) on
-practial 120core system to reduce fork scalability bottleneck.
+We applied LDU in Linux kernel to two reverse mapping(anonymous, file) on
+practical 120core system to reduce fork scalability bottleneck.
 Our design improved throughput and execution time on 120 core by 1.7x ~ 2.2x.
 \end{itemize}
 
@@ -115,5 +115,5 @@ Section 2 describes the background and the Linux scalability problem.
 Section 3 describes the design of the LDU algorithm and 
 Section 4 explains how to apply the LDU to Linux kernel, and
 Section 5 shows the results of the experimental evaluation. 
-Section 6 describes relatived work with our research.
+Section 6 describes related work with our research.
 Finally, section 7 concludes the paper.
