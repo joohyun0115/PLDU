@@ -98,7 +98,7 @@ structure then use it as a status flag.
 For example, consider the insert-remove operation sequence at the same object.
 The first insert operation marks the field of mark and then the operation logs
 in the queue.
-Then, the remove operation occur, \LDU does not logs;it just proceed with
+Then, the remove operation occur, LDU does not logs;it just proceed with
 changing the mark field.
 When the reader applies logs, LDU applies the logs to the original data
 structure in case of the true value of marking field.
@@ -120,12 +120,12 @@ already canceled by using update-side removing, hence insert mark filed
 has remained zero in the queue.
 In this case, the third insert operation reuses the log in the queue instead of 
 creating a new log using atomic swap, so it can reduce not only the memory
-overhead but also the queueing overhead.
+overhead but also the queuing overhead.
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 8: LDU의 로그는 두 종류의 queue에 저장할 수 있도록 지원
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-We designs the log's queue using both the per-core and the global queue becasue
+We designs the log's queue using both the per-core and the global queue because
 it can further support various data structures.
 The per-core queue of the LDU can remove the CAS operations that access global
 head pointer. 
@@ -137,7 +137,7 @@ To overcome these shortcomings, LDU also supports the global queue.
 The global queue of LDU is simple and easy to apply, so it can easily use any
 data structure.
 Though global queue can not perfectly remove global CAS operations, it can
-reduce cache communication overhead by using update-side removing
+mitigate cache communication overhead by using update-side removing
 logs and reuse garbage logs because it reduces count of inserting the
 queue.
 
@@ -205,9 +205,9 @@ memory, and global queue contains $\oplus$\inv{1}{C}, $\oplus$\inv{2}{D} and
 $\oplus$\inv{3}{E}.
 
 The next operations are $\ominus$\inv{1}{D} and $\ominus$\inv{3}{A}.
-When the $\ominus$\inv{1}{D} opertion is excuted, the object does not insert
+When the $\ominus$\inv{1}{D} operation is executed, the object does not insert
 queue, then the object's mark field is changed. 
-The $\ominus$\inv{3}{A} operation inserts queue becuase it is the new operation
+The $\ominus$\inv{3}{A} operation inserts queue because it is the new operation
 log.
 At \code{T2}, the tree is unchanged, the per-core queue
 contains $\oplus$\inv{1}{C}, $\oplus$\res{2}{D}, $\oplus$\inv{3}{E} and
@@ -239,7 +239,7 @@ At T5, the tree contains nodes  \inv{0}{B}, \inv{0}{C} and
 \vspace{-\baselineskip}
 \caption{\deferu logical update algorithm. \code{logical\_insert} represents
  non-blocking insert function.
-It may be called by original insert position without locks. The fastpath is
+It may be called by original insert position without locks. The fast-path is
  that when their object was removed by \code{logical\_remove},
  \code{logical\_insert} just changes node's marking field.}
 \label{fig:gldulogicalupdate}

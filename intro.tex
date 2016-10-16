@@ -14,7 +14,7 @@ Among operating systems, the scalable operating system is the Linux kernel
 because the kernel community has made it scalable[].
 The Linux kernel, however, has some scalability
 problems~\cite{SilasBoydWickizer2010LinuxScales48}~\cite{Changwoo2016UMSF}.
-One of which is update serizlization due to its update lock
+One of which is update serialization due to its update lock
 contention;update operations cannot run in
 parallel~\cite{mckenney2011parallel}~\cite{Matveev2015RLU}~\cite{Dodds2015SCT}.
 
@@ -83,11 +83,11 @@ To evaluate our approach, we applied LDU to Linux kernel reverse
 page mappings(anonymous page mapping, file page mapping) that have the
 problem of fork scalability bottleneck in Linux kernel because of
 high update rates global data structure.
-In addition, we implemented the LDU in a Linux 4.5.rc4.
+In addition, we implemented the LDU in a Linux 4.5.0-rc6
 We evaluated the performance and scalability using a fork-intensive workload-
 AIM7~\cite{AIM7Benchmark}, Exim~\cite{Exim} from MOSBENCH~\cite{MOSBENCH},
 Lmbench~\cite{mcvoy1996lmbench}-our design improves throughput and execution
-time on 120 core by 1.7x, 1.6x, 2.2x respectively, relative to stock Linux.
+time on 120 core by 1.5x, 2.6x, 2.7x respectively, relative to stock Linux.
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -102,7 +102,7 @@ the garbage log in log's queue;therefore, LDU can solve the Oplog's sequential p
 \item 
 We applied LDU in Linux kernel to two reverse mapping(anonymous, file) on
 practical 120core system to reduce fork scalability bottleneck.
-Our design improved throughput and execution time on 120 core by 1.7x ~ 2.2x.
+Our design improved throughput and execution time on 120 core by 1.5x ~ 2.7x.
 \end{itemize}
 
 

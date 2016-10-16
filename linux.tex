@@ -30,22 +30,27 @@ serialization problem;it deals with more practical one.
   \begin{center}
      \includegraphics[width=0.5\textwidth,height=0.5\textheight,keepaspectratio]{fig/anon_vma}
   \end{center}
-  \caption{An example of applying the \deferu to file reverse mapping. }
+  \caption{An example of applying the \deferu to anonymous reverse mapping. to
+  prevent the update operations for the interval tree, the anonymous rmap uses
+  the root \code{anon\_vma}'s lock. Therefore, when the child \code{anon\_vma}
+  are increased, root lock leads to a scalability bottleneck. LDU global queue
+  logs in the position of the root data structure, and the per-core queue also
+  logs in the per-core queue with root information.}
   \label{fig:anonvmaramp}
 \end{figure}
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 1: linux의 anon vma의 공유된 구조에 대한 설명
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-When a process spawns, the parent's \code{anonymous vma chain(avc)} are copyed
-to a child, and then the new anonymous vma, indicating the child's avc, is
+When a process spawns, the parent's \code{anonymous vma chain(AVC)} are copied
+to a child, and then the new anonymous vma, indicating the child's AVCs, is
 created.
 Due to the fact that the continuous process spawns, it becomes more the complex
 anonymous rmap data structure;the anonymous ramp is one of the complex data
 structure in the Linux kernel[].
 Figure \ref{fig:anonvmaramp} shows this complex anonymous rmap data
 structure.
-To prevent the updata operations for the interval tree, the anonymous rmap
+To prevent the update operations for the interval tree, the anonymous rmap
 uses the root \code{anon\_vma}'s lock. 
 Therefore, when the child \code{anon\_vma} are increased, root lock makes lock
 contention problem[].
@@ -54,7 +59,7 @@ contention problem[].
 %Paragraph 2: anon vma에 ldu 적용한 방법에 대한 설명 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 In anonymous ramp, in order to eliminate the problem of lock contention, LDU
-adds insert and remove mark field in the \code{avc} object for concurrent
+adds insert and remove mark field in the \code{AVC} object for concurrent
 update, and then it performs the update-side removing logs scheme.
 Understanding the log's position of queue header in anonymous rmap is important.
 As noted earlier, since the anonymous rmap uses the root lock, LDU global
@@ -69,7 +74,7 @@ lightweight method.
 %Paragraph 1: linux의 file mapped page reverse mapping의 구조에 대한 설명
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 Figure \ref{fig:fileramp} shows the rmap for file.
-To translate physical addresses to virtual addresse, the \code{struct page} for
+To translate physical addresses to virtual address, the \code{struct page} for
 file rmap indicates the \code{struct address\_space} managed by inode, and
 the \code{struct address\_space} manages the VMAs by using the interval tree.
 This interval tree is a shared resource between processes, so the Linux uses the
@@ -89,7 +94,7 @@ To use the LDU, the mark fields are added to the \code{struct
 vma\_area\_struct}, and the log's queue is added to \code{struct address\_space} or per-core
 memory.
 For instance, if it uses global queue, the queue header is located in the
-\code{struct address\_spcae}. If not, the queue header is located in the
+\code{struct address\_space}. If not, the queue header is located in the
 per-core memory.
 
 In addition, this figure clearly shows why the LDU additionally supports the
@@ -107,7 +112,13 @@ tree head pointer and log's head pointer.
   \begin{center}
      \includegraphics[width=0.5\textwidth,height=0.5\textheight,keepaspectratio]{fig/file_rmap}
   \end{center}
-  \caption{An example of applying the \deferu to file reverse mapping. }
+  \caption{An example of applying the \deferu to file reverse mapping. This
+   interval tree is a shared resource between processes, so the Linux uses the 
+   reader-writer semaphore to protect the tree, so it also becomes a bottleneck.
+   to use the LDU, the mark fields are added to the \code{struct
+   vma\_area\_struct}, and the log's queue is added to \code{struct
+   address\_space} or per-core memory.
+}
   \label{fig:fileramp}
 \end{figure}
 
@@ -120,8 +131,8 @@ We have implemented the new deferred update algorithm in Linux 4.5.rc6 kernel,
 and our modified Linux is available as open source. 
 %The version of global queue modified code is xx that less complex, but per-core
 %queue the modified code is xx-xx.
-The implementation is stable enough and has passed virutal memory, scheduler,
-and file related testing in the Linux Test Procject[1].
+The implementation is stable enough and has passed virtual memory, scheduler,
+and file related testing in the Linux Test Project[1].
 
 %$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 %Paragraph 2: per-core queue 구현에 대한 설명 
